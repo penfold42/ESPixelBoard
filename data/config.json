@@ -1,7 +1,7 @@
 {
   "network": {
-    "ssid": "",
-    "passphrase": "",
+    "ssid": "photon",
+    "passphrase": "blah",
     "ip": [
       192,
       168,
