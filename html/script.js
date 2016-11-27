@@ -126,6 +126,7 @@ function feed() {
         ws.send('X1');
         ws.send('X2');
         ws.send('Xh');
+        ws.send('XU');
 
         setTimeout(function() {
             feed();
@@ -180,6 +181,9 @@ function wsConnect() {
                 break;
             case 'Xh':
                 getHeap(data);
+                break;
+            case 'XU':
+                getUptime(data);
                 break;
             case 'X6':
                 showReboot();
@@ -301,6 +305,17 @@ function getHeap(data) {
     var heap = +data;
 
     $('#x_freeheap').text(heap);
+}
+
+function getUptime(data) {
+    var date = new Date(+data);
+    var str = '';
+
+    str += Math.floor(date.getTime()/86400000) + " days, ";
+    str += ("0" + date.getUTCHours()).slice(-2) + ":";
+    str += ("0" + date.getUTCMinutes()).slice(-2) + ":";
+    str += ("0" + date.getUTCSeconds()).slice(-2);
+    $('#x_uptime').text(str);
 }
 
 function getE131Status(data) {
