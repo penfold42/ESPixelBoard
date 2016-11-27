@@ -64,12 +64,13 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
                     (String)e131.stats.num_packets + ":" +
                     (String)seqErrors + ":" +
                     (String)e131.stats.packet_errors + ":" +
-                    (String)e131.stats.last_clientIP[0]
+/*                    (String)e131.stats.last_clientIP[0]
                               + "." + (String)e131.stats.last_clientIP[1]
                               + "." + (String)e131.stats.last_clientIP[2]
                               + "." + (String)e131.stats.last_clientIP[3]
                               + ":" + 
                     (String)e131.stats.last_clientPort + ":" +
+*/
                     (String)rgbStr
 
                     );
