@@ -490,8 +490,8 @@ void loop() {
 
     if (config.testmode == TestMode::DISABLED) {
 
-        /* Parse a packet and update pixels */
-        if (e131.parsePacket()) {
+        /* Parse queued packets and update pixels */
+        while (e131.parsePacket()) {
             if ((e131.universe >= config.universe) && (e131.universe <= uniLast)) {
                 /* Universe offset and sequence tracking */
                 uint8_t uniOffset = (e131.universe - config.universe);
