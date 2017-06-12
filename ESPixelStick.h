@@ -27,7 +27,7 @@
 #endif
 
 /* Name and version */
-const char VERSION[] = "2.1-dev (20161201)";
+const char VERSION[] = "2.1-dev (20161214)";
 
 #define HTTP_PORT       80      /* Default web server port */
 #define DATA_PIN        2       /* Pixel output - GPIO2 */
@@ -65,6 +65,12 @@ enum class TestMode : uint8_t {
     RAINBOW,
     VIEW_STREAM
 };
+
+typedef struct {
+    uint8_t r,g,b;              //hold requested color
+    uint16_t step;               //step in testing routine
+    uint32_t last;              //last update
+} testing_t;
 
 /* Configuration structure */
 typedef struct {
@@ -104,6 +110,7 @@ typedef struct {
 
 /* Globals */
 E131            e131;
+testing_t       testing;
 config_t        config;
 uint32_t        *seqError;      /* Sequence error tracking for each universe */
 uint16_t        uniLast = 1;    /* Last Universe to listen for */

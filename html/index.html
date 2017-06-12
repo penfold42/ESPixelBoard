@@ -199,12 +199,12 @@
     <div id="test" class="mdiv hidden anchor">
       <fieldset>
         <legend class="esps-legend">Display Testing</legend>
-        <form class="form-horizontal">
+        <form class="form-horizontal" onsubmit="return false">
           <div class="form-group">
             <label class="control-label col-sm-2" for="t_mode">Testing Mode</label>
             <div class="col-sm-10">
-              <select class="form-control" id="tmode" name="tmode" onclick="test()">
-                <option value="t_disable">Disabled</option>
+              <select class="form-control" id="tmode" name="tmode" onchange="test()">
+                <option value="t_disabled">Disabled</option>
                 <option value="t_static">Static</option>
                 <option value="t_chase">Chase</option>
                 <option value="t_rainbow">Rainbow</option>
@@ -220,8 +220,44 @@
             <div class="form-group">
               <label class="control-label col-sm-2" for="t_color">Color</label>
               <div class="col-sm-10">
+                <input type="button" class="form-control color no-alpha" value="rgb(128,128,128)"/>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Testing - Chase -->
+          <div id="t_chase" class="tdiv hidden">
+            <legend class="esps-legend">Chase Testing</legend>
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="t_color">Color</label>
+              <div class="col-sm-10">
                 <input type="button" class="form-control color no-alpha" value="rgb(255,255,255)" />
               </div>
+            </div>
+          </div>
+
+          <!-- Testing - View Stream -->
+          <div id="t_view" class="tdiv hidden">
+            <legend class="esps-legend">View Stream</legend>
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="t_color">Display</label>
+              <div class="col-sm-10">
+                <div class="btn-group" data-toggle="buttons">
+                  <label class="btn btn-primary">
+                    <input type="radio" name="viewStyle" value="RGB" autocomplete="off" onchange="clearStream()">RGB
+                  </label>
+                  <label class="btn btn-primary">
+                    <input type="radio" name="viewStyle" value="Channel" autocomplete="off" onchange="clearStream()">Channel
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="v_columns">Columns</label>
+              <div class="col-sm-10"><input type="number" class="form-control" id="v_columns" name="v_columns" oninput="clearStream()"></div>
+            </div>
+            <div class="row">
+              <div class="col-sm-12"><canvas id="canvas" width="820" height="960"></canvas></div>
             </div>
           </div>
 
