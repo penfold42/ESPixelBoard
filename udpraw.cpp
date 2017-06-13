@@ -15,16 +15,27 @@ extern  SerialDriver    serial;         /* Serial object */
 #error "No valid output mode defined."
 #endif
 
+/* Pixel Types */
 enum class DevMode : uint8_t {
     MPIXEL,
     MSERIAL
+};
+
+/* Test Modes */
+enum class TestMode : uint8_t {
+    DISABLED,
+    STATIC,
+    CHASE,
+    RAINBOW,
+    VIEW_STREAM
 };
 
 /* Configuration structure */
 typedef struct {
     /* Device */
     String      id;             /* Device ID */
-    DevMode     mode;           /* Device Mode - used for reporting mode, can't be set */
+    DevMode     devmode;           /* Device Mode - used for reporting mode, can't be set */
+    TestMode    testmode;       /* Testing mode */
 
     /* Network */
     String      ssid;
