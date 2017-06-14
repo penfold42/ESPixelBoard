@@ -497,6 +497,9 @@ void loop() {
    /* check for raw packets on port 2801 */
     handle_raw_port();
 
+    /* check for rotary encoder and buttons */
+    handle_buttons();
+
     /* Reboot handler */
     if (reboot) {
         delay(REBOOT_DELAY);
