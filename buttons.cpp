@@ -56,8 +56,19 @@ void handle_buttons() {
             config.testmode = TestMode::DISABLED;
           }
         }
-        encoder.setPosition(manual_rgb[selected_option]/ROT_SCALE);
-          
+//        encoder.setPosition(manual_rgb[selected_option]/ROT_SCALE);
+        switch (selected_option) {
+          case 0:
+            encoder.setPosition(testing.r/ROT_SCALE);
+            break;
+          case 1:
+            encoder.setPosition(testing.g/ROT_SCALE);
+            break;
+          case 2:
+            encoder.setPosition(testing.b/ROT_SCALE);
+            break;
+        }
+
       }
       if (button_counter >= 12) {
         button_counter = 11;
@@ -74,7 +85,6 @@ void handle_buttons() {
     }
   }
 
-  
   encoder.tick();
   int newPos = encoder.getPosition();
   if (newPos > ROT_MAX) {
@@ -91,10 +101,23 @@ void handle_buttons() {
     Serial.print ("testmode: "); Serial.println ((int)config.testmode);
     pos = newPos;
     if (config.testmode == TestMode::STATIC) {
+/*
       manual_rgb[selected_option] = pos * ROT_SCALE;
       testing.r = manual_rgb[0];
       testing.g = manual_rgb[1];
       testing.b = manual_rgb[2];
+*/
+      switch (selected_option) {
+        case 0:
+          testing.r = pos * ROT_SCALE;
+          break;
+        case 1:
+          testing.g = pos * ROT_SCALE;
+          break;
+        case 2:
+          testing.b = pos * ROT_SCALE;
+          break;
+      }
     }
   }
 
