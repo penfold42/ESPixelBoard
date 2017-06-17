@@ -29,10 +29,13 @@ unsigned long last_millis;
 int button_counter;
 int button_pushed;
 
+void update_leds(int selected_option, int pos);
+
 void handle_buttons() {
 
   if (done_setup == 0) {
     done_setup = 1;
+    selected_option=3;
     pinMode(BUTTON, INPUT_PULLUP);
     pinMode(ROTARY_A, INPUT_PULLUP);
     pinMode(ROTARY_B, INPUT_PULLUP);
@@ -40,35 +43,39 @@ void handle_buttons() {
 
   if  ((millis() - last_millis ) >= 10 ) {
     last_millis = millis();
+    
     if (digitalRead(BUTTON) == 0) {
       button_counter++;
       if ((button_pushed == 0) && (button_counter == 10)) {
         button_pushed = 1;
         Serial.print("button pushed\n");
-        if (config.testmode == TestMode::DISABLED) {
-          config.testmode = TestMode::STATIC;
-          testing.step = 0;
-          selected_option = 0;
+        if (++selected_option > 3) {
+          selected_option=0;
         }
-        else if (config.testmode == TestMode::STATIC) {
-          selected_option++;
-          if (selected_option == 3) {
-            config.testmode = TestMode::DISABLED;
-          }
-        }
-//        encoder.setPosition(manual_rgb[selected_option]/ROT_SCALE);
         switch (selected_option) {
           case 0:
-            encoder.setPosition(testing.r/ROT_SCALE);
+              testing.r = 64; testing.g =  0; testing.b =  0;
+              encoder.setPosition(manual_rgb[selected_option]/ROT_SCALE);
+              config.testmode = TestMode::STATIC;
+              Serial.println("0");
             break;
           case 1:
-            encoder.setPosition(testing.g/ROT_SCALE);
+              testing.r =  0; testing.g = 64; testing.b =  0;
+              encoder.setPosition(manual_rgb[selected_option]/ROT_SCALE);
+              config.testmode = TestMode::STATIC;
+              Serial.println("1");
             break;
           case 2:
-            encoder.setPosition(testing.b/ROT_SCALE);
+              testing.r =  0; testing.g =  0; testing.b = 64;
+              encoder.setPosition(manual_rgb[selected_option]/ROT_SCALE);
+              config.testmode = TestMode::STATIC;
+              Serial.println("2");
+            break;
+          case 3:
+              config.testmode = TestMode::DISABLED;
+              Serial.println("3");
             break;
         }
-
       }
       if (button_counter >= 12) {
         button_counter = 11;
@@ -78,6 +85,11 @@ void handle_buttons() {
       if ((button_pushed == 1) && (button_counter == 1)) {
         button_pushed = 0;
         Serial.print("button released\n");
+        if (config.testmode == TestMode::STATIC) {
+          testing.r = manual_rgb[0];
+          testing.g = manual_rgb[1];
+          testing.b = manual_rgb[2];
+        }
       }
       if (button_counter < 0) {
         button_counter = 0;
@@ -98,38 +110,11 @@ void handle_buttons() {
     Serial.print("    ");
     Serial.print(newPos);
     Serial.println();
-    Serial.print ("testmode: "); Serial.println ((int)config.testmode);
     pos = newPos;
-    if (config.testmode == TestMode::STATIC) {
-/*
-      manual_rgb[selected_option] = pos * ROT_SCALE;
-      testing.r = manual_rgb[0];
-      testing.g = manual_rgb[1];
-      testing.b = manual_rgb[2];
-*/
-      switch (selected_option) {
-        case 0:
-          testing.r = pos * ROT_SCALE;
-          break;
-        case 1:
-          testing.g = pos * ROT_SCALE;
-          break;
-        case 2:
-          testing.b = pos * ROT_SCALE;
-          break;
-      }
+    if ( (config.testmode == TestMode::STATIC) && (button_pushed == 0) ) {
+      update_leds(selected_option, pos);
     }
   }
-
-  /*
-  int pins = 0;
-  pins |= digitalRead(BUTTON)<<2;
-  pins |= digitalRead(ROTARY_A)<<1;
-  pins |= digitalRead(ROTARY_B)<<0;
-  
-  Serial.print(pins, HEX);
-  Serial.print(": pins\n");
-  */
   
   int size = 0;
   if (size == 42) {
@@ -152,6 +137,13 @@ void handle_buttons() {
 #endif
     }
   }
+}
+
+void update_leds(int selected_option, int pos) {
+      manual_rgb[selected_option] = pos * ROT_SCALE;
+      testing.r = manual_rgb[0];
+      testing.g = manual_rgb[1];
+      testing.b = manual_rgb[2];
 }
 
 
