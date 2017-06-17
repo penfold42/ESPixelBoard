@@ -20,10 +20,20 @@
 #ifndef WSHANDLER_H_
 #define WSHANDLER_H_
 
+#include "ESPixelStick.h"
+
 #if defined (ESPS_MODE_PIXEL)
             #include "PixelDriver.h"
             extern PixelDriver     pixels;         /* Pixel object */
 #endif
+
+extern  E131            e131;
+extern  testing_t       testing;
+extern  config_t        config;
+extern  uint32_t        *seqError;  /* Sequence error tracking for each universe */
+extern  uint16_t        uniLast;    /* Last Universe to listen for */
+extern  bool            reboot;     /* Reboot flag */
+
 
 /* 
   Packet Commands
@@ -148,7 +158,7 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             json["ssid"] = (String)WiFi.SSID();
             json["hostname"] = (String)WiFi.hostname();
             json["ip"] = WiFi.localIP().toString();
-            json["mac"] = getMacAddress();
+            json["mac"] = WiFi.macAddress();
             json["version"] = (String)VERSION;
             json["flashchipid"] = String(ESP.getFlashChipId(), HEX);
             json["usedflashsize"] = (String)ESP.getFlashChipSize();

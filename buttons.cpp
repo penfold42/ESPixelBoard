@@ -2,13 +2,14 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <ESP8266mDNS.h>
-#include "structures.h"
 #include <RotaryEncoder.h>
+#include "ESPixelStick.h"
 
 #define BUTTON_DEBOUNCE_DELAY 20
 #define ROT_SCALE 8
 #define ROT_MAX 256/ROT_SCALE-1
 
+// GPIO for rotary encoder
 #define BUTTON    13
 #define ROTARY_A  12
 #define ROTARY_B  14
@@ -21,7 +22,7 @@ extern  testing_t       testing;
 int done_setup = 0;
 
 int selected_option = 0;
-int manual_rgb[3];
+int manual_rgb_hsv[6];
 
 int pos;
 
@@ -29,7 +30,8 @@ unsigned long last_millis;
 int button_counter;
 int button_pushed;
 
-void update_leds(int selected_option, int pos);
+void update_led_from_pos(int selected_option, int pos);
+void set_testing_led(int r, int g, int b);
 
 void handle_buttons() {
 
@@ -48,32 +50,44 @@ void handle_buttons() {
       button_counter++;
       if ((button_pushed == 0) && (button_counter == 10)) {
         button_pushed = 1;
-        Serial.print("button pushed\n");
-        if (++selected_option > 3) {
-          selected_option=0;
+        LOG_PORT.print("button pushed\n");
+        if (++selected_option > 5) {
+          selected_option = -1;
         }
+        LOG_PORT.printf("selected_option: %d\n",selected_option);
         switch (selected_option) {
+          case -1:
+              config.testmode = TestMode::DISABLED;
+            break;
           case 0:
-              testing.r = 64; testing.g =  0; testing.b =  0;
-              encoder.setPosition(manual_rgb[selected_option]/ROT_SCALE);
+              set_testing_led( 64, 0, 0);
+//              testing.r = 64; testing.g =  0; testing.b =  0;
+//              encoder.setPosition(manual_rgb_hsv[selected_option]/ROT_SCALE);
               config.testmode = TestMode::STATIC;
-              Serial.println("0");
             break;
           case 1:
-              testing.r =  0; testing.g = 64; testing.b =  0;
-              encoder.setPosition(manual_rgb[selected_option]/ROT_SCALE);
+              set_testing_led( 0, 64, 0);
+//              testing.r =  0; testing.g = 64; testing.b =  0;
+//              encoder.setPosition(manual_rgb_hsv[selected_option]/ROT_SCALE);
               config.testmode = TestMode::STATIC;
-              Serial.println("1");
             break;
           case 2:
-              testing.r =  0; testing.g =  0; testing.b = 64;
-              encoder.setPosition(manual_rgb[selected_option]/ROT_SCALE);
+              set_testing_led( 0, 0, 64);
+//              testing.r =  0; testing.g =  0; testing.b = 64;
+//              encoder.setPosition(manual_rgb_hsv[selected_option]/ROT_SCALE);
               config.testmode = TestMode::STATIC;
-              Serial.println("2");
             break;
           case 3:
-              config.testmode = TestMode::DISABLED;
-              Serial.println("3");
+              set_testing_led( 64, 64, 0);
+              config.testmode = TestMode::STATIC;
+            break;
+          case 4:
+              set_testing_led( 0, 64, 64);
+              config.testmode = TestMode::STATIC;
+            break;
+          case 5:
+              set_testing_led( 64, 0, 64);
+              config.testmode = TestMode::STATIC;
             break;
         }
       }
@@ -84,11 +98,10 @@ void handle_buttons() {
       button_counter--;
       if ((button_pushed == 1) && (button_counter == 1)) {
         button_pushed = 0;
-        Serial.print("button released\n");
+        LOG_PORT.print("button released\n");
         if (config.testmode == TestMode::STATIC) {
-          testing.r = manual_rgb[0];
-          testing.g = manual_rgb[1];
-          testing.b = manual_rgb[2];
+          encoder.setPosition(manual_rgb_hsv[selected_option]/ROT_SCALE);
+          set_testing_led( manual_rgb_hsv[0], manual_rgb_hsv[1], manual_rgb_hsv[2]);
         }
       }
       if (button_counter < 0) {
@@ -107,43 +120,26 @@ void handle_buttons() {
   }
   newPos = encoder.getPosition();
   if (pos != newPos) {
-    Serial.print("    ");
-    Serial.print(newPos);
-    Serial.println();
+    LOG_PORT.print("    ");
+    LOG_PORT.print(newPos);
+    LOG_PORT.println();
     pos = newPos;
     if ( (config.testmode == TestMode::STATIC) && (button_pushed == 0) ) {
-      update_leds(selected_option, pos);
-    }
-  }
-  
-  int size = 0;
-  if (size == 42) {
-
-    /* Set the data */
-    int i=0;
-    for (i = 0; i < _min(size,config.channel_count); i++) {
-#if defined(ESPS_MODE_PIXEL)
-        pixels.setValue(i, 42);
-#elif defined(ESPS_MODE_SERIAL)
-        serial.setValue(i, 42);
-#endif
-    }
-    /* fill the rest with 0s*/
-    for (      ; i < config.channel_count; i++) {
-#if defined(ESPS_MODE_PIXEL)
-        pixels.setValue(i, 0);
-#elif defined(ESPS_MODE_SERIAL)
-        serial.setValue(i, 0);
-#endif
+      update_led_from_pos(selected_option, pos);
     }
   }
 }
 
-void update_leds(int selected_option, int pos) {
-      manual_rgb[selected_option] = pos * ROT_SCALE;
-      testing.r = manual_rgb[0];
-      testing.g = manual_rgb[1];
-      testing.b = manual_rgb[2];
+void update_led_from_pos(int selected_option, int pos) {
+      manual_rgb_hsv[selected_option] = pos * ROT_SCALE;
+      testing.r = manual_rgb_hsv[0];
+      testing.g = manual_rgb_hsv[1];
+      testing.b = manual_rgb_hsv[2];
 }
 
+void set_testing_led(int r, int g, int b) {
+      testing.r = r;
+      testing.g = g;
+      testing.b = b;
+}
 
