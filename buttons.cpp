@@ -96,26 +96,16 @@ int anim_r, anim_g, anim_b;
 
 // animation sequnces, each with 6 steps
 #define ANIM_STEPS 6
-int old_anim_colours[][ANIM_STEPS] = { 
-      { 0xff0000, 0, 0xff0000, 0, 0xff0000, 0 }, // red
-      { 0x00ff00, 0, 0x00ff00, 0, 0x00ff00, 0 }, // green
-      { 0x0000ff, 0, 0x0000ff, 0, 0x0000ff, 0 }, // blue
-      { 0xffff00, 0, 0xffff00, 0, 0xffff00, 0 }, // yellow
-      { 0x00ffff, 0, 0x00ffff, 0, 0x00ffff, 0 }, // cyan
-      { 0xff00ff, 0, 0xff00ff, 0, 0xff00ff, 0 }, // magenta
-      { 0xff0000, 0x00ff00, 0x0000ff, 0xff0000, 0x00ff00, 0x0000ff }, // rgb
-      { 0xffff00, 0x00ffff, 0xff00ff, 0xffff00, 0x00ffff, 0xff00ff }, // ycm
-};
 
 int anim_colours[][ANIM_STEPS] = { 
-      { 0x400000, 0, 0x400000, 0, 0x400000, 0 }, // red
-      { 0x004000, 0, 0x004000, 0, 0x004000, 0 }, // green
-      { 0x000040, 0, 0x000040, 0, 0x000040, 0 }, // blue
-      { 0x404000, 0, 0x404000, 0, 0x404000, 0 }, // yellow
-      { 0x004040, 0, 0x004040, 0, 0x004040, 0 }, // cyan
-      { 0x400040, 0, 0x400040, 0, 0x400040, 0 }, // magenta
-      { 0x400000, 0x004000, 0x000040, 0x400000, 0x004000, 0x000040 }, // rgb
-      { 0x404000, 0x004040, 0x400040, 0x404000, 0x004040, 0x400040 }, // ycm
+      { 0x400000, 0x400000, 0, 0, 0x400000, 0x400000 }, // red
+      { 0x004000, 0x004000, 0, 0, 0x004000, 0x004000 }, // green
+      { 0x000040, 0x000040, 0, 0, 0x000040, 0x000040 }, // blue
+      { 0x404000, 0x404000, 0, 0, 0x404000, 0x404000 }, // yellow
+      { 0x004040, 0x004040, 0, 0, 0x004040, 0x004040 }, // cyan
+      { 0x400040, 0x400040, 0, 0, 0x400040, 0x400040 }, // magenta
+      { 0x400000, 0x400000, 0x004000, 0x004000, 0x000040, 0x000040 }, // rgb
+      { 0x404000, 0x404000, 0x004040, 0x004040, 0x400040, 0x400040 }, // ycm
 };
 
 
@@ -138,8 +128,8 @@ void debounce_buttons() {
 
       if ((button_pushed == 0) && (button_counter == 10)) {
         button_pushed = 1;
-        LOG_PORT.print("button pushed\n");        
-        LOG_PORT.printf("selected_option: %d\n",selected_option);
+//        LOG_PORT.print("button pushed\n");        
+//        LOG_PORT.printf("selected_option: %d\n",selected_option);
       }
       if (button_counter >= 500) {
         button_counter = 500;
@@ -149,7 +139,7 @@ void debounce_buttons() {
       if (button_pushed == 1) {
         if ((button_duration - button_counter >= 10) || (button_counter == 1)) {
           button_pushed = 0;
-          LOG_PORT.printf("button released. button_duration %d\n", button_duration);
+//          LOG_PORT.printf("button released. button_duration %d\n", button_duration);
           if (button_duration >= 40) {
             handle_long_release();
           } else {
@@ -222,7 +212,7 @@ void handle_rotary_encoder() {
     }
     newPos = encoder.getPosition();
     if (pos != newPos) {
-      LOG_PORT.printf("newPos: %d. button_mode: %d. selected_option: %d.\n",newPos, button_mode, selected_option);
+//      LOG_PORT.printf("newPos: %d. button_mode: %d. selected_option: %d.\n",newPos, button_mode, selected_option);
       pos = newPos;
       if (button_pushed == 0) {
         switch (button_mode) {
@@ -230,13 +220,14 @@ void handle_rotary_encoder() {
             break;
           case 1:
             manual_rgb[selected_option] = pos * ROT_SCALE;
-            temp_rgb.r = manual_rgb[0]/250.0; //*1.0/ROT_UNITY;
-            temp_rgb.g = manual_rgb[1]/250.0; //*1.0/ROT_UNITY;
-            temp_rgb.b = manual_rgb[2]/250.0; //*1.0/ROT_UNITY;
-//LOG_PORT.printf("Rf %f Gf %f Bf %f\n",temp_rgb.r, temp_rgb.g, temp_rgb.b );
+            
+            temp_rgb.r = (double) manual_rgb[0] / ROT_UNITY;
+            temp_rgb.g = (double) manual_rgb[1] / ROT_UNITY;
+            temp_rgb.b = (double) manual_rgb[2] / ROT_UNITY;
             
             temp_hsv = rgb2hsv(temp_rgb);
-            manual_hsv[0] = temp_hsv.h*ROT_UNITY/359;
+            
+            manual_hsv[0] = temp_hsv.h*ROT_UNITY / 359;
             manual_hsv[1] = temp_hsv.s*ROT_UNITY;
             manual_hsv[2] = temp_hsv.v*ROT_UNITY;
 //LOG_PORT.printf("R %d G %d B %d H %d S %d V %d\n",manual_rgb[0],manual_rgb[1],manual_rgb[2],manual_hsv[0],manual_hsv[1],manual_hsv[2]);
@@ -244,14 +235,16 @@ void handle_rotary_encoder() {
             
           case 2:
             manual_hsv[selected_option] = pos * ROT_SCALE;
-            temp_hsv.h = manual_hsv[0]*359.0/ROT_UNITY;
-            temp_hsv.s = manual_hsv[1]*1.0/ROT_UNITY;
-            temp_hsv.v = manual_hsv[2]*1.0/ROT_UNITY;
+
+            temp_hsv.h = (double) manual_hsv[0] * 359 / ROT_UNITY;
+            temp_hsv.s = (double) manual_hsv[1] / ROT_UNITY;
+            temp_hsv.v = (double) manual_hsv[2] / ROT_UNITY;
 
             temp_rgb = hsv2rgb(temp_hsv);
-            manual_rgb[0] = temp_rgb.r*1.0*ROT_UNITY;
-            manual_rgb[1] = temp_rgb.g*1.0*ROT_UNITY;
-            manual_rgb[2] = temp_rgb.b*1.0*ROT_UNITY;    
+
+            manual_rgb[0] = temp_rgb.r * ROT_UNITY;
+            manual_rgb[1] = temp_rgb.g * ROT_UNITY;
+            manual_rgb[2] = temp_rgb.b * ROT_UNITY;    
 //LOG_PORT.printf("R %d G %d B %d H %d S %d V %d\n",manual_rgb[0],manual_rgb[1],manual_rgb[2],manual_hsv[0],manual_hsv[1],manual_hsv[2]);
             break;
         }
