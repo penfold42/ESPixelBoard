@@ -5,9 +5,9 @@
 #include <RotaryEncoder.h>
 #include "ESPixelStick.h"
 
-#define BUTTON_DEBOUNCE_DELAY 20
-#define ROT_SCALE 8
-#define ROT_MAX 256/ROT_SCALE-1
+#define ROT_MAX 25  // 19
+#define ROT_SCALE 10   // 13
+#define ROT_UNITY (ROT_SCALE*ROT_MAX)   // 247 
 
 // GPIO for rotary encoder
 #define BUTTON    13
@@ -49,13 +49,30 @@ void handle_short_release();
 void handle_long_release();
 
 
+typedef struct {
+    double r;       // a fraction between 0 and 1
+    double g;       // a fraction between 0 and 1
+    double b;       // a fraction between 0 and 1
+} rgb;
+
+typedef struct {
+    double h;       // angle in degrees
+    double s;       // a fraction between 0 and 1
+    double v;       // a fraction between 0 and 1
+} hsv;
+
+static hsv   rgb2hsv(rgb in);
+static rgb   hsv2rgb(hsv in);
+
+
+
 void handle_buttons() {
 
   encoder.tick();
 
   if (done_setup == 0) {
     done_setup = 1;
-    selected_option = -1;
+    selected_option = 0;
     pinMode(BUTTON, INPUT_PULLUP);
     pinMode(ROTARY_A, INPUT_PULLUP);
     pinMode(ROTARY_B, INPUT_PULLUP);
@@ -79,7 +96,7 @@ int anim_r, anim_g, anim_b;
 
 // animation sequnces, each with 6 steps
 #define ANIM_STEPS 6
-int anim_colours[][ANIM_STEPS] = { 
+int old_anim_colours[][ANIM_STEPS] = { 
       { 0xff0000, 0, 0xff0000, 0, 0xff0000, 0 }, // red
       { 0x00ff00, 0, 0x00ff00, 0, 0x00ff00, 0 }, // green
       { 0x0000ff, 0, 0x0000ff, 0, 0x0000ff, 0 }, // blue
@@ -89,6 +106,18 @@ int anim_colours[][ANIM_STEPS] = {
       { 0xff0000, 0x00ff00, 0x0000ff, 0xff0000, 0x00ff00, 0x0000ff }, // rgb
       { 0xffff00, 0x00ffff, 0xff00ff, 0xffff00, 0x00ffff, 0xff00ff }, // ycm
 };
+
+int anim_colours[][ANIM_STEPS] = { 
+      { 0x400000, 0, 0x400000, 0, 0x400000, 0 }, // red
+      { 0x004000, 0, 0x004000, 0, 0x004000, 0 }, // green
+      { 0x000040, 0, 0x000040, 0, 0x000040, 0 }, // blue
+      { 0x404000, 0, 0x404000, 0, 0x404000, 0 }, // yellow
+      { 0x004040, 0, 0x004040, 0, 0x004040, 0 }, // cyan
+      { 0x400040, 0, 0x400040, 0, 0x400040, 0 }, // magenta
+      { 0x400000, 0x004000, 0x000040, 0x400000, 0x004000, 0x000040 }, // rgb
+      { 0x404000, 0x004040, 0x400040, 0x404000, 0x004040, 0x400040 }, // ycm
+};
+
 
 void do_button_animations() {
   if (anim_step >= 0) {
@@ -161,20 +190,20 @@ void handle_long_release(){
     if (button_mode >= 3) {
       button_mode = 0;
     }
-    LOG_PORT.printf("button mode: %d\n", button_mode);
+//    LOG_PORT.printf("button mode: %d\n", button_mode);
     switch (button_mode) {
       case 0:
         config.testmode = TestMode::DISABLED;
         break;
       case 1:
         config.testmode = TestMode::STATIC;
-        anim_mode = 6; anim_step = 0;
+        anim_mode = 6; anim_step = 0;   // RGBRGB
         selected_option = 0;
         encoder.setPosition(manual_rgb[selected_option]/ROT_SCALE);
         break;
       case 2:
         config.testmode = TestMode::STATIC;
-        anim_mode = 7; anim_step = 0;
+        anim_mode = 7; anim_step = 0;   // HSVHSV
         selected_option = 0;
         encoder.setPosition(manual_hsv[selected_option]/ROT_SCALE);
         break;
@@ -182,6 +211,8 @@ void handle_long_release(){
 }
 
 void handle_rotary_encoder() {
+    rgb temp_rgb;
+    hsv temp_hsv; 
     int newPos = encoder.getPosition();
     if (newPos > ROT_MAX) {
       encoder.setPosition(ROT_MAX);
@@ -191,8 +222,7 @@ void handle_rotary_encoder() {
     }
     newPos = encoder.getPosition();
     if (pos != newPos) {
-      LOG_PORT.printf("    %d\n",newPos);
-      LOG_PORT.printf("button_mode: %d. selected_option: %d.\n",button_mode, selected_option);
+      LOG_PORT.printf("newPos: %d. button_mode: %d. selected_option: %d.\n",newPos, button_mode, selected_option);
       pos = newPos;
       if (button_pushed == 0) {
         switch (button_mode) {
@@ -200,9 +230,29 @@ void handle_rotary_encoder() {
             break;
           case 1:
             manual_rgb[selected_option] = pos * ROT_SCALE;
+            temp_rgb.r = manual_rgb[0]/250.0; //*1.0/ROT_UNITY;
+            temp_rgb.g = manual_rgb[1]/250.0; //*1.0/ROT_UNITY;
+            temp_rgb.b = manual_rgb[2]/250.0; //*1.0/ROT_UNITY;
+//LOG_PORT.printf("Rf %f Gf %f Bf %f\n",temp_rgb.r, temp_rgb.g, temp_rgb.b );
+            
+            temp_hsv = rgb2hsv(temp_rgb);
+            manual_hsv[0] = temp_hsv.h*ROT_UNITY/359;
+            manual_hsv[1] = temp_hsv.s*ROT_UNITY;
+            manual_hsv[2] = temp_hsv.v*ROT_UNITY;
+//LOG_PORT.printf("R %d G %d B %d H %d S %d V %d\n",manual_rgb[0],manual_rgb[1],manual_rgb[2],manual_hsv[0],manual_hsv[1],manual_hsv[2]);
             break;
+            
           case 2:
             manual_hsv[selected_option] = pos * ROT_SCALE;
+            temp_hsv.h = manual_hsv[0]*359.0/ROT_UNITY;
+            temp_hsv.s = manual_hsv[1]*1.0/ROT_UNITY;
+            temp_hsv.v = manual_hsv[2]*1.0/ROT_UNITY;
+
+            temp_rgb = hsv2rgb(temp_hsv);
+            manual_rgb[0] = temp_rgb.r*1.0*ROT_UNITY;
+            manual_rgb[1] = temp_rgb.g*1.0*ROT_UNITY;
+            manual_rgb[2] = temp_rgb.b*1.0*ROT_UNITY;    
+//LOG_PORT.printf("R %d G %d B %d H %d S %d V %d\n",manual_rgb[0],manual_rgb[1],manual_rgb[2],manual_hsv[0],manual_hsv[1],manual_hsv[2]);
             break;
         }
       }
@@ -219,3 +269,106 @@ void set_testing_led(int r, int g, int b) {
       testing.b = b;
 }
 
+
+hsv rgb2hsv(rgb in)
+{
+    hsv         out;
+    double      min, max, delta;
+
+    min = in.r < in.g ? in.r : in.g;
+    min = min  < in.b ? min  : in.b;
+
+    max = in.r > in.g ? in.r : in.g;
+    max = max  > in.b ? max  : in.b;
+
+    out.v = max;                                // v
+    delta = max - min;
+    if (delta < 0.00001)
+    {
+        out.s = 0;
+        out.h = 0; // undefined, maybe nan?
+        return out;
+    }
+    if( max > 0.0 ) { // NOTE: if Max is == 0, this divide would cause a crash
+        out.s = (delta / max);                  // s
+    } else {
+        // if max is 0, then r = g = b = 0              
+        // s = 0, v is undefined
+        out.s = 0.0;
+        out.h = NAN;                            // its now undefined
+        return out;
+    }
+    if( in.r >= max )                           // > is bogus, just keeps compilor happy
+        out.h = ( in.g - in.b ) / delta;        // between yellow & magenta
+    else
+    if( in.g >= max )
+        out.h = 2.0 + ( in.b - in.r ) / delta;  // between cyan & yellow
+    else
+        out.h = 4.0 + ( in.r - in.g ) / delta;  // between magenta & cyan
+
+    out.h *= 60.0;                              // degrees
+
+    if( out.h < 0.0 )
+        out.h += 360.0;
+
+    return out;
+}
+
+
+rgb hsv2rgb(hsv in)
+{
+    double      hh, p, q, t, ff;
+    long        i;
+    rgb         out;
+
+    if(in.s <= 0.0) {       // < is bogus, just shuts up warnings
+        out.r = in.v;
+        out.g = in.v;
+        out.b = in.v;
+        return out;
+    }
+    hh = in.h;
+    if(hh >= 360.0) hh = 0.0;
+    hh /= 60.0;
+    i = (long)hh;
+    ff = hh - i;
+    p = in.v * (1.0 - in.s);
+    q = in.v * (1.0 - (in.s * ff));
+    t = in.v * (1.0 - (in.s * (1.0 - ff)));
+
+    switch(i) {
+    case 0:
+        out.r = in.v;
+        out.g = t;
+        out.b = p;
+        break;
+    case 1:
+        out.r = q;
+        out.g = in.v;
+        out.b = p;
+        break;
+    case 2:
+        out.r = p;
+        out.g = in.v;
+        out.b = t;
+        break;
+
+    case 3:
+        out.r = p;
+        out.g = q;
+        out.b = in.v;
+        break;
+    case 4:
+        out.r = t;
+        out.g = p;
+        out.b = in.v;
+        break;
+    case 5:
+    default:
+        out.r = in.v;
+        out.g = p;
+        out.b = q;
+        break;
+    }
+    return out;     
+}
