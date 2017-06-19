@@ -128,9 +128,10 @@ void debounce_buttons() {
 
       if ((button_pushed == 0) && (button_counter == 10)) {
         button_pushed = 1;
-//        LOG_PORT.print("button pushed\n");        
-//        LOG_PORT.printf("selected_option: %d\n",selected_option);
       }
+      if (button_duration == 40) {
+        handle_long_release();
+      } 
       if (button_counter >= 500) {
         button_counter = 500;
       }
@@ -141,7 +142,7 @@ void debounce_buttons() {
           button_pushed = 0;
 //          LOG_PORT.printf("button released. button_duration %d\n", button_duration);
           if (button_duration >= 40) {
-            handle_long_release();
+//            handle_long_release();
           } else {
             handle_short_release();
           }
