@@ -516,9 +516,7 @@ void saveConfig() {
 /* Main Loop */
 void loop() {
    /* check for raw packets on port 2801 */
-    if (config.testmode == TestMode::DISABLED || config.testmode == TestMode::VIEW_STREAM) {
-        handle_raw_port();
-    }
+    handle_raw_port();
 
     /* check for rotary encoder and buttons */
     handle_buttons();

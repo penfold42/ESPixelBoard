@@ -40,22 +40,24 @@ void handle_raw_port() {
     RAWudp.read(udpraw_Buffer, UDPRAW_BUFFER_SIZE); // read the packet into the buffer
     RAW_ctr++;
 
-    /* Set the data */
-    int i=0;
-    for (i = 0; i < _min(size,config.channel_count); i++) {
+    if (config.testmode == TestMode::DISABLED || config.testmode == TestMode::VIEW_STREAM) {
+      /* Set the data */
+      int i=0;
+      for (i = 0; i < _min(size,config.channel_count); i++) {
 #if defined(ESPS_MODE_PIXEL)
-        pixels.setValue(i, udpraw_Buffer[i]);
+          pixels.setValue(i, udpraw_Buffer[i]);
 #elif defined(ESPS_MODE_SERIAL)
-        serial.setValue(i, udpraw_Buffer[i]);
+          serial.setValue(i, udpraw_Buffer[i]);
 #endif
-    }
-    /* fill the rest with 0s*/
-    for (      ; i < config.channel_count; i++) {
+      }
+      /* fill the rest with 0s*/
+      for (      ; i < config.channel_count; i++) {
 #if defined(ESPS_MODE_PIXEL)
-        pixels.setValue(i, 0);
+          pixels.setValue(i, 0);
 #elif defined(ESPS_MODE_SERIAL)
-        serial.setValue(i, 0);
+          serial.setValue(i, 0);
 #endif
+      }
     }
   }
 }
