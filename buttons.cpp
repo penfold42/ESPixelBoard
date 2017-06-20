@@ -7,7 +7,7 @@
 
 #define ROT_MAX 25  // 19
 #define ROT_SCALE 10   // 13
-#define ROT_UNITY (ROT_SCALE*ROT_MAX)   // 247 
+#define ROT_UNITY (ROT_SCALE*ROT_MAX)   // 247
 
 // GPIO for rotary encoder
 #define BUTTON    13
@@ -77,7 +77,7 @@ void handle_buttons() {
     pinMode(ROTARY_A, INPUT_PULLUP);
     pinMode(ROTARY_B, INPUT_PULLUP);
   }
-  
+
   if  ((millis() - last_millis ) >= 10 ) {
     last_millis = millis();
 
@@ -97,7 +97,7 @@ int anim_r, anim_g, anim_b;
 // animation sequnces, each with 6 steps
 #define ANIM_STEPS 6
 
-int anim_colours[][ANIM_STEPS] = { 
+int anim_colours[][ANIM_STEPS] = {
       { 0x400000, 0x400000, 0, 0, 0x400000, 0x400000 }, // red
       { 0x004000, 0x004000, 0, 0, 0x004000, 0x004000 }, // green
       { 0x000040, 0x000040, 0, 0, 0x000040, 0x000040 }, // blue
@@ -116,12 +116,12 @@ void do_button_animations() {
     } else {
       int val = anim_colours[anim_mode][anim_step/10];
       set_testing_led( val>>16&0xff, val>>8&0xff, val>>0&0xff );
-    }    
+    }
   }
 }
 
 void debounce_buttons() {
-    
+
     if (digitalRead(BUTTON) == 0) {
       button_counter++;
       button_duration = button_counter;
@@ -131,7 +131,7 @@ void debounce_buttons() {
       }
       if (button_duration == 40) {
         handle_long_release();
-      } 
+      }
       if (button_counter >= 500) {
         button_counter = 500;
       }
@@ -151,7 +151,7 @@ void debounce_buttons() {
       if (button_counter < 0) {
         button_counter = 0;
       }
-    }  
+    }
 }
 
 void handle_short_release() {
@@ -203,7 +203,7 @@ void handle_long_release(){
 
 void handle_rotary_encoder() {
     rgb temp_rgb;
-    hsv temp_hsv; 
+    hsv temp_hsv;
     int newPos = encoder.getPosition();
     if (newPos > ROT_MAX) {
       encoder.setPosition(ROT_MAX);
@@ -221,19 +221,19 @@ void handle_rotary_encoder() {
             break;
           case 1:
             manual_rgb[selected_option] = pos * ROT_SCALE;
-            
+
             temp_rgb.r = (double) manual_rgb[0] / ROT_UNITY;
             temp_rgb.g = (double) manual_rgb[1] / ROT_UNITY;
             temp_rgb.b = (double) manual_rgb[2] / ROT_UNITY;
-            
+
             temp_hsv = rgb2hsv(temp_rgb);
-            
+
             manual_hsv[0] = temp_hsv.h*ROT_UNITY / 359;
             manual_hsv[1] = temp_hsv.s*ROT_UNITY;
             manual_hsv[2] = temp_hsv.v*ROT_UNITY;
 //LOG_PORT.printf("R %d G %d B %d H %d S %d V %d\n",manual_rgb[0],manual_rgb[1],manual_rgb[2],manual_hsv[0],manual_hsv[1],manual_hsv[2]);
             break;
-            
+
           case 2:
             manual_hsv[selected_option] = pos * ROT_SCALE;
 
@@ -245,7 +245,7 @@ void handle_rotary_encoder() {
 
             manual_rgb[0] = temp_rgb.r * ROT_UNITY;
             manual_rgb[1] = temp_rgb.g * ROT_UNITY;
-            manual_rgb[2] = temp_rgb.b * ROT_UNITY;    
+            manual_rgb[2] = temp_rgb.b * ROT_UNITY;
 //LOG_PORT.printf("R %d G %d B %d H %d S %d V %d\n",manual_rgb[0],manual_rgb[1],manual_rgb[2],manual_hsv[0],manual_hsv[1],manual_hsv[2]);
             break;
         }
@@ -286,7 +286,7 @@ hsv rgb2hsv(rgb in)
     if( max > 0.0 ) { // NOTE: if Max is == 0, this divide would cause a crash
         out.s = (delta / max);                  // s
     } else {
-        // if max is 0, then r = g = b = 0              
+        // if max is 0, then r = g = b = 0
         // s = 0, v is undefined
         out.s = 0.0;
         out.h = NAN;                            // its now undefined
@@ -364,5 +364,5 @@ rgb hsv2rgb(hsv in)
         out.b = q;
         break;
     }
-    return out;     
+    return out;
 }

@@ -65,25 +65,14 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
             uint32_t seqErrors = 0;
             for (int i = 0; i < ((uniLast + 1) - config.universe); i++)
                 seqErrors =+ seqError[i];
-            
-            char rgbStr[18] = {0};
-            sprintf(rgbStr, "#%02X%02X%02X", pixels.getValue(0), pixels.getValue(1), pixels.getValue(2));
 
             client->text("X2" + (String)config.universe + ":" +
                     (String)uniLast + ":" +
                     (String)e131.stats.num_packets + ":" +
                     (String)seqErrors + ":" +
                     (String)e131.stats.packet_errors + ":" +
-                    e131.stats.last_clientIP.toString()
-//                    (String)e131.stats.last_clientIP[0]
-//                              + "." + (String)e131.stats.last_clientIP[1]
-//                              + "." + (String)e131.stats.last_clientIP[2]
-//                              + "." + (String)e131.stats.last_clientIP[3]
-                              + ":" + 
-                    (String)e131.stats.last_clientPort + ":" +
-                    (String)rgbStr
-
-                    );
+                    e131.stats.last_clientIP.toString() + ":" + 
+                    (String)e131.stats.last_clientPort);
             break;
         }
         case 'h':
