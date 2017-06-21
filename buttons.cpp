@@ -28,6 +28,12 @@ int button_mode = 0;
 // (0,1,2) = (r,g,b) or (h,s,v)
 int selected_option = 0;
 
+#define BUTTON_LONG_THRESHOLD 40
+
+#define BUTTON_MAX 50
+
+#define BUTTON_DEBOUNCE 10
+
 int manual_rgb[3];
 int manual_hsv[3];
 
@@ -97,7 +103,27 @@ int anim_r, anim_g, anim_b;
 // animation sequnces, each with 6 steps
 #define ANIM_STEPS 6
 
+#define BRITE 0x40
+#define BLK (0)
+#define RED (BRITE<<16)
+#define GRN (BRITE<<8)
+#define BLU (BRITE<<0)
+#define YEL (RED+GRN)
+#define CYN (GRN+BLU)
+#define PUR (RED+BLU)
+
 int anim_colours[][ANIM_STEPS] = {
+      { RED, RED, BLK, BLK, RED, RED }, // red
+      { GRN, GRN, BLK, BLK, GRN, GRN }, // green
+      { BLU, BLU, BLK, BLK, BLU, BLU }, // blue
+      { YEL, YEL, BLK, BLK, YEL, YEL }, // yellow
+      { CYN, CYN, BLK, BLK, CYN, CYN }, // cyan
+      { PUR, PUR, BLK, BLK, PUR, PUR }, // magenta
+      { RED, RED, GRN, GRN, BLU, BLU }, // rgb
+      { YEL, YEL, CYN, CYN, PUR, PUR }, // ycm
+};
+
+int OLDanim_colours[][ANIM_STEPS] = {
       { 0x400000, 0x400000, 0, 0, 0x400000, 0x400000 }, // red
       { 0x004000, 0x004000, 0, 0, 0x004000, 0x004000 }, // green
       { 0x000040, 0x000040, 0, 0, 0x000040, 0x000040 }, // blue
@@ -126,22 +152,22 @@ void debounce_buttons() {
       button_counter++;
       button_duration = button_counter;
 
-      if ((button_pushed == 0) && (button_counter == 10)) {
+      if ((button_pushed == 0) && (button_counter == BUTTON_DEBOUNCE)) {
         button_pushed = 1;
       }
-      if (button_duration == 40) {
+      if (button_duration == BUTTON_LONG_THRESHOLD) {
         handle_long_release();
       }
-      if (button_counter >= 500) {
-        button_counter = 500;
+      if (button_counter >= BUTTON_MAX) {
+        button_counter = BUTTON_MAX;
       }
     } else {
       button_counter--;
       if (button_pushed == 1) {
-        if ((button_duration - button_counter >= 10) || (button_counter == 1)) {
+        if ((button_duration - button_counter >= BUTTON_DEBOUNCE) || (button_counter == 1)) {
           button_pushed = 0;
 //          LOG_PORT.printf("button released. button_duration %d\n", button_duration);
-          if (button_duration >= 40) {
+          if (button_duration >= BUTTON_LONG_THRESHOLD) {
 //            handle_long_release();
           } else {
             handle_short_release();
@@ -164,11 +190,11 @@ void handle_short_release() {
           case 0:
             break;
           case 1:
-            anim_mode = selected_option; anim_step = 0;
+            anim_mode = selected_option; anim_step = 0; // R, G or B
             encoder.setPosition(manual_rgb[selected_option]/ROT_SCALE);
             break;
           case 2:
-            anim_mode = selected_option + 3; anim_step = 0;
+            anim_mode = selected_option + 3; anim_step = 0; // Y, M or C
             encoder.setPosition(manual_hsv[selected_option]/ROT_SCALE);
             break;
         }
