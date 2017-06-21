@@ -37,13 +37,17 @@ int selected_option = 0;
 rgb global_rgb;
 hsv global_hsv;
 
-int pos;
-
 unsigned long last_millis;
+
+int rotary_pos;   // current position of the rotary encoder
 
 int button_counter;   // debounce and duration counter
 int button_pushed;    // 1 = pushed, 0 = not pushed
 int button_duration;  // how long was it held?
+
+int anim_step;  // which step of the animation to display
+int anim_mode;  // which animation sequence
+
 
 /* forward declarations */
 void update_rgbhsv_from_pos();
@@ -58,7 +62,7 @@ void handle_long_press();
 
 void handle_buttons() {
 
-  encoder.tick();
+  encoder.tick();   // rotary encoder update
 
   if (done_setup == 0) {
     done_setup = 1;
@@ -79,10 +83,6 @@ void handle_buttons() {
     }
   }
 }
-
-int anim_step;
-int anim_mode;
-//int anim_r, anim_g, anim_b;
 
 #define BRITE 0x40
 #define BLK (0)
@@ -108,6 +108,7 @@ int anim_colours[][ANIM_STEPS] = {
 };
 
 void do_button_animations() {
+
   if (anim_step >= 0) {
     if (++anim_step >= ANIM_STEPS*10) {
       anim_step = -1;
@@ -153,7 +154,7 @@ void debounce_buttons() {
 }
 
 void handle_short_release() {
-  // Short press
+
       if (config.testmode == TestMode::STATIC) {
         if (++selected_option > 2) {
           selected_option = 0;
@@ -165,7 +166,7 @@ void handle_short_release() {
 }
 
 void handle_long_press(){
-// Long press
+
     button_mode++;
     if (button_mode >= 3) {
       button_mode = 0;
@@ -186,8 +187,7 @@ void handle_long_press(){
 }
 
 void handle_rotary_encoder() {
-    rgb temp_rgb;
-    hsv temp_hsv;
+
     int newPos = encoder.getPosition();
     if (newPos > ROT_MAX) {
       encoder.setPosition(ROT_MAX);
@@ -196,9 +196,9 @@ void handle_rotary_encoder() {
       encoder.setPosition(0);
     }
     newPos = encoder.getPosition();
-    if (pos != newPos) {
+    if (rotary_pos != newPos) {
 //      LOG_PORT.printf("newPos: %d. button_mode: %d. selected_option: %d.\n",newPos, button_mode, selected_option);
-      pos = newPos;
+      rotary_pos = newPos;
       if (button_pushed == 0) {
         update_rgbhsv_from_pos();
       }
@@ -206,64 +206,65 @@ void handle_rotary_encoder() {
 }
 
 void update_rgbhsv_from_pos() {
+
       int combo = (button_mode-1)*3 + selected_option;
       switch (combo) {
         case 0: // Red
-          global_rgb.r = (double) pos / ROT_MAX;
+          global_rgb.r = (double) rotary_pos / ROT_MAX;
           global_hsv = rgb2hsv(global_rgb);
           break;
         case 1: // Green
-          global_rgb.g = (double) pos / ROT_MAX;
+          global_rgb.g = (double) rotary_pos / ROT_MAX;
           global_hsv = rgb2hsv(global_rgb);
           break;
         case 2: // Blue
-          global_rgb.b = (double) pos / ROT_MAX;
+          global_rgb.b = (double) rotary_pos / ROT_MAX;
           global_hsv = rgb2hsv(global_rgb);
           break;
 
         case 3: // Hue
-          global_hsv.h = (double) 360 * pos / ROT_MAX;
+          global_hsv.h = (double) 360 * rotary_pos / ROT_MAX;
           global_rgb = hsv2rgb(global_hsv);
           break;
         case 4: // Saturation
-          global_hsv.s = (double) pos / ROT_MAX;
+          global_hsv.s = (double) rotary_pos / ROT_MAX;
           global_rgb = hsv2rgb(global_hsv);
           break;
         case 5: // Value
-          global_hsv.v = (double) pos / ROT_MAX;
+          global_hsv.v = (double) rotary_pos / ROT_MAX;
           global_rgb = hsv2rgb(global_hsv);
           break;
       }
 }
 
 void update_pos_from_rgbhsv() {
+
       int combo = (button_mode-1)*3 + selected_option;
       
       if ((combo >= 0) && (combo <= 5)) {
     
         switch (combo) {
           case 0: // Red
-            pos = global_rgb.r * ROT_MAX;
+            rotary_pos = global_rgb.r * ROT_MAX;
             break;
           case 1: // Green
-            pos = global_rgb.g * ROT_MAX;
+            rotary_pos = global_rgb.g * ROT_MAX;
             break;
           case 2: // Blue
-            pos = global_rgb.b * ROT_MAX;
+            rotary_pos = global_rgb.b * ROT_MAX;
             break;
           case 3: // Hue
-            pos = global_hsv.h * ROT_MAX / 360;
+            rotary_pos = global_hsv.h * ROT_MAX / 360;
             break;
           case 4: // Saturation
-            pos = global_hsv.s * ROT_MAX;
+            rotary_pos = global_hsv.s * ROT_MAX;
             break;
           case 5: // Value
-            pos = global_hsv.v * ROT_MAX;
+            rotary_pos = global_hsv.v * ROT_MAX;
             break;          
         }
-        encoder.setPosition(pos);
+        encoder.setPosition(rotary_pos);
       }
-      
 }
 
 void set_testing_led(int r, int g, int b) {
@@ -271,6 +272,4 @@ void set_testing_led(int r, int g, int b) {
       testing.g = g;
       testing.b = b;
 }
-
-
 
