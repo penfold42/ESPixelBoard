@@ -23,14 +23,14 @@ uint8_t             udpraw_Buffer[ UDPRAW_BUFFER_SIZE];
 void handle_raw_port() {
 
   if (!RAWudp) {
-    Serial.println("RE-Starting UDP");
+    Serial.println("(re)-starting UDP raw");
     RAWudp.begin(RAWPort);
     MDNS.addService("hyperiond-rgbled", "udp", RAWPort);
-    Serial.print("Local RAWport: ");
+    Serial.print("- Unicast port: ");
     Serial.println(RAWudp.localPort());
   }
   if (!RAWudp) {
-    Serial.println("RE-Start failed.");
+    Serial.println("(re)-start failed.");
     return;
   }
 

@@ -6,21 +6,18 @@
 #include "ESPixelStick.h"
 #include "rgbhsv.h"
 
-#define ROT_MAX 25  // 19
-#define ROT_SCALE 10   // 13
-#define ROT_UNITY (ROT_SCALE*ROT_MAX)   // 247
-
 // GPIO for rotary encoder
 #define BUTTON    13
 #define ROTARY_A  12
 #define ROTARY_B  14
 
+#define ROT_MAX 40  // 20 is one rotation
 
 RotaryEncoder encoder(ROTARY_A, ROTARY_B);
 
+// ESPixelStick globals
 extern  config_t        config;
 extern  testing_t       testing;
-
 
 int done_setup = 0;
 
@@ -30,10 +27,12 @@ int button_mode = 0;
 // (0,1,2) = (r,g,b) or (h,s,v)
 int selected_option = 0;
 
+// button counter thresholds in 0.010 s
+#define BUTTON_DEBOUNCE 10
 #define BUTTON_LONG_THRESHOLD 40
 #define BUTTON_MAX 50
-#define BUTTON_DEBOUNCE 10
 
+// globals to hold current colour
 rgb global_rgb;
 hsv global_hsv;
 
@@ -139,7 +138,6 @@ void debounce_buttons() {
       if (button_pushed == 1) {
         if ((button_duration - button_counter >= BUTTON_DEBOUNCE) || (button_counter == 1)) {
           button_pushed = 0;
-//          LOG_PORT.printf("button released. button_duration %d\n", button_duration);
           if (button_duration >= BUTTON_LONG_THRESHOLD) {
 //            handle_long_release();
           } else {
