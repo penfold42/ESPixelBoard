@@ -27,7 +27,7 @@
             extern PixelDriver     pixels;         /* Pixel object */
 #endif
 
-extern  E131            e131;
+extern  E131Async       e131;       /* E131Async with X buffers */
 extern  testing_t       testing;
 extern  config_t        config;
 extern  uint32_t        *seqError;  /* Sequence error tracking for each universe */
