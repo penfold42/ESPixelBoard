@@ -34,9 +34,10 @@
 #endif
 
 /* Name and version */
-const char VERSION[] = "2.1-dev (20161214)";
+const char VERSION[] = "3.0-dev2 (20170629)";
 
 #define HTTP_PORT       80      /* Default web server port */
+#define MQTT_PORT       1883    /* Default MQTT port */
 #define DATA_PIN        2       /* Pixel output - GPIO2 */
 #define EEPROM_BASE     0       /* EEPROM configuration base address */
 #define UNIVERSE_LIMIT  512     /* Universe boundary - 512 Channels */
@@ -70,7 +71,8 @@ enum class TestMode : uint8_t {
     STATIC,
     CHASE,
     RAINBOW,
-    VIEW_STREAM
+    VIEW_STREAM,
+    MQTT
 };
 
 typedef struct {
@@ -93,8 +95,16 @@ typedef struct {
     uint8_t     ip[4];
     uint8_t     netmask[4];
     uint8_t     gateway[4];
-    bool        dhcp;           /* Use DHCP */
-    bool        ap_fallback;    /* Fallback to AP if fail to associate */
+    bool        dhcp;           /* Use DHCP? */
+    bool        ap_fallback;    /* Fallback to AP if fail to associate? */
+
+    /* MQTT */
+    bool        mqtt;           /* Use MQTT? */
+    String      mqtt_ip;
+    uint16_t    mqtt_port;
+    String      mqtt_user;
+    String      mqtt_password;
+    String      mqtt_topic;
 
     /* E131 */
     uint16_t    universe;       /* Universe to listen for */

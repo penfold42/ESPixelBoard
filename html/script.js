@@ -26,13 +26,13 @@ $(function() {
             $('#update').modal({backdrop: 'static', keyboard: false});
         });
 
-        /* Test mode toggles */
+        // Test mode toggles
         $('#tmode').change(function() {
             $('.tdiv').addClass('hidden');
             $('#'+$('select[name=tmode]').val()).removeClass('hidden');
         });
 
-        /* Color Picker */
+        // Color Picker
         $('.color').colorPicker({
             buildCallback: function($elm) {
                 var colorInstance = this.color;
@@ -101,9 +101,22 @@ $(function() {
     // DHCP field toggles
     $('#dhcp').click(function() {
         if ($(this).is(':checked')) {
-            $('.dhcp').prop('disabled', true);
+            //$('.dhcp').prop('disabled', true);
+            $('.dhcp').addClass('hidden');
        } else {
-            $('.dhcp').prop('disabled', false);
+            //$('.dhcp').prop('disabled', false);
+            $('.dhcp').removeClass('hidden');
+       }
+    });
+
+    // MQTT field toggles
+    $('#mqtt').click(function() {
+        if ($(this).is(':checked')) {
+            //$('.mqtt').prop('disabled', false);
+            $('.mqtt').removeClass('hidden');
+       } else {
+            //$('.mqtt').prop('disabled', true);
+            $('.mqtt').addClass('hidden');
        }
     });
 
@@ -123,6 +136,21 @@ $(function() {
             $('#s_baud').prop('disabled', false);
     });
     
+    // Hostname Validation
+    $('#hostname').keyup(function() {
+        var re = /^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])$/;
+        if (re.test($(this).val())) {
+            $('#fg_hostname').removeClass('has-error');
+            $('#fg_hostname').addClass('has-success');
+            $('#btn_wifi').prop('disabled', false);
+        } else {
+            $('#fg_hostname').removeClass('has-success');
+            $('#fg_hostname').addClass('has-error');
+            $('#btn_wifi').prop('disabled', true);
+        }
+    });
+
+
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
     ctx.font = "20px Arial";
@@ -306,8 +334,14 @@ function getConfig(data) {
     $('#devid').val(config.device.id);
     $('#ssid').val(config.network.ssid);
     $('#password').val(config.network.passphrase);
+    $('#hostname').val(config.network.hostname);
     $('#dhcp').prop('checked', config.network.dhcp);
-    $('.dhcp').prop('disabled', config.network.dhcp);
+    if (config.network.dhcp) {
+        $('.dhcp').addClass('hidden');
+    } else {
+        $('.dhcp').removeClass('hidden');
+    }
+    //$('.dhcp').prop('disabled', config.network.dhcp);
     $('#ap').prop('checked', config.network.ap_fallback);
     $('#ip').val(config.network.ip[0] + '.' +
             config.network.ip[1] + '.' +
@@ -322,6 +356,20 @@ function getConfig(data) {
             config.network.gateway[2] + '.' +
             config.network.gateway[3]);
 
+    // MQTT Config
+    $('#mqtt').prop('checked', config.mqtt.enabled);
+    if (config.mqtt.enabled) {
+        $('.mqtt').removeClass('hidden');
+    } else {
+        $('.mqtt').addClass('hidden');
+    }
+    //$('.mqtt').prop('disabled', !config.mqtt.enabled);
+    $('#mqtt_ip').val(config.mqtt.ip);
+    $('#mqtt_port').val(config.mqtt.port);
+    $('#mqtt_user').val(config.mqtt.user);
+    $('#mqtt_password').val(config.mqtt.password);
+    $('#mqtt_topic').val(config.mqtt.topic);
+    
     // E1.31 Config
     $('#universe').val(config.e131.universe);
     $('#channel_start').val(config.e131.channel_start);
@@ -455,6 +503,7 @@ function submitWiFi() {
             'network': {
                 'ssid': $('#ssid').val(),
                 'passphrase': $('#password').val(),
+                'hostname': $('#hostname').val(),
                 'ip': [parseInt(ip[0]), parseInt(ip[1]), parseInt(ip[2]), parseInt(ip[3])],
                 'netmask': [parseInt(netmask[0]), parseInt(netmask[1]), parseInt(netmask[2]), parseInt(netmask[3])],
                 'gateway': [parseInt(gateway[0]), parseInt(gateway[1]), parseInt(gateway[2]), parseInt(gateway[3])],
@@ -473,6 +522,14 @@ function submitConfig() {
     var json = {
             'device': {
                 'id': $('#devid').val()
+            },
+            'mqtt': {
+                'enabled': $('#mqtt').prop('checked'),
+                'ip': $('#mqtt_ip').val(),
+                'port': $('#mqtt_port').val(),
+                'user': $('#mqtt_user').val(),
+                'password': $('#mqtt_password').val(),
+                'topic': $('#mqtt_topic').val()
             },
             'e131': {
                 'universe': parseInt($('#universe').val()),
@@ -498,11 +555,11 @@ function refreshPixel() {
     var proto = $('#p_type option:selected').text();    
     var size = parseInt($('#p_count').val());
     var frame = 30;
-    var idle = 80;
+    var idle = 300;
 
     if (!proto.localeCompare('WS2811 800kHz')) {
         frame = 30;
-        idle = 80;
+        idle = 300;
     } else if (!proto.localeCompare('GE Color Effects')) {
         frame = 790;
         idle = 35;
@@ -544,7 +601,6 @@ function test() {
         ws.send('T4');
     }
 }
-
 
 function showReboot() {
     $('#update').modal('hide');
