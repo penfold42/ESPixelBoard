@@ -1,7 +1,4 @@
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <WiFiUdp.h>
-#include <ESP8266mDNS.h>
 #include <RotaryEncoder.h>
 #include "ESPixelStick.h"
 #include "rgbhsv.h"
