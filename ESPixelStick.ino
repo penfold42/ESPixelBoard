@@ -159,7 +159,6 @@ void setup() {
 
     // Setup WiFi Handlers
     wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
-    wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWiFiDisconnect);
 
     // Setup MQTT Handlers
     if (config.mqtt) {
@@ -192,6 +191,8 @@ void setup() {
             ESP.restart();
         }
     }
+
+    wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWiFiDisconnect);
 
     // Configure and start the web server
     initWeb();
