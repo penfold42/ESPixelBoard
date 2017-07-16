@@ -235,9 +235,9 @@ void update_rgbhsv_from_pos() {
 void update_pos_from_rgbhsv() {
 
       int combo = (button_mode-1)*3 + selected_option;
-      
+
       if ((combo >= 0) && (combo <= 5)) {
-    
+
         switch (combo) {
           case 0: // Red
             rotary_pos = global_rgb.r * ROT_MAX;
@@ -256,7 +256,7 @@ void update_pos_from_rgbhsv() {
             break;
           case 5: // Value
             rotary_pos = global_hsv.v * ROT_MAX;
-            break;          
+            break;
         }
         encoder.setPosition(rotary_pos);
       }
