@@ -20,21 +20,26 @@
 #ifndef ESPIXELSTICK_H_
 #define ESPIXELSTICK_H_
 
-#include <ArduinoJson.h>
+const char VERSION[] = "3.0-rc3";
+const char BUILD_DATE[] = __DATE__ " " __TIME__;
+
+/*****************************************/
+/*        BEGIN - Configuration          */
+/*****************************************/
 
 /* Output Mode - There can be only one! (-Conor MacLeod) */
 #define ESPS_MODE_PIXEL
 //#define ESPS_MODE_SERIAL
 
+/*****************************************/
+/*         END - Configuration           */
+/*****************************************/
 
 #if defined(ESPS_MODE_PIXEL)
 #include "PixelDriver.h"
 #elif defined(ESPS_MODE_SERIAL)
 #include "SerialDriver.h"
 #endif
-
-/* Name and version */
-const char VERSION[] = "3.0-rc2 (20170804)";
 
 #define HTTP_PORT       80      /* Default web server port */
 #define MQTT_PORT       1883    /* Default MQTT port */
@@ -56,7 +61,6 @@ const char VERSION[] = "3.0-rc2 (20170804)";
 #define RDMNET_DNSSD_E133VERS   1
 
 /* Configuration file params */
-const char CONFIG_FILE[] = "/config.json";
 #define CONFIG_MAX_SIZE 2048    /* Sanity limit for config file */
 
 /* Pixel Types */
@@ -76,9 +80,9 @@ enum class TestMode : uint8_t {
 };
 
 typedef struct {
-    uint8_t r,g,b;              //hold requested color
-    uint16_t step;               //step in testing routine
-    uint32_t last;              //last update
+    uint8_t r, g, b;    /* Hold requested color */
+    uint16_t step;      /* Step in testing routine */
+    uint32_t last;      /* Last update */
 } testing_t;
 
 /* Configuration structure */
@@ -125,7 +129,6 @@ typedef struct {
     BaudRate    baudrate;       /* Baudrate */
 #endif
 } config_t;
-
 
 /* Forward Declarations */
 void serializeConfig(String &jsonString, bool pretty = false, bool creds = false);
