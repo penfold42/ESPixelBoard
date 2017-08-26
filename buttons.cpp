@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <RotaryEncoder.h>
+#include <ArduinoJson.h>
 #include "ESPixelStick.h"
 #include "rgbhsv.h"
 

@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <ESP8266mDNS.h>
+#include <ArduinoJson.h>
 #include "ESPixelStick.h"
 
 #if defined(ESPS_MODE_PIXEL)
