@@ -7,7 +7,7 @@ extern  config_t    config;         // Current configuration
 
 // PWM globals
 
-uint8_t last_pwm[NUM_GPIO];   // 0-255, 0=dark
+uint16_t last_pwm[NUM_GPIO];   // 0-255, 0=dark
 
 
 #if defined(ESPS_SUPPORT_PWM)
@@ -36,16 +36,16 @@ void handlePWM() {
         int gpio_dmx = config.pwm_gpio_dmx[gpio];
         if (gpio_dmx < config.channel_count) {
 #if defined (ESPS_MODE_PIXEL)
-          int pwm_val = (config.pwm_gamma) ? GAMMA_TABLE[pixels.getData()[gpio_dmx]] : pixels.getData()[gpio_dmx];
+          uint16_t pwm_val = (config.pwm_gamma) ? GAMMA_TABLE[pixels.getData()[gpio_dmx]]>>6 : pixels.getData()[gpio_dmx]<<2;
 #elif defined(ESPS_MODE_SERIAL)
-          int pwm_val = (config.pwm_gamma) ? GAMMA_TABLE[serial.getData()[gpio_dmx]] : serial.getData()[gpio_dmx];
+          uint16_t pwm_val = (config.pwm_gamma) ? GAMMA_TABLE[serial.getData()[gpio_dmx]]>>6 : serial.getData()[gpio_dmx]<<2;
 #endif
           if ( pwm_val != last_pwm[gpio]) {
             last_pwm[gpio] = pwm_val;
             if (config.pwm_gpio_invert[gpio]) {
-              analogWrite(gpio, 1023-4*pwm_val);  // 0..255 => 1023..0
+              analogWrite(gpio, 1023-pwm_val);  // 0..1023 => 1023..0
             } else {
-              analogWrite(gpio, 4*pwm_val);       // 0..255 => 0..1023
+              analogWrite(gpio, pwm_val);       // 0..1023 => 0..1023
             }
           }
         }

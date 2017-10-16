@@ -2,7 +2,9 @@
 #define GAMMA_H_
 
 /* Gamma correction table */
-extern uint8_t GAMMA_TABLE[];
+extern uint16_t GAMMA_TABLE[];
+
+#define GAMMA_SHIFT 8
 
 void updateGammaTable(float gammaVal);
 

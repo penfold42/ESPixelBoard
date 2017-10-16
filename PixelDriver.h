@@ -24,7 +24,7 @@
 #define UART 1
 
 /* Gamma correction table */
-extern uint8_t GAMMA_TABLE[];
+#include "gamma.h"
 
 /* 
 * Inverted 6N1 UART lookup table for ws2811, first 2 bits ignored.
