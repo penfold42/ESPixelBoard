@@ -299,6 +299,8 @@ function wsConnect() {
                 case 'X6':
                     showReboot();
                     break;
+                case 'OK':
+                    break;
                 default:
                     console.log('Unknown Command: ' + event.data);
                     break;
