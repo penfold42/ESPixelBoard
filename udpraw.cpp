@@ -9,8 +9,6 @@ extern  config_t        config;
 WiFiUDP             RAWudp;             /* Raw UDP packet Server */
 unsigned int        RAWPort = 2801;      // local port to listen for UDP packets
 unsigned long       RAW_ctr = 0;
-#define             UDPRAW_BUFFER_SIZE  1600
-uint8_t             udpraw_Buffer[ UDPRAW_BUFFER_SIZE];
 
 void handle_raw_port() {
 
@@ -26,19 +24,17 @@ void handle_raw_port() {
     return;
   }
 
+// Do we have a packet?
   int size = RAWudp.parsePacket();
-  if (size) {
-    // We've received a packet, read the data from it
-    RAWudp.read(udpraw_Buffer, UDPRAW_BUFFER_SIZE); // read the packet into the buffer
-    RAW_ctr++;
 
-    /* Set the data */
+// yep, go read it
+  if (size) {
     int i=0;
     for (i = 0; i < _min(size,config.channel_count); i++) {
 #if defined(ESPS_MODE_PIXEL)
-        pixels.setValue(i, udpraw_Buffer[i]);
+        pixels.setValue(i, RAWudp.read());
 #elif defined(ESPS_MODE_SERIAL)
-        serial.setValue(i, udpraw_Buffer[i]);
+        serial.setValue(i, RAWudp.read());
 #endif
     }
     /* fill the rest with 0s*/
