@@ -34,6 +34,12 @@ const char BUILD_DATE[] = __DATE__ " " __TIME__;
 /* Include support for PWM */
 #define ESPS_SUPPORT_PWM
 
+/* Enable support for rotary encoder */
+#define ESPS_ENABLE_BUTTONS
+
+/* Enable support for udpraw packets on port 2801 */
+#define ESPS_ENABLE_UDPRAW
+
 /*****************************************/
 /*         END - Configuration           */
 /*****************************************/

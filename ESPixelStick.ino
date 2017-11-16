@@ -50,6 +50,7 @@ const char passphrase[] = "ENTER_PASSPHRASE_HERE";
 #include "pwm.h"
 #include "gamma.h"
 #include "gpio.h"
+#include "buttons.h"
 
 extern "C" {
 #include <user_interface.h>
@@ -928,7 +929,14 @@ void setStatic(uint8_t r, uint8_t g, uint8_t b) {
 /////////////////////////////////////////////////////////
 void loop() {
    /* check for raw packets on port 2801 */
+#if defined(ESPS_ENABLE_UDPRAW)
     handle_raw_port();
+#endif
+
+    /* check for rotary encoder and buttons */
+#if defined(ESPS_ENABLE_BUTTONS)
+    handle_buttons();
+#endif
 
     e131_packet_t packet;
 
