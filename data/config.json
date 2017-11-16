@@ -1,7 +1,7 @@
 {
   "network": {
-    "ssid": "",
-    "passphrase": "",
+    "ssid": "photon",
+    "passphrase": "blah",
     "ip": [
       192,
       168,
@@ -38,8 +38,8 @@
 
   "pixel": {
     "type": 0,
-    "color": 0,
-    "gamma": true
+    "color": 1,
+    "gamma": false
   },
 
   "serial": {

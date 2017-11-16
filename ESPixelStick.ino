@@ -25,8 +25,8 @@
 
 
 /* Fallback configuration if config.json is empty or fails */
-const char ssid[] = "ENTER_SSID_HERE";
-const char passphrase[] = "ENTER_PASSPHRASE_HERE";
+const char ssid[] = "blaster";
+const char passphrase[] = "omgthisismywirelesskeyhaha";
 
 /*****************************************/
 /*         END - Configuration           */
@@ -929,6 +929,10 @@ void setStatic(uint8_t r, uint8_t g, uint8_t b) {
 void loop() {
    /* check for raw packets on port 2801 */
     handle_raw_port();
+
+
+    /* check for rotary encoder and buttons */
+    handle_buttons();
 
     e131_packet_t packet;
 
