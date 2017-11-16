@@ -590,9 +590,13 @@ void validateConfig() {
             config.channel_count = 63 * 3;
     }
 
-    // default gamma value
+    // gamma value
     if (config.gammaVal <= 0) {
         config.gammaVal = 2.2;
+    }
+    // default gamma value
+    if (config.briteVal <= 0) {
+        config.briteVal = 1.0;
     }
 #elif defined(ESPS_MODE_SERIAL)
     // Set Mode
@@ -646,7 +650,7 @@ void updateConfig() {
 #if defined(ESPS_MODE_PIXEL)
     pixels.begin(config.pixel_type, config.pixel_color, config.channel_count / 3);
     pixels.setGamma(config.gamma);
-    updateGammaTable(config.gammaVal);
+    updateGammaTable(config.gammaVal, config.briteVal);
 
 #elif defined(ESPS_MODE_SERIAL)
     serial.begin(&SEROUT_PORT, config.serial_type, config.channel_count, config.baudrate);
@@ -718,6 +722,7 @@ void dsDeviceConfig(JsonObject &json) {
     config.pixel_color = PixelColor(static_cast<uint8_t>(json["pixel"]["color"]));
     config.gamma = json["pixel"]["gamma"];
     config.gammaVal = json["pixel"]["gammaVal"];
+    config.briteVal = json["pixel"]["briteVal"];
 
 #elif defined(ESPS_MODE_SERIAL)
     /* Serial */
@@ -730,12 +735,16 @@ void dsDeviceConfig(JsonObject &json) {
     config.pwm_freq = json["pwm"]["freq"];
     config.pwm_gamma = json["pwm"]["gamma"];
     config.pwm_gpio_invert = 0;
+    config.pwm_gpio_digital = 0;
     config.pwm_gpio_enabled = 0;
     for (int gpio=0; gpio < NUM_GPIO; gpio++ ) {
       if ( valid_gpio_mask & 1<<gpio ) {
         config.pwm_gpio_dmx[gpio] = json["pwm"]["gpio" + (String)gpio + "_channel"];
         if (json["pwm"]["gpio" + (String)gpio + "_invert"]) {
           config.pwm_gpio_invert |= 1<<gpio;
+        }
+        if (json["pwm"]["gpio" + (String)gpio + "_digital"]) {
+          config.pwm_gpio_digital |= 1<<gpio;
         }
         if (json["pwm"]["gpio" + (String)gpio + "_enabled"]) {
           config.pwm_gpio_enabled |= 1<<gpio;
@@ -838,6 +847,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     pixel["color"] = static_cast<uint8_t>(config.pixel_color);
     pixel["gamma"] = config.gamma;
     pixel["gammaVal"] = config.gammaVal;
+    pixel["briteVal"] = config.briteVal;
 
 #elif defined(ESPS_MODE_SERIAL)
     // Serial
@@ -857,6 +867,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
         pwm["gpio" + (String)gpio + "_channel"] = static_cast<uint16_t>(config.pwm_gpio_dmx[gpio]);
         pwm["gpio" + (String)gpio + "_enabled"] = static_cast<bool>(config.pwm_gpio_enabled & 1<<gpio);
         pwm["gpio" + (String)gpio + "_invert"] = static_cast<bool>(config.pwm_gpio_invert & 1<<gpio);
+        pwm["gpio" + (String)gpio + "_digital"] = static_cast<bool>(config.pwm_gpio_digital & 1<<gpio);
       }
     }
 #endif
