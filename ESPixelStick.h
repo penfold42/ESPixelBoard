@@ -146,6 +146,7 @@ typedef struct {
     PixelColor  pixel_color;    /* Pixel color order */
     bool        gamma;          /* Use gamma map? */
     float       gammaVal;       /* gamma value to use */
+    float       briteVal;       /* brightness lto use */
 #elif defined(ESPS_MODE_SERIAL)
     /* Serial */
     SerialType  serial_type;    /* Serial type */
@@ -158,6 +159,7 @@ typedef struct {
     uint16_t    pwm_gpio_dmx[17];    /* which dmx channel is gpio[n] mapped to? */
     uint32_t    pwm_gpio_enabled;      /* is gpio[n] enabled? */
     uint32_t    pwm_gpio_invert;       /* is gpio[n] active high or active low? */
+    uint32_t    pwm_gpio_digital;      /* is gpio[n] digital or "analog"? */
 #endif
 } config_t;
 
