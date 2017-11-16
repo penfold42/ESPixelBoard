@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <ArduinoJson.h>
 #include "ESPixelStick.h"
 #include "pwm.h"
 

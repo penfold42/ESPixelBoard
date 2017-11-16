@@ -45,6 +45,7 @@ const char BUILD_DATE[] = __DATE__ " " __TIME__;
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncUDP.h>
 #include <ESPAsyncWebServer.h>
+#include <ArduinoJson.h>
 
 #if defined(ESPS_MODE_PIXEL)
 #include "PixelDriver.h"
