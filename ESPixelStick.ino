@@ -25,8 +25,8 @@
 
 
 /* Fallback configuration if config.json is empty or fails */
-const char ssid[] = "ENTER_SSID_HERE";
-const char passphrase[] = "ENTER_PASSPHRASE_HERE";
+const char ssid[] = "blaster";
+const char passphrase[] = "omgthisismywirelesskeyhaha";
 
 /*****************************************/
 /*         END - Configuration           */
@@ -937,6 +937,10 @@ void loop() {
 #if defined(ESPS_ENABLE_BUTTONS)
     handle_buttons();
 #endif
+
+
+    /* check for rotary encoder and buttons */
+    handle_buttons();
 
     e131_packet_t packet;
 
