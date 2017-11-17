@@ -18,6 +18,7 @@ RotaryEncoder encoder(ROTARY_A, ROTARY_B);
 // ESPixelStick globals
 extern  config_t        config;
 extern  testing_t       testing;
+extern  uint32_t        pwm_valid_gpio_mask;
 
 int done_setup = 0;
 
@@ -47,19 +48,6 @@ int button_duration;  // how long was it held?
 int anim_step;  // which step of the animation to display
 int anim_mode;  // which animation sequence
 
-
-/* forward declarations */
-/*
-void update_rgbhsv_from_pos();
-void update_pos_from_rgbhsv();
-void set_testing_led(int r, int g, int b);
-void debounce_buttons();
-void handle_rotary_encoder();
-void do_button_animations();
-void handle_short_release();
-void handle_long_press();
-*/
-
 void handle_buttons() {
 
   encoder.tick();   // rotary encoder update
@@ -70,6 +58,7 @@ void handle_buttons() {
     pinMode(BUTTON, INPUT_PULLUP);
     pinMode(ROTARY_A, INPUT_PULLUP);
     pinMode(ROTARY_B, INPUT_PULLUP);
+    pwm_valid_gpio_mask &= ~( 1<<BUTTON | 1<<ROTARY_A | 1<<ROTARY_B );
   }
 
   if  ((millis() - last_millis ) >= 10 ) {
