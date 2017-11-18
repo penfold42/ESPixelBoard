@@ -104,7 +104,6 @@ enum class TestMode : uint8_t {
     STATIC,
     CHASE,
     RAINBOW,
-    VIEW_STREAM,
     MQTT
 };
 
