@@ -48,18 +48,17 @@ int button_duration;  // how long was it held?
 int anim_step;  // which step of the animation to display
 int anim_mode;  // which animation sequence
 
+void setup_buttons() {
+  selected_option = 0;
+  pinMode(BUTTON, INPUT_PULLUP);
+  pinMode(ROTARY_A, INPUT_PULLUP);
+  pinMode(ROTARY_B, INPUT_PULLUP);
+  pwm_valid_gpio_mask &= ~( 1<<BUTTON | 1<<ROTARY_A | 1<<ROTARY_B );
+}
+
 void handle_buttons() {
 
   encoder.tick();   // rotary encoder update
-
-  if (done_setup == 0) {
-    done_setup = 1;
-    selected_option = 0;
-    pinMode(BUTTON, INPUT_PULLUP);
-    pinMode(ROTARY_A, INPUT_PULLUP);
-    pinMode(ROTARY_B, INPUT_PULLUP);
-    pwm_valid_gpio_mask &= ~( 1<<BUTTON | 1<<ROTARY_A | 1<<ROTARY_B );
-  }
 
   if  ((millis() - last_millis ) >= 10 ) {
     last_millis = millis();

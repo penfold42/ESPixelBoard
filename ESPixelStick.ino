@@ -239,7 +239,10 @@ void setup() {
     // Configure the outputs
 #if defined (ESPS_SUPPORT_PWM)
     setupPWM();
-    
+#endif
+
+#if defined(ESPS_ENABLE_BUTTONS)
+    setup_buttons();
 #endif
 
 #if defined (ESPS_MODE_PIXEL)
@@ -937,10 +940,6 @@ void loop() {
 #if defined(ESPS_ENABLE_BUTTONS)
     handle_buttons();
 #endif
-
-
-    /* check for rotary encoder and buttons */
-    handle_buttons();
 
     e131_packet_t packet;
 

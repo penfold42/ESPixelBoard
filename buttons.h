@@ -10,6 +10,7 @@ void do_button_animations();
 void handle_short_release();
 void handle_long_press();
 
+void setup_buttons();
 void handle_buttons();
 
 #endif /* BUTTONS_H_ */
