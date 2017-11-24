@@ -60,7 +60,8 @@ const char LOOKUP_2811[4] = {
 /* Pixel Types */
 enum class PixelType : uint8_t {
     WS2811,
-    GECE
+    GECE,
+    SK6812RGBW
 };
 
 /* Color Order */

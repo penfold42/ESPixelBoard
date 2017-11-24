@@ -55,7 +55,11 @@ int PixelDriver::begin(PixelType type, PixelColor color, uint16_t length) {
     updateOrder(color);
 
     if (pixdata) free(pixdata);
-    szBuffer = length * 3;
+    if (type == PixelType::SK6812RGBW) {
+      szBuffer = length * 4;
+    } else {
+      szBuffer = length * 3;
+    }
     if (pixdata = static_cast<uint8_t *>(malloc(szBuffer))) {
         memset(pixdata, 0, szBuffer);
         numPixels = length;
@@ -206,50 +210,29 @@ const uint8_t* ICACHE_RAM_ATTR PixelDriver::fillWS2811(const uint8_t *buff,
     if (tail - buff > avail)
         tail = buff + avail;
 
-    if (ws2811gamma) {
-        while (buff + 2 < tail) {
-            uint8_t subpix = buff[rOffset];
-            enqueue(LOOKUP_2811[(GAMMA_TABLE[subpix] >> 6) & 0x3]);
-            enqueue(LOOKUP_2811[(GAMMA_TABLE[subpix] >> 4) & 0x3]);
-            enqueue(LOOKUP_2811[(GAMMA_TABLE[subpix] >> 2) & 0x3]);
-            enqueue(LOOKUP_2811[GAMMA_TABLE[subpix] & 0x3]);
-
-            subpix = buff[gOffset];
-            enqueue(LOOKUP_2811[(GAMMA_TABLE[subpix] >> 6) & 0x3]);
-            enqueue(LOOKUP_2811[(GAMMA_TABLE[subpix] >> 4) & 0x3]);
-            enqueue(LOOKUP_2811[(GAMMA_TABLE[subpix] >> 2) & 0x3]);
-            enqueue(LOOKUP_2811[GAMMA_TABLE[subpix] & 0x3]);
-
-            subpix = buff[bOffset];
-            enqueue(LOOKUP_2811[(GAMMA_TABLE[subpix] >> 6) & 0x3]);
-            enqueue(LOOKUP_2811[(GAMMA_TABLE[subpix] >> 4) & 0x3]);
-            enqueue(LOOKUP_2811[(GAMMA_TABLE[subpix] >> 2) & 0x3]);
-            enqueue(LOOKUP_2811[GAMMA_TABLE[subpix] & 0x3]);
-
-            buff += 3;
+    // RGBW leds use 4 bytes per pixel
+    int bitShiftStart = 22;
+/*
+    if (this->type == PixelType::SK6812RGBW) {
+      bitShiftStart = 30;
+    }
+*/
+    while (buff + 2 < tail) {
+        uint32_t thisrgb = 0;
+        if (ws2811gamma) {
+          thisrgb |= GAMMA_TABLE[buff[rOffset]] << 16;
+          thisrgb |= GAMMA_TABLE[buff[gOffset]] << 8;
+          thisrgb |= GAMMA_TABLE[buff[bOffset]];
+        } else {
+          thisrgb |= buff[rOffset] << 16;
+          thisrgb |= buff[gOffset] << 8;
+          thisrgb |= buff[bOffset];
+        } 
+        // enqueue all the bits for this pixel
+        for (int i = bitShiftStart; i >= 0; i-=2) {
+          enqueue(LOOKUP_2811[(thisrgb >> i) & 0x3]);
         }
-    } else {
-        while (buff + 2 < tail) {
-            uint8_t subpix = buff[rOffset];
-            enqueue(LOOKUP_2811[(subpix >> 6) & 0x3]);
-            enqueue(LOOKUP_2811[(subpix >> 4) & 0x3]);
-            enqueue(LOOKUP_2811[(subpix >> 2) & 0x3]);
-            enqueue(LOOKUP_2811[subpix & 0x3]);
-
-            subpix = buff[gOffset];
-            enqueue(LOOKUP_2811[(subpix >> 6) & 0x3]);
-            enqueue(LOOKUP_2811[(subpix >> 4) & 0x3]);
-            enqueue(LOOKUP_2811[(subpix >> 2) & 0x3]);
-            enqueue(LOOKUP_2811[subpix & 0x3]);
-
-            subpix = buff[bOffset];
-            enqueue(LOOKUP_2811[(subpix >> 6) & 0x3]);
-            enqueue(LOOKUP_2811[(subpix >> 4) & 0x3]);
-            enqueue(LOOKUP_2811[(subpix >> 2) & 0x3]);
-            enqueue(LOOKUP_2811[subpix & 0x3]);
-
-            buff += 3;
-        }
+        buff += 3;
     }
     return buff;
 }
