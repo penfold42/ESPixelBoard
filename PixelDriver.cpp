@@ -38,6 +38,8 @@ uint8_t PixelDriver::rOffset = 0;
 uint8_t PixelDriver::gOffset = 1;
 uint8_t PixelDriver::bOffset = 2;
 
+PixelType PixelDriver::PixType;
+
 int PixelDriver::begin() {
     return begin(PixelType::WS2811, PixelColor::RGB, 170);
 }
@@ -91,7 +93,7 @@ int PixelDriver::begin(PixelType type, PixelColor color, uint16_t length) {
         retval = false;
     }
 
-    if (type == PixelType::WS2811) {
+    if ( (type == PixelType::WS2811) || (type == PixelType::SK6812RGBW)) {
         refreshTime = WS2811_TFRAME * length + WS2811_TIDLE;
         ws2811_init();
     } else if (type == PixelType::GECE) {
@@ -178,6 +180,11 @@ void PixelDriver::updateOrder(PixelColor color) {
             gOffset = 1;
             bOffset = 0;
             break;
+        case PixelColor::RGBW:
+            rOffset = 0;
+            gOffset = 1;
+            bOffset = 2;
+            break;
         default:
             rOffset = 0;
             gOffset = 1;
@@ -210,13 +217,6 @@ const uint8_t* ICACHE_RAM_ATTR PixelDriver::fillWS2811(const uint8_t *buff,
     if (tail - buff > avail)
         tail = buff + avail;
 
-    // RGBW leds use 4 bytes per pixel
-    int bitShiftStart = 22;
-/*
-    if (this->type == PixelType::SK6812RGBW) {
-      bitShiftStart = 30;
-    }
-*/
     while (buff + 2 < tail) {
         uint32_t thisrgb = 0;
         if (ws2811gamma) {
@@ -227,7 +227,14 @@ const uint8_t* ICACHE_RAM_ATTR PixelDriver::fillWS2811(const uint8_t *buff,
           thisrgb |= buff[rOffset] << 16;
           thisrgb |= buff[gOffset] << 8;
           thisrgb |= buff[bOffset];
-        } 
+        }
+        // RGBW leds use 4 bytes per pixel
+        // shift the RGB data to left to make room for white
+        int bitShiftStart = 22;
+        if (PixType == PixelType::SK6812RGBW) {
+          thisrgb <<= 8;
+          bitShiftStart = 30;
+        }
         // enqueue all the bits for this pixel
         for (int i = bitShiftStart; i >= 0; i-=2) {
           enqueue(LOOKUP_2811[(thisrgb >> i) & 0x3]);
@@ -240,7 +247,7 @@ const uint8_t* ICACHE_RAM_ATTR PixelDriver::fillWS2811(const uint8_t *buff,
 void PixelDriver::show() {
     if (!pixdata) return;
 
-    if (type == PixelType::WS2811) {
+    if ( (type == PixelType::WS2811) || (type == PixelType::SK6812RGBW)) {
         uart_buffer = pixdata;
         uart_buffer_tail = pixdata + szBuffer;
         SET_PERI_REG_MASK(UART_INT_ENA(1), UART_TXFIFO_EMPTY_INT_ENA);

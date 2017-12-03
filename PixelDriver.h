@@ -71,7 +71,8 @@ enum class PixelColor : uint8_t {
     BRG,
     RBG,
     GBR,
-    BGR
+    BGR,
+    RGBW
 };
 
 class PixelDriver {
@@ -109,6 +110,7 @@ class PixelDriver {
     static uint8_t    rOffset;  // Index of red byte
     static uint8_t    gOffset;  // Index of green byte
     static uint8_t    bOffset;  // Index of blue byte
+    static PixelType PixType;
 
     void ws2811_init();
     void gece_init();
