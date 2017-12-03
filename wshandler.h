@@ -82,8 +82,7 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
                     (String)e131.stats.num_packets + ":" +
                     (String)seqErrors + ":" +
                     (String)e131.stats.packet_errors + ":" +
-                    e131.stats.last_clientIP.toString() + ":" + 
-                    (String)e131.stats.last_clientPort);
+                    e131.stats.last_clientIP.toString());
             break;
         }
         case 'h':
@@ -165,7 +164,12 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             json["usedflashsize"] = (String)ESP.getFlashChipSize();
             json["realflashsize"] = (String)ESP.getFlashChipRealSize();
             json["freeheap"] = (String)ESP.getFreeHeap();
-            json["testing"] = static_cast<uint8_t>(config.testmode);
+
+            JsonObject &test = json.createNestedObject("testing");
+            test["mode"] = static_cast<uint8_t>(config.testmode);
+            test["r"] = testing.r;
+            test["g"] = testing.g;
+            test["b"] = testing.b;
 
             String response;
             json.printTo(response);
@@ -229,7 +233,6 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
             testing.r = json["r"];
             testing.g = json["g"];
             testing.b = json["b"];
-            client->text("OK");
             break;
         }
         case '2': {  // Chase
@@ -241,13 +244,11 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
             testing.r = json["r"];
             testing.g = json["g"];
             testing.b = json["b"];
-            client->text("OK");
             break;
         }
         case '3':  // Rainbow
             config.testmode = TestMode::RAINBOW;
             testing.step = 0;
-            client->text("OK");
             break;
 
         case '4': {  // View stream

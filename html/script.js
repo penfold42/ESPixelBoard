@@ -1,10 +1,14 @@
 var mode = 'null';
-var gpio_list = [0,1,2,3,4,5,12,13,14,15,16];
+var gpio_list = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16];
 var wsQueue = [];
 var wsBusy = false;
 var wsTimerId;
 
 var testing_modes = [ "t_disabled", "t_static", "t_chase", "t_rainbow", "t_view" ];
+
+// Default modal properties
+$.fn.modal.Constructor.DEFAULTS.backdrop = 'static';
+$.fn.modal.Constructor.DEFAULTS.keyboard = false;
 
 // jQuery doc ready 
 $(function() {
@@ -28,14 +32,10 @@ $(function() {
         $('#navbar').removeClass('in').attr('aria-expanded', 'false');
         $('.navbar-toggle').attr('aria-expanded', 'false');
 
-        $('#wserror').on('hidden.bs.modal', function() {
-            location.reload(true);
-        });
-
         // Firmware selection and upload
         $('#efu').change(function () {
             $('#updatefw').submit();
-            $('#update').modal({backdrop: 'static', keyboard: false});
+            $('#update').modal();
         });
 
         // Color Picker
@@ -109,15 +109,13 @@ $(function() {
     });
 
     // Test mode toggles
-    $('#tmode').change( hideShowTestSections() );
+    $('#tmode').change(hideShowTestSections());
 
     // DHCP field toggles
     $('#dhcp').click(function() {
         if ($(this).is(':checked')) {
-            //$('.dhcp').prop('disabled', true);
             $('.dhcp').addClass('hidden');
        } else {
-            //$('.dhcp').prop('disabled', false);
             $('.dhcp').removeClass('hidden');
        }
     });
@@ -125,10 +123,8 @@ $(function() {
     // MQTT field toggles
     $('#mqtt').click(function() {
         if ($(this).is(':checked')) {
-            //$('.mqtt').prop('disabled', false);
             $('.mqtt').removeClass('hidden');
        } else {
-            //$('.mqtt').prop('disabled', true);
             $('.mqtt').addClass('hidden');
        }
     });
@@ -136,10 +132,8 @@ $(function() {
     // PWM field toggles
     $('#pwm_enabled').click(function() {
         if ($(this).is(':checked')) {
-            //$('.mqtt').prop('disabled', false);
             $('.pwm').removeClass('hidden');
        } else {
-            //$('.mqtt').prop('disabled', true);
             $('.pwm').addClass('hidden');
        }
     });
@@ -201,25 +195,25 @@ function wifiValidation() {
     } else {
         $('#fg_hostname').removeClass('has-success');
         $('#fg_hostname').addClass('has-error');
-        WifiSaveDisabled = true
+        WifiSaveDisabled = true;
     }
-    if ($('#ssid').val().length <= 32){
+    if ($('#ssid').val().length <= 32) {
         $('#fg_ssid').removeClass('has-error');
         $('#fg_ssid').addClass('has-success');
     } else {
         $('#fg_ssid').removeClass('has-success');
         $('#fg_ssid').addClass('has-error');
-        WifiSaveDisabled = true
+        WifiSaveDisabled = true;
     }
-    if ($('#password').val().length <= 32){
+    if ($('#password').val().length <= 64) {
         $('#fg_password').removeClass('has-error');
         $('#fg_password').addClass('has-success');
     } else {
         $('#fg_password').removeClass('has-success');
         $('#fg_password').addClass('has-error');
-        WifiSaveDisabled = true
+        WifiSaveDisabled = true;
     }
-    if ($('#dhcp').prop('checked')== false) {
+    if ($('#dhcp').prop('checked') === false) {
         var iptest = new RegExp('' 
         + /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\./.source
         + /(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\./.source
@@ -233,7 +227,7 @@ function wifiValidation() {
         } else {
             $('#fg_ip').removeClass('has-success');
             $('#fg_ip').addClass('has-error');
-            WifiSaveDisabled = true
+            WifiSaveDisabled = true;
         }
         if (iptest.test($('#netmask').val())) {
             $('#fg_netmask').removeClass('has-error');
@@ -241,7 +235,7 @@ function wifiValidation() {
         } else {
             $('#fg_netmask').removeClass('has-success');
             $('#fg_netmask').addClass('has-error');
-            WifiSaveDisabled = true
+            WifiSaveDisabled = true;
         }
         if (iptest.test($('#gateway').val())) {
             $('#fg_gateway').removeClass('has-error');
@@ -249,7 +243,7 @@ function wifiValidation() {
         } else {
             $('#fg_gateway').removeClass('has-success');
             $('#fg_gateway').addClass('has-error');
-            WifiSaveDisabled = true
+            WifiSaveDisabled = true;
         }
     }
     $('#btn_wifi').prop('disabled', WifiSaveDisabled);
@@ -275,6 +269,7 @@ function wsConnect() {
         ws.binaryType = 'arraybuffer';
 
         ws.onopen = function() {
+            $('#wserror').modal('hide');
             wsEnqueue('E1'); // Get html elements
             wsEnqueue('G1'); // Get Config
             wsEnqueue('G2'); // Get Net Status
@@ -321,8 +316,6 @@ function wsConnect() {
                 case 'X6':
                     showReboot();
                     break;
-                case 'OK':
-                    break;
                 default:
                     console.log('Unknown Command: ' + event.data);
                     break;
@@ -335,13 +328,11 @@ function wsConnect() {
             wsReadyToSend();
         };
         
-        ws.onerror = function() {
-            $('#wserror').modal({backdrop: 'static', keyboard: false});
+        ws.onclose = function() {
+            $('#wserror').modal();
+            wsConnect();
         };
 
-        ws.onclose = function() {
-            $('#wserror').modal({backdrop: 'static', keyboard: false});
-        };
     } else {
         alert('WebSockets is NOT supported by your Browser! You will need to upgrade your browser or downgrade to v2.0 of the ESPixelStick firmware.');
     }
@@ -368,7 +359,7 @@ function wsCheckQueue(value) {
 function wsProcessQueue() {
     //check if currently waiting for a response
     if(wsBusy) {
-        console.log('WS queue busy : ' + wsQueue)
+        //console.log('WS queue busy : ' + wsQueue);
     } else {
         //set wsBusy flag that we are waiting for a response
         wsBusy=true;
@@ -382,7 +373,7 @@ function wsProcessQueue() {
         }
         wsTimerId=setTimeout(wsReadyToSend,timeout);
         //send it.
-        console.log('WS sending ' + message);
+        //console.log('WS sending ' + message);
         ws.send(message);
     }
 }
@@ -394,7 +385,7 @@ function wsReadyToSend() {
         //send next message
         wsProcessQueue();
     } else {
-        console.log('WS queue empty');
+        //console.log('WS queue empty');
     }
 }
 
@@ -460,7 +451,6 @@ function getConfig(data) {
     } else {
         $('.dhcp').removeClass('hidden');
     }
-    //$('.dhcp').prop('disabled', config.network.dhcp);
     $('#ap').prop('checked', config.network.ap_fallback);
     $('#ip').val(config.network.ip[0] + '.' +
             config.network.ip[1] + '.' +
@@ -482,7 +472,6 @@ function getConfig(data) {
     } else {
         $('.mqtt').addClass('hidden');
     }
-    //$('.mqtt').prop('disabled', !config.mqtt.enabled);
     $('#mqtt_ip').val(config.mqtt.ip);
     $('#mqtt_port').val(config.mqtt.port);
     $('#mqtt_user').val(config.mqtt.user);
@@ -506,7 +495,7 @@ function getConfig(data) {
         $('#p_gamma').prop('checked', config.pixel.gamma);
         $('#p_gammaVal').val(config.pixel.gammaVal);
         $('#p_briteVal').val(config.pixel.briteVal);
-        
+
         if(config.e131.channel_count / 3 <8 ) {
             $('#v_columns').val(config.e131.channel_count / 3);
         } else if (config.e131.channel_count / 3 <50 ) {
@@ -590,10 +579,12 @@ function getConfigStatus(data) {
 }
 
 function updateTestingGUI(data) {
-    if ($('#tmode option:selected').val().localeCompare(testing_modes[data])) {
-        $('#tmode').val(testing_modes[data]);//.change();
-	hideShowTestSections();
+    if ($('#tmode option:selected').val().localeCompare(testing_modes[data.mode])) {
+        $('#tmode').val(testing_modes[data.mode]);
+	    hideShowTestSections();
     }
+
+    $('.color').val('rgb(' + data.r + ',' + data.g + ',' + data.b + ')');
 }
 
 function getSystemStatus(data) {
@@ -665,7 +656,6 @@ function getE131Status(data) {
     $('#serr').text(status[3]);
     $('#perr').text(status[4]);
     $('#clientip').text(status[5]);
-    $('#clientport').text(status[6]);
 }
 
 function snackSave() {
@@ -745,13 +735,16 @@ function submitConfig() {
             }
         };
 
-    for(var i=0, len=gpio_list.length; i < len; i++){
+// TODO: Need to fix this, it's crashing procS() in wshandler.h
+/*
+    for(var i = 0, len = gpio_list.length; i < len; i++) {
         var tg = gpio_list[i];
         json['pwm']['gpio'+tg+'_channel'] = parseInt($('#gpio'+tg+'_channel').val());
         json['pwm']['gpio'+tg+'_enabled'] = $('#gpio'+tg+'_enabled').prop('checked');
         json['pwm']['gpio'+tg+'_invert'] = $('#gpio'+tg+'_invert').prop('checked');
         json['pwm']['gpio'+tg+'_digital'] = $('#gpio'+tg+'_digital').prop('checked');
     }
+*/
     wsEnqueue('S2' + JSON.stringify(json));
 }
 
@@ -813,14 +806,14 @@ function test() {
 
 function showReboot() {
     $('#update').modal('hide');
-    $('#reboot').modal({backdrop: 'static', keyboard: false});
+    $('#reboot').modal();
     setTimeout(function() {
         if($('#dhcp').prop('checked')) {
             window.location.assign("/");
         } else {
             window.location.assign("http://" + $('#ip').val());
         }
-    }, 5000);    
+    }, 5000);
 }
 
 function reboot() {

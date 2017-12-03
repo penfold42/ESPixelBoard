@@ -20,8 +20,8 @@
 #ifndef ESPIXELSTICK_H_
 #define ESPIXELSTICK_H_
 
-const char VERSION[] = "3.0-rc3";
-const char BUILD_DATE[] = __DATE__ " " __TIME__;
+const char VERSION[] = "3.1-dev (gece uart)";
+const char BUILD_DATE[] = __DATE__;
 
 /*****************************************/
 /*        BEGIN - Configuration          */
@@ -32,7 +32,7 @@ const char BUILD_DATE[] = __DATE__ " " __TIME__;
 //#define ESPS_MODE_SERIAL
 
 /* Include support for PWM */
-#define ESPS_SUPPORT_PWM
+//#define ESPS_SUPPORT_PWM
 
 /* Enable support for rotary encoder */
 //#define ESPS_ENABLE_BUTTONS
@@ -83,21 +83,22 @@ const char BUILD_DATE[] = __DATE__ " " __TIME__;
 
 /* Pixel Types */
 class DevCap {
-public:
+ public:
     bool MPIXEL : 1;
     bool MSERIAL : 1;
     bool MPWM : 1;
     uint8_t toInt() {
-      return (MPWM<<2 | MSERIAL<<1 | MPIXEL);
+        return (MPWM << 2 | MSERIAL << 1 | MPIXEL);
     }
-
 };
+
 /*
 enum class DevMode : uint8_t {
     MPIXEL,
     MSERIAL
 };
 */
+
 /* Test Modes */
 enum class TestMode : uint8_t {
     DISABLED,
@@ -157,16 +158,18 @@ typedef struct {
     SerialType  serial_type;    /* Serial type */
     BaudRate    baudrate;       /* Baudrate */
 #endif
+
 #if defined(ESPS_SUPPORT_PWM)
-    bool        pwm_global_enabled;    /* is pwm runtime enabled? */
-    int         pwm_freq;       /* pwm frequency */
-    bool        pwm_gamma;      /* is pwm runtime enabled? */
-    uint16_t    pwm_gpio_dmx[17];    /* which dmx channel is gpio[n] mapped to? */
-    uint32_t    pwm_gpio_enabled;      /* is gpio[n] enabled? */
-    uint32_t    pwm_gpio_invert;       /* is gpio[n] active high or active low? */
-    uint32_t    pwm_gpio_digital;      /* is gpio[n] digital or "analog"? */
+    bool        pwm_global_enabled; /* is pwm runtime enabled? */
+    int         pwm_freq;           /* pwm frequency */
+    bool        pwm_gamma;          /* is pwm gamma enabled? */
+    uint16_t    pwm_gpio_dmx[17];   /* which dmx channel is gpio[n] mapped to? */
+    uint32_t    pwm_gpio_enabled;   /* is gpio[n] enabled? */
+    uint32_t    pwm_gpio_invert;    /* is gpio[n] active high or active low? */
+    uint32_t    pwm_gpio_digital;   /* is gpio[n] digital or "analog"? */
 #endif
 } config_t;
+
 
 /* Forward Declarations */
 void serializeConfig(String &jsonString, bool pretty = false, bool creds = false);
@@ -181,7 +184,7 @@ void connectToMqtt();
 void onMqttConnect(bool sessionPresent);
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
 void onMqttMessage(char* topic, char* p_payload,
-        AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total);
+        AsyncMqttClientMessageProperties properties, size_t len,size_t index, size_t total);
 void publishRGBState();
 void publishRGBBrightness();
 void publishRGBColor();
