@@ -148,7 +148,7 @@ RF_PRE_INIT() {
 void setup() {
     // Configure SDK params
     wifi_set_sleep_type(NONE_SLEEP_T);
-    ToggleSetup();
+    setupWebGpio();
     // Initial pin states
     pinMode(DATA_PIN, OUTPUT);
     digitalWrite(DATA_PIN, LOW);
@@ -518,7 +518,7 @@ void initWeb() {
 
     // Static Handler
     web.serveStatic("/", SPIFFS, "/www/").setDefaultFile("index.html");
-    //web.serveStatic("/config.json", SPIFFS, "/config.json");
+    web.serveStatic("/config.json", SPIFFS, "/config.json");
 
     web.onNotFound([](AsyncWebServerRequest *request) {
         if (request->method() == HTTP_OPTIONS) {
@@ -1084,10 +1084,13 @@ void loop() {
                     testing.step++;
                 }
                 break;
+
+            default:
+                break;
         }
     }
 
-  ToggleTime();
+  toggleWebGpio();
 
 
 /* Streaming refresh */

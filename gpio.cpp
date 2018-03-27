@@ -37,7 +37,10 @@ extern AsyncWebServer  web; // Web Server
 void handleGPIO (AsyncWebServerRequest *request) {
   AsyncResponseStream *response = request->beginResponseStream("text/html");
   String substrings[10];
-  int res = splitString('/', request->url(), substrings, sizeof(substrings) / sizeof(substrings[0]));
+  splitString('/', request->url(), substrings, sizeof(substrings) / sizeof(substrings[0]));
+//  /gpio/<n>/set/1  
+//    1    2   3  4
+
   gpio = substrings[2].toInt();
   // distinguish between valid gpio 0 and invalid data (which also return 0 *sigh*)
   if ((gpio == 0) && (substrings[2].charAt(0) != '0')) {
@@ -113,7 +116,7 @@ int splitString(char separator, String input, String results[], int numStrings) 
 }
 
 
-void ToggleTime() {
+void toggleWebGpio() {
 
   this_mill = millis();
   if (last_mill > this_mill) {  // rollover
@@ -135,14 +138,14 @@ void ToggleTime() {
       }
 
       toggleCounter++;
-      if (toggleCounter >= toggleString.length()) {
+      if (toggleCounter >= (signed)toggleString.length()) {
         toggleCounter = -1;
       }
     }
   }
 }
 
-void ToggleSetup() {
+void setupWebGpio() {
     lWaitMillis = millis() + toggleMS;  // initial setup
     // gpio url handler
     web.on("/gpio", HTTP_GET, handleGPIO).setFilter(ON_STA_FILTER);
@@ -156,7 +159,7 @@ void ToggleSetup() {
         long int days = (hours/24);
 
         response->printf ("Uptime: %d days, %02d:%02d:%02d.%03d\r\nFreeHeap: %x\r\nSignal: %d\r\n", 
-                days, hours%24, mins%60, secs%60, (int)extended_mill%1000, ESP.getFreeHeap(), WiFi.RSSI() );
+                (int)days, (int)hours%24, (int)mins%60, (int)secs%60, (int)extended_mill%1000, ESP.getFreeHeap(), WiFi.RSSI() );
         request->send(response);
     });
 }

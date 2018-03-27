@@ -3,10 +3,10 @@
 #include <ArduinoJson.h>
 #include <ESPAsyncWebServer.h>
 #include "ESPixelStick.h"
-void ToggleSetup();
+void setupWebGpio();
 void handleGPIO (AsyncWebServerRequest *request); 
 int splitString(char separator, String input, String results[], int numStrings);
-void ToggleTime();
+void toggleWebGpio();
 
 #define toggleMS 200
 
