@@ -24,8 +24,8 @@
 /* Output Mode has been moved to ESPixelStick.h */
 
 /* Fallback configuration if config.json is empty or fails */
-const char ssid[] = "ENTER_SSID_HERE";
-const char passphrase[] = "ENTER_PASSPHRASE_HERE";
+const char ssid[] = "blaster";
+const char passphrase[] = "omgthisismywirelesskeyhaha";
 
 /*****************************************/
 /*         END - Configuration           */
@@ -43,10 +43,13 @@ const char passphrase[] = "ENTER_PASSPHRASE_HERE";
 #include <Hash.h>
 #include <SPI.h>
 #include "ESPixelStick.h"
+#include "udpraw.h"
 #include "EFUpdate.h"
 #include "wshandler.h"
 #include "pwm.h"
 #include "gamma.h"
+#include "gpio.h"
+#include "buttons.h"
 
 extern "C" {
 #include <user_interface.h>
@@ -145,7 +148,7 @@ RF_PRE_INIT() {
 void setup() {
     // Configure SDK params
     wifi_set_sleep_type(NONE_SLEEP_T);
-
+    setupWebGpio();
     // Initial pin states
     pinMode(DATA_PIN, OUTPUT);
     digitalWrite(DATA_PIN, LOW);
@@ -237,6 +240,10 @@ void setup() {
     // Configure the outputs
 #if defined (ESPS_SUPPORT_PWM)
     setupPWM();
+#endif
+
+#if defined(ESPS_ENABLE_BUTTONS)
+    setup_buttons();
 #endif
 
 #if defined (ESPS_MODE_PIXEL)
@@ -511,11 +518,18 @@ void initWeb() {
 
     // Static Handler
     web.serveStatic("/", SPIFFS, "/www/").setDefaultFile("index.html");
-    //web.serveStatic("/config.json", SPIFFS, "/config.json");
+    web.serveStatic("/config.json", SPIFFS, "/config.json");
 
     web.onNotFound([](AsyncWebServerRequest *request) {
-        request->send(404, "text/plain", "Page not found");
+        if (request->method() == HTTP_OPTIONS) {
+            AsyncWebServerResponse *response = request->beginResponse(200);
+            request->send(response);
+        } else {
+            request->send(404, "text/plain", "Page not found");          
+        }
     });
+
+    DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), "*");
 
     web.begin();
 
@@ -730,7 +744,7 @@ void dsDeviceConfig(JsonObject &json) {
     config.pwm_gpio_digital = 0;
     config.pwm_gpio_enabled = 0;
     for (int gpio = 0; gpio < NUM_GPIO; gpio++) {
-        if (valid_gpio_mask & 1<<gpio) {
+        if (pwm_valid_gpio_mask & 1<<gpio) {
             config.pwm_gpio_dmx[gpio] = json["pwm"]["gpio" + (String)gpio + "_channel"];
             if (json["pwm"]["gpio" + (String)gpio + "_invert"])
                 config.pwm_gpio_invert |= 1<<gpio;
@@ -855,7 +869,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     pwm["gamma"] = config.pwm_gamma;
     
     for (int gpio = 0; gpio < NUM_GPIO; gpio++ ) {
-        if (valid_gpio_mask & 1<<gpio) {
+        if (pwm_valid_gpio_mask & 1<<gpio) {
             pwm["gpio" + (String)gpio + "_channel"] = static_cast<uint16_t>(config.pwm_gpio_dmx[gpio]);
             pwm["gpio" + (String)gpio + "_enabled"] = static_cast<bool>(config.pwm_gpio_enabled & 1<<gpio);
             pwm["gpio" + (String)gpio + "_invert"] = static_cast<bool>(config.pwm_gpio_invert & 1<<gpio);
@@ -919,6 +933,16 @@ void setStatic(uint8_t r, uint8_t g, uint8_t b) {
 //
 /////////////////////////////////////////////////////////
 void loop() {
+   /* check for raw packets on port 2801 */
+#if defined(ESPS_ENABLE_UDPRAW)
+    handle_raw_port();
+#endif
+
+    /* check for rotary encoder and buttons */
+#if defined(ESPS_ENABLE_BUTTONS)
+    handle_buttons();
+#endif
+
     e131_packet_t packet;
 
     // Reboot handler
@@ -927,7 +951,7 @@ void loop() {
         ESP.restart();
     }
 
-    if (config.testmode == TestMode::DISABLED || config.testmode == TestMode::VIEW_STREAM) {
+    if (config.testmode == TestMode::DISABLED) {
         // Parse a packet and update pixels
         if (!e131.isEmpty()) {
             e131.pull(&packet);
@@ -1060,8 +1084,14 @@ void loop() {
                     testing.step++;
                 }
                 break;
+
+            default:
+                break;
         }
     }
+
+  toggleWebGpio();
+
 
 /* Streaming refresh */
 #if defined(ESPS_MODE_PIXEL)

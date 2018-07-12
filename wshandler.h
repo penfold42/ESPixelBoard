@@ -252,7 +252,6 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
             break;
 
         case '4': {  // View stream
-            config.testmode = TestMode::VIEW_STREAM;
 #if defined(ESPS_MODE_PIXEL)
             client->binary(pixels.getData(), config.channel_count);
 #elif defined(ESPS_MODE_SERIAL)
@@ -298,26 +297,31 @@ void wsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
     switch (type) {
         case WS_EVT_DATA: {
             AwsFrameInfo *info = static_cast<AwsFrameInfo*>(arg);
-            if (info->opcode == WS_TEXT) {
-                switch (data[0]) {
-                    case 'X':
-                        procX(data, client);
-                        break;
-                    case 'E':
-                        procE(data, client);
-                        break;
-                    case 'G':
-                        procG(data, client);
-                        break;
-                    case 'S':
-                        procS(data, client);
-                        break;
-                    case 'T':
-                        procT(data, client);
-                        break;
-                }
+            if (info->final && info->index == 0 && info->len == len) {
+              if (info->opcode == WS_TEXT) {
+                  data[len] = 0;
+                  switch (data[0]) {
+                      case 'X':
+                          procX(data, client);
+                          break;
+                      case 'E':
+                          procE(data, client);
+                          break;
+                      case 'G':
+                          procG(data, client);
+                          break;
+                      case 'S':
+                          procS(data, client);
+                          break;
+                      case 'T':
+                          procT(data, client);
+                          break;
+                  }
+              } else {
+                  LOG_PORT.println(F("-- binary message --"));
+              }
             } else {
-                LOG_PORT.println(F("-- binary message --"));
+                  LOG_PORT.println(F("-- multiframe WS message --"));              
             }
             break;
         }
@@ -339,4 +343,3 @@ void wsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
 }
 
 #endif /* ESPIXELSTICK_H_ */
-

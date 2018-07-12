@@ -20,7 +20,7 @@
 #ifndef ESPIXELSTICK_H_
 #define ESPIXELSTICK_H_
 
-const char VERSION[] = "3.1-dev";
+const char VERSION[] = "3.1-dev (gece uart)";
 const char BUILD_DATE[] = __DATE__;
 
 /*****************************************/
@@ -34,6 +34,12 @@ const char BUILD_DATE[] = __DATE__;
 /* Include support for PWM */
 #define ESPS_SUPPORT_PWM
 
+/* Enable support for rotary encoder */
+//#define ESPS_ENABLE_BUTTONS
+
+/* Enable support for udpraw packets on port 2801 */
+#define ESPS_ENABLE_UDPRAW
+
 /*****************************************/
 /*         END - Configuration           */
 /*****************************************/
@@ -45,6 +51,7 @@ const char BUILD_DATE[] = __DATE__;
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncUDP.h>
 #include <ESPAsyncWebServer.h>
+#include <ArduinoJson.h>
 
 #if defined(ESPS_MODE_PIXEL)
 #include "PixelDriver.h"
@@ -98,7 +105,6 @@ enum class TestMode : uint8_t {
     STATIC,
     CHASE,
     RAINBOW,
-    VIEW_STREAM,
     MQTT
 };
 

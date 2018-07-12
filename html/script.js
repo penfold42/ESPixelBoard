@@ -13,6 +13,7 @@ $.fn.modal.Constructor.DEFAULTS.keyboard = false;
 // jQuery doc ready 
 $(function() {
     // Menu navigation for single page layout
+
     $('ul.navbar-nav li a').click(function() {
         // Highlight proper navbar item
         $('.nav li').removeClass('active');
@@ -21,7 +22,12 @@ $(function() {
         // Show the proper menu div
         $('.mdiv').addClass('hidden');
         $($(this).attr('href')).removeClass('hidden');
-        
+
+        // kick start the live stream
+	if ($(this).attr('href') == "#stream") {
+            wsEnqueue('T4');
+	}
+
         // Collapse the menu on smaller screens
         $('#navbar').removeClass('in').attr('aria-expanded', 'false');
         $('.navbar-toggle').attr('aria-expanded', 'false');
@@ -41,8 +47,12 @@ $(function() {
                 $elm.append('<div class="cp-memory">' +
                     '<div style="background-color: #FFFFFF";></div>' +
                     '<div style="background-color: #FF0000";></div>' +
+                    '<div style="background-color: #FFFF00";></div>' +
                     '<div style="background-color: #00FF00";></div>' +
-                    '<div style="background-color: #0000FF";></div>').
+                    '<div style="background-color: #00FFFF";></div>' +
+                    '<div style="background-color: #0000FF";></div>' +
+                    '<div style="background-color: #FF00FF";></div>' +
+                    '<div style="background-color: #000000";></div>').
                 on('click', '.cp-memory div', function(e) {
                     var $this = $(this);
 
@@ -60,7 +70,7 @@ $(function() {
 
             cssAddon:
                 '.cp-memory {margin-bottom:6px; clear:both;}' +
-                '.cp-memory div {float:left; width:25%; height:40px;' +
+                '.cp-memory div {float:left; width:12.5%; height:40px;' +
                 'background:rgba(0,0,0,1); text-align:center; line-height:40px;}' +
                 '.cp-disp{padding:10px; margin-bottom:6px; font-size:19px; height:40px; line-height:20px}' +
                 '.cp-xy-slider{width:200px; height:200px;}' +
@@ -313,7 +323,7 @@ function wsConnect() {
             } else {
                 streamData= new Uint8Array(event.data);
                 drawStream(streamData);
-                if (!$('#tmode option:selected').val().localeCompare('t_view')) wsEnqueue('T4');
+                if ($('#stream').is(':visible')) wsEnqueue('T4');
             }
             wsReadyToSend();
         };
@@ -792,9 +802,6 @@ function test() {
     else if (!tmode.localeCompare('t_rainbow')) {
         wsEnqueue('T3');
     }
-    else if (!tmode.localeCompare('t_view')) {
-        wsEnqueue('T4');
-    }
 }
 
 function showReboot() {
@@ -813,3 +820,4 @@ function reboot() {
     showReboot();
     wsEnqueue('X6');
 }
+
