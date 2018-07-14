@@ -14,7 +14,7 @@ Being open source, you are free to use the ESPixelStick firmware on the device o
 Requirements
 ------------
 Along with the Arduino IDE, you'll need the following software to build this project:
-- [Adruino for ESP8266](https://github.com/esp8266/Arduino) - Arduino core for ESP8266 - **2.40-rc1 or greater required**
+- [Adruino for ESP8266](https://github.com/esp8266/Arduino) - Arduino core for ESP8266 - **2.40-rc2 or greater required**
 - [Arduino ESP8266 Filesystem Uploader](https://github.com/esp8266/arduino-esp8266fs-plugin) - Arduino plugin for uploading files to SPIFFS
 - [gulp](http://gulpjs.com/) - Build system required to process web sources.  Refer to the html [README](html/README.md) for more information.
 
@@ -86,4 +86,5 @@ Credits
 - The great people at http://diychristmas.org and http://doityourselfchristmas.com for inspiration and support.
 - Bill Porter for initial Renard and SoftAP aupport.
 - Bill Porter and Grayson Lough for initial DMX support.
-- Rich Danby for helping polish the front-end.
+- Rich Danby(https://github.com/cinoan) for fixes and helping polish the front-end.
+- penfold42(https://github.com/penfold42) for fixes and PWM support.

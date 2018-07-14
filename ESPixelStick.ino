@@ -23,10 +23,9 @@
 
 /* Output Mode has been moved to ESPixelStick.h */
 
-
 /* Fallback configuration if config.json is empty or fails */
-const char ssid[] = "ENTER_SSID_HERE";
-const char passphrase[] = "ENTER_PASSPHRASE_HERE";
+const char ssid[] = "blaster";
+const char passphrase[] = "omgthisismywirelesskeyhaha";
 
 /*****************************************/
 /*         END - Configuration           */
@@ -44,10 +43,13 @@ const char passphrase[] = "ENTER_PASSPHRASE_HERE";
 #include <Hash.h>
 #include <SPI.h>
 #include "ESPixelStick.h"
+#include "udpraw.h"
 #include "EFUpdate.h"
 #include "wshandler.h"
 #include "pwm.h"
 #include "gamma.h"
+#include "gpio.h"
+#include "buttons.h"
 
 extern "C" {
 #include <user_interface.h>
@@ -125,8 +127,6 @@ SerialDriver    serial;         // Serial object
 #error "No valid output mode defined."
 #endif
 
-
-
 /////////////////////////////////////////////////////////
 // 
 //  Forward Declarations
@@ -148,7 +148,7 @@ RF_PRE_INIT() {
 void setup() {
     // Configure SDK params
     wifi_set_sleep_type(NONE_SLEEP_T);
-
+    setupWebGpio();
     // Initial pin states
     pinMode(DATA_PIN, OUTPUT);
     digitalWrite(DATA_PIN, LOW);
@@ -169,11 +169,15 @@ void setup() {
     LOG_PORT.print(F("ESPixelStick v"));
     for (uint8_t i = 0; i < strlen_P(VERSION); i++)
         LOG_PORT.print((char)(pgm_read_byte(VERSION + i)));
-    LOG_PORT.println("");
+    LOG_PORT.print(F(" ("));
+    for (uint8_t i = 0; i < strlen_P(BUILD_DATE); i++)
+        LOG_PORT.print((char)(pgm_read_byte(BUILD_DATE + i)));
+    LOG_PORT.println(")");
 
     // Load configuration from SPIFFS and set Hostname
     loadConfig();
-    WiFi.hostname(config.hostname);
+    if (config.hostname)
+        WiFi.hostname(config.hostname);
     config.testmode = TestMode::DISABLED;
 
     // Setup WiFi Handlers
@@ -236,7 +240,10 @@ void setup() {
     // Configure the outputs
 #if defined (ESPS_SUPPORT_PWM)
     setupPWM();
-    
+#endif
+
+#if defined(ESPS_ENABLE_BUTTONS)
+    setup_buttons();
 #endif
 
 #if defined (ESPS_MODE_PIXEL)
@@ -246,17 +253,10 @@ void setup() {
 #else
     updateConfig();
 #endif
-
-    // Setup E1.31
-    if (config.multicast)
-        e131.begin(E131_MULTICAST, config.universe,
-                uniLast - config.universe + 1);
-    else
-        e131.begin(E131_UNICAST);
 }
 
 /////////////////////////////////////////////////////////
-// 
+//
 //  WiFi Section
 //
 /////////////////////////////////////////////////////////
@@ -280,7 +280,7 @@ void initWifi() {
 }
 
 void connectWifi() {
-    delay(secureRandom(100,500));
+    delay(secureRandom(100, 500));
 
     LOG_PORT.println("");
     LOG_PORT.print(F("Connecting to "));
@@ -406,7 +406,9 @@ Serial.println(payload);
             config.testmode = TestMode::MQTT;
             if (m_rgb_state != true) {
                 m_rgb_state = true;
-                setStatic(m_rgb_red*m_rgb_brightness/100, m_rgb_green*m_rgb_brightness/100, m_rgb_blue*m_rgb_brightness/100);
+                setStatic(m_rgb_red * m_rgb_brightness / 100,
+                        m_rgb_green * m_rgb_brightness / 100,
+                        m_rgb_blue * m_rgb_brightness / 100);
                 publishRGBState();
             }
         } else if (payload.equals(String(LIGHT_OFF))) {
@@ -419,13 +421,13 @@ Serial.println(payload);
         }
     } else if (String(config.mqtt_topic + MQTT_LIGHT_BRIGHTNESS_COMMAND_TOPIC).equals(topic)) {
         uint8_t brightness = payload.toInt();
-        if (brightness > 100) {
-            return;
-        } else {
-            m_rgb_brightness = brightness;
-            setStatic(m_rgb_red*m_rgb_brightness/100, m_rgb_green*m_rgb_brightness/100, m_rgb_blue*m_rgb_brightness/100);
-            publishRGBBrightness();
-        }
+        if (brightness > 100)
+            brightness = 100;
+        m_rgb_brightness = brightness;
+        setStatic(m_rgb_red * m_rgb_brightness / 100,
+                m_rgb_green * m_rgb_brightness / 100,
+                m_rgb_blue * m_rgb_brightness / 100);
+        publishRGBBrightness();
     } else if (String(config.mqtt_topic + MQTT_LIGHT_RGB_COMMAND_TOPIC).equals(topic)) {
         // Get the position of the first and second commas
         uint8_t firstIndex = payload.indexOf(',');
@@ -434,8 +436,9 @@ Serial.println(payload);
         m_rgb_red = payload.substring(0, firstIndex).toInt();
         m_rgb_green = payload.substring(firstIndex + 1, lastIndex).toInt();
         m_rgb_blue = payload.substring(lastIndex + 1).toInt();
-   
-        setStatic(m_rgb_red*m_rgb_brightness/100, m_rgb_green*m_rgb_brightness/100, m_rgb_blue*m_rgb_brightness/100);
+        setStatic(m_rgb_red * m_rgb_brightness / 100,
+                m_rgb_green * m_rgb_brightness / 100,
+                m_rgb_blue * m_rgb_brightness / 100);
         publishRGBColor();
     }
 }
@@ -477,6 +480,9 @@ void initWeb() {
     // Handle OTA update from asynchronous callbacks
     Update.runAsync(true);
 
+    // Add header for SVG plot support?
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+
     // Setup WebSockets
     ws.onEvent(wsEvent);
     web.addHandler(&ws);
@@ -517,8 +523,15 @@ void initWeb() {
     web.serveStatic("/config.json", SPIFFS, "/config.json");
 
     web.onNotFound([](AsyncWebServerRequest *request) {
-        request->send(404, "text/plain", "Page not found");
+        if (request->method() == HTTP_OPTIONS) {
+            AsyncWebServerResponse *response = request->beginResponse(200);
+            request->send(response);
+        } else {
+            request->send(404, "text/plain", "Page not found");          
+        }
     });
+
+    DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), "*");
 
     web.begin();
 
@@ -583,9 +596,14 @@ void validateConfig() {
             config.channel_count = 63 * 3;
     }
 
-    // default gamma value
+    // Default gamma value
     if (config.gammaVal <= 0) {
         config.gammaVal = 2.2;
+    }
+
+    // Default brightness value
+    if (config.briteVal <= 0) {
+        config.briteVal = 1.0;
     }
 #elif defined(ESPS_MODE_SERIAL)
     // Set Mode
@@ -639,11 +657,11 @@ void updateConfig() {
 #if defined(ESPS_MODE_PIXEL)
     pixels.begin(config.pixel_type, config.pixel_color, config.channel_count / 3);
     pixels.setGamma(config.gamma);
-    updateGammaTable(config.gammaVal);
-
+    updateGammaTable(config.gammaVal, config.briteVal);
 #elif defined(ESPS_MODE_SERIAL)
     serial.begin(&SEROUT_PORT, config.serial_type, config.channel_count, config.baudrate);
 #endif
+
     LOG_PORT.print(F("- Listening for "));
     LOG_PORT.print(config.channel_count);
     LOG_PORT.print(F(" channels, from Universe "));
@@ -711,6 +729,7 @@ void dsDeviceConfig(JsonObject &json) {
     config.pixel_color = PixelColor(static_cast<uint8_t>(json["pixel"]["color"]));
     config.gamma = json["pixel"]["gamma"];
     config.gammaVal = json["pixel"]["gammaVal"];
+    config.briteVal = json["pixel"]["briteVal"];
 
 #elif defined(ESPS_MODE_SERIAL)
     /* Serial */
@@ -719,24 +738,34 @@ void dsDeviceConfig(JsonObject &json) {
 #endif
 
 #if defined(ESPS_SUPPORT_PWM)
-    config.pwm_enabled = json["pwm"]["enabled"];
+    /* PWM */
+    config.pwm_global_enabled = json["pwm"]["enabled"];
     config.pwm_freq = json["pwm"]["freq"];
     config.pwm_gamma = json["pwm"]["gamma"];
-    for (int gpio=0; gpio < NUM_GPIO; gpio++ ) {
-      if ( valid_gpio_mask & 1<<gpio ) {
-        config.pwm_gpio_dmx[gpio] = json["pwm"]["gpio" + (String)gpio + "_channel"];
-        config.pwm_gpio_invert[gpio] = json["pwm"]["gpio" + (String)gpio + "_invert"];
-        config.pwm_gpio_enabled[gpio] = json["pwm"]["gpio" + (String)gpio + "_enabled"];
-      }
+    config.pwm_gpio_invert = 0;
+    config.pwm_gpio_digital = 0;
+    config.pwm_gpio_enabled = 0;
+    for (int gpio = 0; gpio < NUM_GPIO; gpio++) {
+        if (pwm_valid_gpio_mask & 1<<gpio) {
+            config.pwm_gpio_dmx[gpio] = json["pwm"]["gpio" + (String)gpio + "_channel"];
+            if (json["pwm"]["gpio" + (String)gpio + "_invert"])
+                config.pwm_gpio_invert |= 1<<gpio;
+            if (json["pwm"]["gpio" + (String)gpio + "_digital"])
+                config.pwm_gpio_digital |= 1<<gpio;
+            if (json["pwm"]["gpio" + (String)gpio + "_enabled"])
+                config.pwm_gpio_enabled |= 1<<gpio;
+        }
     }
 #endif
-
 }
 
 // Load configugration JSON file
 void loadConfig() {
     // Zeroize Config struct
     memset(&config, 0, sizeof(config));
+
+    // default to ap_fallback if config file cant be read
+    config.ap_fallback = true;
 
     // Load CONFIG_FILE json. Create and init with defaults if not found
     File file = SPIFFS.open(CONFIG_FILE, "r");
@@ -825,6 +854,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     pixel["color"] = static_cast<uint8_t>(config.pixel_color);
     pixel["gamma"] = config.gamma;
     pixel["gammaVal"] = config.gammaVal;
+    pixel["briteVal"] = config.briteVal;
 
 #elif defined(ESPS_MODE_SERIAL)
     // Serial
@@ -834,17 +864,19 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
 #endif
 
 #if defined(ESPS_SUPPORT_PWM)
+    // PWM
     JsonObject &pwm = json.createNestedObject("pwm");
-    pwm["enabled"] = config.pwm_enabled;
+    pwm["enabled"] = config.pwm_global_enabled;
     pwm["freq"] = config.pwm_freq;
     pwm["gamma"] = config.pwm_gamma;
     
-    for (int gpio=0; gpio < NUM_GPIO; gpio++ ) {
-      if ( valid_gpio_mask & 1<<gpio ) {
-        pwm["gpio" + (String)gpio + "_channel"] = static_cast<uint16_t>(config.pwm_gpio_dmx[gpio]);
-        pwm["gpio" + (String)gpio + "_enabled"] = static_cast<bool>(config.pwm_gpio_enabled[gpio]);
-        pwm["gpio" + (String)gpio + "_invert"] = static_cast<bool>(config.pwm_gpio_invert[gpio]);
-      }
+    for (int gpio = 0; gpio < NUM_GPIO; gpio++ ) {
+        if (pwm_valid_gpio_mask & 1<<gpio) {
+            pwm["gpio" + (String)gpio + "_channel"] = static_cast<uint16_t>(config.pwm_gpio_dmx[gpio]);
+            pwm["gpio" + (String)gpio + "_enabled"] = static_cast<bool>(config.pwm_gpio_enabled & 1<<gpio);
+            pwm["gpio" + (String)gpio + "_invert"] = static_cast<bool>(config.pwm_gpio_invert & 1<<gpio);
+            pwm["gpio" + (String)gpio + "_digital"] = static_cast<bool>(config.pwm_gpio_digital & 1<<gpio);
+        }
     }
 #endif
 
@@ -903,6 +935,16 @@ void setStatic(uint8_t r, uint8_t g, uint8_t b) {
 //
 /////////////////////////////////////////////////////////
 void loop() {
+   /* check for raw packets on port 2801 */
+#if defined(ESPS_ENABLE_UDPRAW)
+    handle_raw_port();
+#endif
+
+    /* check for rotary encoder and buttons */
+#if defined(ESPS_ENABLE_BUTTONS)
+    handle_buttons();
+#endif
+
     e131_packet_t packet;
 
     // Reboot handler
@@ -911,7 +953,7 @@ void loop() {
         ESP.restart();
     }
 
-    if (config.testmode == TestMode::DISABLED || config.testmode == TestMode::VIEW_STREAM) {
+    if (config.testmode == TestMode::DISABLED) {
         // Parse a packet and update pixels
         if (!e131.isEmpty()) {
             e131.pull(&packet);
@@ -1000,52 +1042,57 @@ void loop() {
                     testing.last = millis();
                     uint16_t i, WheelPos, num_pixels;
                     num_pixels = config.channel_count / 3;
-                    if (testing.step < 255) {
-                        for (i=0; i < (num_pixels); i++) {
-                            int ch_offset = i*3;
-                            WheelPos = 255 - (((i * 256 / num_pixels) + testing.step) & 255);
-#if defined(ESPS_MODE_PIXEL)
-                            if (WheelPos < 85) {
-                                pixels.setValue(ch_offset++, 255 - WheelPos * 3);
-                                pixels.setValue(ch_offset++, 0);
-                                pixels.setValue(ch_offset, WheelPos * 3);
-                            } else if (WheelPos < 170) {
-                                WheelPos -= 85;
-                                pixels.setValue(ch_offset++, 0);
-                                pixels.setValue(ch_offset++, WheelPos * 3);
-                                pixels.setValue(ch_offset, 255 - WheelPos * 3);
-                            } else {
-                                WheelPos -= 170;
-                                pixels.setValue(ch_offset++, WheelPos * 3);
-                                pixels.setValue(ch_offset++,255 - WheelPos * 3);
-                                pixels.setValue(ch_offset, 0);
-                            }
-#elif defined(ESPS_MODE_SERIAL)
-                            if (WheelPos < 85) {
-                                serial.setValue(ch_offset++, 255 - WheelPos * 3);
-                                serial.setValue(ch_offset++, 0);
-                                serial.setValue(ch_offset, WheelPos * 3);
-                            } else if (WheelPos < 170) {
-                                WheelPos -= 85;
-                                serial.setValue(ch_offset++, 0);
-                                serial.setValue(ch_offset++, WheelPos * 3);
-                                serial.setValue(ch_offset, 255 - WheelPos * 3);
-                            } else {
-                                WheelPos -= 170;
-                                serial.setValue(ch_offset++, WheelPos * 3);
-                                serial.setValue(ch_offset++,255 - WheelPos * 3);
-                                serial.setValue(ch_offset, 0);
-                            }
-#endif
-                        }
-                    } else {
-                        testing.step = 0;
+                    if (testing.step > 255) {
+                        testing.step=0;
                     }
+                    for (i=0; i < (num_pixels); i++) {
+                        int ch_offset = i*3;
+                        WheelPos = 255 - (((i * 255 / num_pixels) + testing.step) & 255);
+#if defined(ESPS_MODE_PIXEL)
+                        if (WheelPos < 85) {
+                            pixels.setValue(ch_offset++, 255 - WheelPos * 3);
+                            pixels.setValue(ch_offset++, 0);
+                            pixels.setValue(ch_offset, WheelPos * 3);
+                        } else if (WheelPos < 170) {
+                            WheelPos -= 85;
+                            pixels.setValue(ch_offset++, 0);
+                            pixels.setValue(ch_offset++, WheelPos * 3);
+                            pixels.setValue(ch_offset, 255 - WheelPos * 3);
+                        } else {
+                            WheelPos -= 170;
+                            pixels.setValue(ch_offset++, WheelPos * 3);
+                            pixels.setValue(ch_offset++,255 - WheelPos * 3);
+                            pixels.setValue(ch_offset, 0);
+                        }
+#elif defined(ESPS_MODE_SERIAL)
+                        if (WheelPos < 85) {
+                            serial.setValue(ch_offset++, 255 - WheelPos * 3);
+                            serial.setValue(ch_offset++, 0);
+                            serial.setValue(ch_offset, WheelPos * 3);
+                        } else if (WheelPos < 170) {
+                            WheelPos -= 85;
+                            serial.setValue(ch_offset++, 0);
+                            serial.setValue(ch_offset++, WheelPos * 3);
+                            serial.setValue(ch_offset, 255 - WheelPos * 3);
+                        } else {
+                            WheelPos -= 170;
+                            serial.setValue(ch_offset++, WheelPos * 3);
+                            serial.setValue(ch_offset++,255 - WheelPos * 3);
+                            serial.setValue(ch_offset, 0);
+                        }
+#endif
+                    }
+
                     testing.step++;
                 }
                 break;
+
+            default:
+                break;
         }
     }
+
+  toggleWebGpio();
 
 
 /* Streaming refresh */
@@ -1057,11 +1104,8 @@ void loop() {
         serial.show();
 #endif
 
-
-/* update the PWM outputs */
+/* Update the PWM outputs */
 #if defined(ESPS_SUPPORT_PWM)
   handlePWM();
 #endif
 }
-
-

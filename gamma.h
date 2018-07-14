@@ -6,6 +6,6 @@ extern uint16_t GAMMA_TABLE[];
 
 #define GAMMA_SHIFT 8
 
-void updateGammaTable(float gammaVal);
+void updateGammaTable(float gammaVal, float briteVal);
 
 #endif /* GAMMA_H_ */

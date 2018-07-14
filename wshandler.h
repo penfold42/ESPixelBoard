@@ -1,5 +1,5 @@
 /*
-* ESPixelStick.h
+* wshandler.h
 *
 * Project: ESPixelStick - An ESP8266 and E1.31 based pixel driver
 * Copyright (c) 2016 Shelby Merrick
@@ -45,13 +45,18 @@ extern bool         reboot;     // Reboot flag
     
     T0 - Disable Testing
     T1 - Static Testing
+    T2 - Chase Test
+    T3 - Rainbow Test
+    T4 - View Stream
 
     S1 - Set Network Config
     S2 - Set Device Config
 
+    XS - Get RSSI:heap:uptime
     X1 - Get RSSI
     X2 - Get E131 Status
     Xh - Get Heap
+    XU - Get Uptime
     X6 - Reboot
 */
 
@@ -59,6 +64,12 @@ EFUpdate efupdate;
 
 void procX(uint8_t *data, AsyncWebSocketClient *client) {
     switch (data[1]) {
+        case 'S':
+            client->text("XS" + 
+                     (String)WiFi.RSSI() + ":" +
+                     (String)ESP.getFreeHeap() + ":" +
+                     (String)millis());
+            break;
         case '1':
             client->text("X1" + (String)WiFi.RSSI());
             break;
@@ -71,8 +82,7 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
                     (String)e131.stats.num_packets + ":" +
                     (String)seqErrors + ":" +
                     (String)e131.stats.packet_errors + ":" +
-                    e131.stats.last_clientIP.toString() + ":" + 
-                    (String)e131.stats.last_clientPort);
+                    e131.stats.last_clientIP.toString());
             break;
         }
         case 'h':
@@ -154,7 +164,12 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             json["usedflashsize"] = (String)ESP.getFlashChipSize();
             json["realflashsize"] = (String)ESP.getFlashChipRealSize();
             json["freeheap"] = (String)ESP.getFreeHeap();
-            json["testing"] = static_cast<uint8_t>(config.testmode);
+
+            JsonObject &test = json.createNestedObject("testing");
+            test["mode"] = static_cast<uint8_t>(config.testmode);
+            test["r"] = testing.r;
+            test["g"] = testing.g;
+            test["b"] = testing.b;
 
             String response;
             json.printTo(response);
@@ -218,6 +233,7 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
             testing.r = json["r"];
             testing.g = json["g"];
             testing.b = json["b"];
+            client->text("OK");
             break;
         }
         case '2': {  // Chase
@@ -229,15 +245,16 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
             testing.r = json["r"];
             testing.g = json["g"];
             testing.b = json["b"];
+            client->text("OK");
             break;
         }
         case '3':  // Rainbow
             config.testmode = TestMode::RAINBOW;
             testing.step = 0;
+            client->text("OK");
             break;
 
         case '4': {  // View stream
-            config.testmode = TestMode::VIEW_STREAM;
 #if defined(ESPS_MODE_PIXEL)
             client->binary(pixels.getData(), config.channel_count);
 #elif defined(ESPS_MODE_SERIAL)
@@ -283,26 +300,31 @@ void wsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
     switch (type) {
         case WS_EVT_DATA: {
             AwsFrameInfo *info = static_cast<AwsFrameInfo*>(arg);
-            if (info->opcode == WS_TEXT) {
-                switch (data[0]) {
-                    case 'X':
-                        procX(data, client);
-                        break;
-                    case 'E':
-                        procE(data, client);
-                        break;
-                    case 'G':
-                        procG(data, client);
-                        break;
-                    case 'S':
-                        procS(data, client);
-                        break;
-                    case 'T':
-                        procT(data, client);
-                        break;
-                }
+            if (info->final && info->index == 0 && info->len == len) {
+              if (info->opcode == WS_TEXT) {
+                  data[len] = 0;
+                  switch (data[0]) {
+                      case 'X':
+                          procX(data, client);
+                          break;
+                      case 'E':
+                          procE(data, client);
+                          break;
+                      case 'G':
+                          procG(data, client);
+                          break;
+                      case 'S':
+                          procS(data, client);
+                          break;
+                      case 'T':
+                          procT(data, client);
+                          break;
+                  }
+              } else {
+                  LOG_PORT.println(F("-- binary message --"));
+              }
             } else {
-                LOG_PORT.println(F("-- binary message --"));
+                  LOG_PORT.println(F("-- multiframe WS message --"));              
             }
             break;
         }
@@ -324,4 +346,3 @@ void wsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
 }
 
 #endif /* ESPIXELSTICK_H_ */
-
