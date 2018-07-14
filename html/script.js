@@ -1,11 +1,19 @@
 var mode = 'null';
+var gpio_list = [0, 1, 2, 3, 4, 5, 12, 13, 14, 15, 16];
 var wsQueue = [];
 var wsBusy = false;
 var wsTimerId;
 
+var testing_modes = [ "t_disabled", "t_static", "t_chase", "t_rainbow", "t_view" ];
+
+// Default modal properties
+$.fn.modal.Constructor.DEFAULTS.backdrop = 'static';
+$.fn.modal.Constructor.DEFAULTS.keyboard = false;
+
 // jQuery doc ready 
 $(function() {
     // Menu navigation for single page layout
+
     $('ul.navbar-nav li a').click(function() {
         // Highlight proper navbar item
         $('.nav li').removeClass('active');
@@ -14,25 +22,20 @@ $(function() {
         // Show the proper menu div
         $('.mdiv').addClass('hidden');
         $($(this).attr('href')).removeClass('hidden');
-        
+
+        // kick start the live stream
+	if ($(this).attr('href') == "#stream") {
+            wsEnqueue('T4');
+	}
+
         // Collapse the menu on smaller screens
         $('#navbar').removeClass('in').attr('aria-expanded', 'false');
         $('.navbar-toggle').attr('aria-expanded', 'false');
 
-        $('#wserror').on('hidden.bs.modal', function() {
-            location.reload(true);
-        });
-
         // Firmware selection and upload
         $('#efu').change(function () {
             $('#updatefw').submit();
-            $('#update').modal({backdrop: 'static', keyboard: false});
-        });
-
-        // Test mode toggles
-        $('#tmode').change(function() {
-            $('.tdiv').addClass('hidden');
-            $('#'+$('select[name=tmode]').val()).removeClass('hidden');
+            $('#update').modal();
         });
 
         // Color Picker
@@ -44,8 +47,12 @@ $(function() {
                 $elm.append('<div class="cp-memory">' +
                     '<div style="background-color: #FFFFFF";></div>' +
                     '<div style="background-color: #FF0000";></div>' +
+                    '<div style="background-color: #FFFF00";></div>' +
                     '<div style="background-color: #00FF00";></div>' +
-                    '<div style="background-color: #0000FF";></div>').
+                    '<div style="background-color: #00FFFF";></div>' +
+                    '<div style="background-color: #0000FF";></div>' +
+                    '<div style="background-color: #FF00FF";></div>' +
+                    '<div style="background-color: #000000";></div>').
                 on('click', '.cp-memory div', function(e) {
                     var $this = $(this);
 
@@ -63,7 +70,7 @@ $(function() {
 
             cssAddon:
                 '.cp-memory {margin-bottom:6px; clear:both;}' +
-                '.cp-memory div {float:left; width:25%; height:40px;' +
+                '.cp-memory div {float:left; width:12.5%; height:40px;' +
                 'background:rgba(0,0,0,1); text-align:center; line-height:40px;}' +
                 '.cp-disp{padding:10px; margin-bottom:6px; font-size:19px; height:40px; line-height:20px}' +
                 '.cp-xy-slider{width:200px; height:200px;}' +
@@ -101,13 +108,14 @@ $(function() {
         feed();
     });
 
+    // Test mode toggles
+    $('#tmode').change(hideShowTestSections());
+
     // DHCP field toggles
     $('#dhcp').click(function() {
         if ($(this).is(':checked')) {
-            //$('.dhcp').prop('disabled', true);
             $('.dhcp').addClass('hidden');
        } else {
-            //$('.dhcp').prop('disabled', false);
             $('.dhcp').removeClass('hidden');
        }
     });
@@ -115,11 +123,18 @@ $(function() {
     // MQTT field toggles
     $('#mqtt').click(function() {
         if ($(this).is(':checked')) {
-            //$('.mqtt').prop('disabled', false);
             $('.mqtt').removeClass('hidden');
        } else {
-            //$('.mqtt').prop('disabled', true);
             $('.mqtt').addClass('hidden');
+       }
+    });
+
+    // PWM field toggles
+    $('#pwm_enabled').click(function() {
+        if ($(this).is(':checked')) {
+            $('.pwm').removeClass('hidden');
+       } else {
+            $('.pwm').addClass('hidden');
        }
     });
 
@@ -180,25 +195,25 @@ function wifiValidation() {
     } else {
         $('#fg_hostname').removeClass('has-success');
         $('#fg_hostname').addClass('has-error');
-        WifiSaveDisabled = true
+        WifiSaveDisabled = true;
     }
-    if ($('#ssid').val().length <= 32){
+    if ($('#ssid').val().length <= 32) {
         $('#fg_ssid').removeClass('has-error');
         $('#fg_ssid').addClass('has-success');
     } else {
         $('#fg_ssid').removeClass('has-success');
         $('#fg_ssid').addClass('has-error');
-        WifiSaveDisabled = true
+        WifiSaveDisabled = true;
     }
-    if ($('#password').val().length <= 32){
+    if ($('#password').val().length <= 64) {
         $('#fg_password').removeClass('has-error');
         $('#fg_password').addClass('has-success');
     } else {
         $('#fg_password').removeClass('has-success');
         $('#fg_password').addClass('has-error');
-        WifiSaveDisabled = true
+        WifiSaveDisabled = true;
     }
-    if ($('#dhcp').prop('checked')== false) {
+    if ($('#dhcp').prop('checked') === false) {
         var iptest = new RegExp('' 
         + /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\./.source
         + /(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\./.source
@@ -212,7 +227,7 @@ function wifiValidation() {
         } else {
             $('#fg_ip').removeClass('has-success');
             $('#fg_ip').addClass('has-error');
-            WifiSaveDisabled = true
+            WifiSaveDisabled = true;
         }
         if (iptest.test($('#netmask').val())) {
             $('#fg_netmask').removeClass('has-error');
@@ -220,7 +235,7 @@ function wifiValidation() {
         } else {
             $('#fg_netmask').removeClass('has-success');
             $('#fg_netmask').addClass('has-error');
-            WifiSaveDisabled = true
+            WifiSaveDisabled = true;
         }
         if (iptest.test($('#gateway').val())) {
             $('#fg_gateway').removeClass('has-error');
@@ -228,7 +243,7 @@ function wifiValidation() {
         } else {
             $('#fg_gateway').removeClass('has-success');
             $('#fg_gateway').addClass('has-error');
-            WifiSaveDisabled = true
+            WifiSaveDisabled = true;
         }
     }
     $('#btn_wifi').prop('disabled', WifiSaveDisabled);
@@ -237,10 +252,8 @@ function wifiValidation() {
 // Page event feeds
 function feed() {
     if ($('#home').is(':visible')) {
-        wsEnqueue('X1');
+        wsEnqueue('XS');
         wsEnqueue('X2');
-        wsEnqueue('Xh');
-        wsEnqueue('XU');
 
         setTimeout(function() {
             feed();
@@ -256,6 +269,7 @@ function wsConnect() {
         ws.binaryType = 'arraybuffer';
 
         ws.onopen = function() {
+            $('#wserror').modal('hide');
             wsEnqueue('E1'); // Get html elements
             wsEnqueue('G1'); // Get Config
             wsEnqueue('G2'); // Get Net Status
@@ -284,6 +298,9 @@ function wsConnect() {
                 case 'S2':
                     setConfig(data);
                     break;
+                case 'XS':
+                    getSystemStatus(data);
+                    break;
                 case 'X1':
                     getRSSI(data);
                     break;
@@ -308,18 +325,16 @@ function wsConnect() {
             } else {
                 streamData= new Uint8Array(event.data);
                 drawStream(streamData);
-                if (!$('#tmode option:selected').val().localeCompare('t_view')) wsEnqueue('T4');
+                if ($('#stream').is(':visible')) wsEnqueue('T4');
             }
             wsReadyToSend();
         };
         
-        ws.onerror = function() {
-            $('#wserror').modal({backdrop: 'static', keyboard: false});
+        ws.onclose = function() {
+            $('#wserror').modal();
+            wsConnect();
         };
 
-        ws.onclose = function() {
-            $('#wserror').modal({backdrop: 'static', keyboard: false});
-        };
     } else {
         alert('WebSockets is NOT supported by your Browser! You will need to upgrade your browser or downgrade to v2.0 of the ESPixelStick firmware.');
     }
@@ -346,15 +361,21 @@ function wsCheckQueue(value) {
 function wsProcessQueue() {
     //check if currently waiting for a response
     if(wsBusy) {
-        console.log('WS queue busy : ' + wsQueue)
+        //console.log('WS queue busy : ' + wsQueue);
     } else {
         //set wsBusy flag that we are waiting for a response
         wsBusy=true;
-        //set timeout to clear flag and try next message if response isn't recieved
-        wsTimerId=setTimeout(wsReadyToSend,2000);
-        //get next message from queue and send it.
+        //get next message from queue.
         message=wsQueue.shift();
-        console.log('WS sending ' + message);
+        //set timeout to clear flag and try next message if response isn't recieved. Short timeout for message types that don't generate a response.
+        if(['T0','T1','T2','T3','X6'].indexOf(message.substr(0,2))) {
+            timeout=40;
+        } else {
+            timeout=2000;
+        }
+        wsTimerId=setTimeout(wsReadyToSend,timeout);
+        //send it.
+        //console.log('WS sending ' + message);
         ws.send(message);
     }
 }
@@ -366,7 +387,7 @@ function wsReadyToSend() {
         //send next message
         wsProcessQueue();
     } else {
-        console.log('WS queue empty');
+        //console.log('WS queue empty');
     }
 }
 
@@ -432,7 +453,6 @@ function getConfig(data) {
     } else {
         $('.dhcp').removeClass('hidden');
     }
-    //$('.dhcp').prop('disabled', config.network.dhcp);
     $('#ap').prop('checked', config.network.ap_fallback);
     $('#ip').val(config.network.ip[0] + '.' +
             config.network.ip[1] + '.' +
@@ -454,13 +474,12 @@ function getConfig(data) {
     } else {
         $('.mqtt').addClass('hidden');
     }
-    //$('.mqtt').prop('disabled', !config.mqtt.enabled);
     $('#mqtt_ip').val(config.mqtt.ip);
     $('#mqtt_port').val(config.mqtt.port);
     $('#mqtt_user').val(config.mqtt.user);
     $('#mqtt_password').val(config.mqtt.password);
     $('#mqtt_topic').val(config.mqtt.topic);
-    
+
     // E1.31 Config
     $('#universe').val(config.e131.universe);
     $('#universe_limit').val(config.e131.universe_limit);
@@ -469,14 +488,16 @@ function getConfig(data) {
 
     // Output Config
     $('.odiv').addClass('hidden');
-    if (config.device.mode === 0) {  // Pixel
+    if (config.device.mode & 0x01) {  // Pixel
         mode = 'pixel';
         $('#o_pixel').removeClass('hidden');
         $('#p_count').val(config.e131.channel_count / 3);
         $('#p_type').val(config.pixel.type);
         $('#p_color').val(config.pixel.color);
         $('#p_gamma').prop('checked', config.pixel.gamma);
-        
+        $('#p_gammaVal').val(config.pixel.gammaVal);
+        $('#p_briteVal').val(config.pixel.briteVal);
+
         if(config.e131.channel_count / 3 <8 ) {
             $('#v_columns').val(config.e131.channel_count / 3);
         } else if (config.e131.channel_count / 3 <50 ) {
@@ -492,7 +513,7 @@ function getConfig(data) {
         $('#p_count').trigger('change');
     }
 
-    if (config.device.mode == 1) {  // Serial
+    if (config.device.mode & 0x02) {  // Serial
         mode = 'serial';
         $('#o_serial').removeClass('hidden');
         $('#s_count').val(config.e131.channel_count);
@@ -511,6 +532,36 @@ function getConfig(data) {
         $('#s_proto').trigger('click');
         $('#s_count').trigger('change');
     }
+
+    // PWM Config
+    if (config.device.mode & 0x04) {  // PWM
+        $('#o_pwm').removeClass('hidden');
+        $('#pwm_enabled').prop('checked', config.pwm.enabled);
+        if (config.pwm.enabled) {
+            $('.pwm').removeClass('hidden');
+        } else {
+            $('.pwm').addClass('hidden');
+        }
+
+        $('#pwm_freq').val(config.pwm.freq);
+        $('#pwm_gamma').prop('checked', config.pwm.gamma);
+        for(var i=0, len=gpio_list.length; i < len; i++){
+            var gpioN = 'gpio' + gpio_list[i];
+
+            if (typeof config['pwm'][gpioN + '_enabled'] === 'undefined') {
+                $('#' + gpioN +'_enabled').attr('disabled', 'true');
+                $('#' + gpioN +'_invert').attr('disabled', 'true');
+                $('#' + gpioN +'_digital').attr('disabled', 'true');
+                $('#' + gpioN +'_channel').val('-');
+                $('#' + gpioN +'_channel').attr('disabled', 'true');
+            } else {
+                $('#' + gpioN +'_enabled').prop('checked', config['pwm'][gpioN + '_enabled']);
+                $('#' + gpioN +'_invert').prop('checked', config['pwm'][gpioN + '_invert']);
+                $('#' + gpioN +'_digital').prop('checked', config['pwm'][gpioN + '_digital']);
+                $('#' + gpioN +'_channel').val(config['pwm'][gpioN + '_channel']);
+            }
+        }
+    }
 }
 
 function getConfigStatus(data) {
@@ -526,6 +577,46 @@ function getConfigStatus(data) {
     $('#x_usedflashsize').text(status.usedflashsize);
     $('#x_realflashsize').text(status.realflashsize);
     $('#x_freeheap').text(status.freeheap);
+    updateTestingGUI(status.testing);
+}
+
+function updateTestingGUI(data) {
+    if ($('#tmode option:selected').val().localeCompare(testing_modes[data.mode])) {
+        $('#tmode').val(testing_modes[data.mode]);
+	    hideShowTestSections();
+    }
+
+    $('.color').val('rgb(' + data.r + ',' + data.g + ',' + data.b + ')');
+}
+
+function getSystemStatus(data) {
+    var status = data.split(':');
+   
+    var rssi = +status[0];
+    var quality = 2 * (rssi + 100);
+
+    if (rssi <= -100)
+        quality = 0;
+    else if (rssi >= -50)
+        quality = 100;
+
+    $('#x_rssi').text(rssi);
+    $('#x_quality').text(quality);
+
+// getHeap(data) 
+    var heap = status[1];
+
+    $('#x_freeheap').text(heap);
+
+// function getUptime
+    var date = new Date(+status[2]);
+    var str = '';
+
+    str += Math.floor(date.getTime()/86400000) + " days, ";
+    str += ("0" + date.getUTCHours()).slice(-2) + ":";
+    str += ("0" + date.getUTCMinutes()).slice(-2) + ":";
+    str += ("0" + date.getUTCSeconds()).slice(-2);
+    $('#x_uptime').text(str);
 }
 
 function getRSSI(data) {
@@ -567,7 +658,6 @@ function getE131Status(data) {
     $('#serr').text(status[3]);
     $('#perr').text(status[4]);
     $('#clientip').text(status[5]);
-    $('#clientport').text(status[6]);
 }
 
 function snackSave() {
@@ -632,13 +722,31 @@ function submitConfig() {
             'pixel': {
                 'type': parseInt($('#p_type').val()),
                 'color': parseInt($('#p_color').val()),
-                'gamma': $('#p_gamma').prop('checked')
+                'gamma': $('#p_gamma').prop('checked'),
+                'gammaVal': parseFloat($('#p_gammaVal').val()),
+                'briteVal': parseFloat($('#p_briteVal').val())
             },
             'serial': {
                 'type': parseInt($('#s_proto').val()),
                 'baudrate': parseInt($('#s_baud').val())
+            },
+            "pwm": {
+               "enabled": $('#pwm_enabled').prop('checked'),
+               "freq": parseInt($('#pwm_freq').val()),
+               "gamma": $('#pwm_gamma').prop('checked'),
             }
         };
+
+// TODO: Need to fix this, it's crashing procS() in wshandler.h
+
+    for(var i = 0, len = gpio_list.length; i < len; i++) {
+        var tg = gpio_list[i];
+        json['pwm']['gpio'+tg+'_channel'] = parseInt($('#gpio'+tg+'_channel').val());
+        json['pwm']['gpio'+tg+'_enabled'] = $('#gpio'+tg+'_enabled').prop('checked');
+        json['pwm']['gpio'+tg+'_invert'] = $('#gpio'+tg+'_invert').prop('checked');
+        json['pwm']['gpio'+tg+'_digital'] = $('#gpio'+tg+'_digital').prop('checked');
+    }
+
     wsEnqueue('S2' + JSON.stringify(json));
 }
 
@@ -679,7 +787,15 @@ function refreshSerial() {
     $('#refresh').html(Math.ceil(rate) + 'ms / ' + Math.floor(hz) + 'Hz');
 }
 
+function hideShowTestSections() {
+    // Test mode toggles
+    $('.tdiv').addClass('hidden');
+    $('#'+$('select[name=tmode]').val()).removeClass('hidden');
+}
+
 function test() {
+    hideShowTestSections();
+
     var tmode = $('#tmode option:selected').val();
 
     if (!tmode.localeCompare('t_disabled')) {
@@ -688,21 +804,18 @@ function test() {
     else if (!tmode.localeCompare('t_rainbow')) {
         wsEnqueue('T3');
     }
-    else if (!tmode.localeCompare('t_view')) {
-        wsEnqueue('T4');
-    }
 }
 
 function showReboot() {
     $('#update').modal('hide');
-    $('#reboot').modal({backdrop: 'static', keyboard: false});
+    $('#reboot').modal();
     setTimeout(function() {
         if($('#dhcp').prop('checked')) {
             window.location.assign("/");
         } else {
             window.location.assign("http://" + $('#ip').val());
         }
-    }, 5000);    
+    }, 5000);
 }
 
 function reboot() {

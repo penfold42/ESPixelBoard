@@ -38,7 +38,7 @@
 
   "pixel": {
     "type": 0,
-    "color": 0,
+    "color": 1,
     "gamma": true
   },
 
