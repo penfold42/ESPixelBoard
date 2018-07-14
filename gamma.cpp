@@ -1,7 +1,8 @@
 #include <Arduino.h>
 
+
 /* Gamma correction table until pow() is fixed */
-uint8_t GAMMA_TABLE[] = {
+uint16_t GAMMA_TABLE[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2,
     2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5,
@@ -20,9 +21,9 @@ uint8_t GAMMA_TABLE[] = {
     222,224,227,229,231,233,235,237,239,241,244,246,248,250,252,255
 };
 
-void updateGammaTable(float gammaVal, float briteVal) {
-  for (int i = 0; i < 256; i++) {
-    GAMMA_TABLE[i] = (uint8_t) min((255.0 * pow(i * briteVal / 255.0, gammaVal) + 0.5), 255.0);
+void updateGammaTable(float gammaVal) {
+  for (int i=0; i<256; i++) {
+    GAMMA_TABLE[i] = (uint16_t) 65535.0 * pow(i/255.0, gammaVal) + 0.5;
   }
 }
 

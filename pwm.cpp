@@ -6,7 +6,7 @@ extern  config_t    config;         // Current configuration
 
 // PWM globals
 
-uint8_t last_pwm[NUM_GPIO];   // 0-255, 0=dark
+uint16_t last_pwm[NUM_GPIO];   // 0-255, 0=dark
 
 // GPIO 6-11 are for flash chip
 #if defined (ESPS_MODE_PIXEL) || ( defined(ESPS_MODE_SERIAL) && (SEROUT_UART == 1))
@@ -47,14 +47,10 @@ void handlePWM() {
         uint16_t gpio_dmx = config.pwm_gpio_dmx[gpio];
         if (gpio_dmx < config.channel_count) {
 #if defined (ESPS_MODE_PIXEL)
-          pwm_val = pixels.getData()[gpio_dmx];
+          uint16_t pwm_val = (config.pwm_gamma) ? GAMMA_TABLE[pixels.getData()[gpio_dmx]]>>6 : pixels.getData()[gpio_dmx]<<2;
 #elif defined(ESPS_MODE_SERIAL)
-          if (config.serial_type == SerialType::DMX512)
-                pwm_val = serial.getData()[gpio_dmx+1];
-          else
-                pwm_val = serial.getData()[gpio_dmx+2];
+          uint16_t pwm_val = (config.pwm_gamma) ? GAMMA_TABLE[serial.getData()[gpio_dmx]]>>6 : serial.getData()[gpio_dmx]<<2;
 #endif
-
           if (config.pwm_gpio_digital & 1<<gpio) {
             if ( pwm_val >= 128) {
               pwm_val = 255;
@@ -69,10 +65,10 @@ void handlePWM() {
 
           if ( pwm_val != last_pwm[gpio]) {
             last_pwm[gpio] = pwm_val;
-            if (config.pwm_gpio_invert & 1<<gpio) {
-              analogWrite(gpio, 1023-(1023*pwm_val/255) );  // 0..255 => 1023..0
+            if (config.pwm_gpio_invert[gpio]) {
+              analogWrite(gpio, 1023-pwm_val);  // 0..1023 => 1023..0
             } else {
-              analogWrite(gpio, 1023*pwm_val/255);       // 0..255 => 0..1023
+              analogWrite(gpio, pwm_val);       // 0..1023 => 0..1023
             }
           }
         }

@@ -502,10 +502,12 @@ void initWeb() {
     // gamma debugging Config Handler
     web.on("/gamma", HTTP_GET, [](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("text/plain");
-        for (int i = 0; i < 256; i++) {
-          response->printf ("%5d,", GAMMA_TABLE[i]);
-          if (i % 16 == 15) {
+        for (int i=0; i<256; i++) {
+          response->printf ("%5d", GAMMA_TABLE[i]);
+          if (i%16 == 15) {
             response->printf("\r\n");
+          } else {
+            response->printf(", ");            
           }
         }
         request->send(response);
