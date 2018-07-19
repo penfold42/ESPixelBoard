@@ -63,6 +63,9 @@ light:
     rgb: true
     effect: true
     effect_list:
+      - Solid
+      - Blink
+      - Flash
       - Rainbow
       - Chase
 ```
@@ -78,4 +81,8 @@ Credits
 - Bill Porter for initial Renard and SoftAP aupport.
 - Bill Porter and Grayson Lough for initial DMX support.
 - Rich Danby(https://github.com/cinoan) for fixes and helping polish the front-end.
-- penfold42(https://github.com/penfold42) for fixes and PWM support.
+- penfold42(https://github.com/penfold42) for fixes, brightness, and gamma support.
+  - penfold42 also maintains PWM support in their fork located [here](https://github.com/penfold42/ESPixelBoard).
+- Austin Hodges(https://github.com/ahodges9) for effects support and MQTT cleanup.
+- Matthias C. Hormann(https://github.com/Moonbase59) — some MQTT & effects cleanup.
+
