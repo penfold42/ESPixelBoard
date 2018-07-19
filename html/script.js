@@ -339,7 +339,8 @@ function wsConnect() {
             } else {
                 streamData= new Uint8Array(event.data);
                 drawStream(streamData);
-                if ($('#stream').is(':visible')) wsEnqueue('T4');
+                if ($('#stream').is(':visible')) wsEnqueue('T6');
+//                if (!$('#tmode option:selected').val().localeCompare('t_view')) wsEnqueue('T6');
             }
             wsReadyToSend();
         };
