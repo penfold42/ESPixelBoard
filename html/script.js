@@ -4,7 +4,7 @@ var wsQueue = [];
 var wsBusy = false;
 var wsTimerId;
 
-var testing_modes = { 
+var testing_modes = {
     "" : "t_disabled",
     "Solid" : "t_static",
     "Blink" : "t_blink",
@@ -18,7 +18,7 @@ var testing_modes = {
 $.fn.modal.Constructor.DEFAULTS.backdrop = 'static';
 $.fn.modal.Constructor.DEFAULTS.keyboard = false;
 
-// jQuery doc ready 
+// jQuery doc ready
 $(function() {
     // Menu navigation for single page layout
 
@@ -26,14 +26,14 @@ $(function() {
         // Highlight proper navbar item
         $('.nav li').removeClass('active');
         $(this).parent().addClass('active');
-        
+
         // Show the proper menu div
         $('.mdiv').addClass('hidden');
         $($(this).attr('href')).removeClass('hidden');
 
         // kick start the live stream
 	if ($(this).attr('href') == "#stream") {
-            wsEnqueue('T4');
+            wsEnqueue('T6');
 	}
 
         // Collapse the menu on smaller screens
@@ -100,7 +100,7 @@ $(function() {
                     backgroundColor: '#' + colors.HEX,
                     color: colors.RGBLuminance > 0.22 ? '#222' : '#ddd'
                 }).text(this.color.toString($elm._colorMode)); // $elm.val();
-                
+
                 var tmode = $('#tmode option:selected').val();
 
                 if (!tmode.localeCompare('t_static')) {
@@ -116,6 +116,34 @@ $(function() {
                     wsEnqueue('T4' + JSON.stringify(json));
                 }
             }
+        });
+
+        // Reverse checkbox
+        $('.reverse').click(function() {
+          // On click(), the new checkbox state has already been set
+          var json = { 'reverse': $(this).prop('checked') };
+          var tmode = $('#tmode option:selected').val();
+
+          if(!tmode.localeCompare('t_chase')) {
+              wsEnqueue('T4' + JSON.stringify(json));
+          }
+          else if(!tmode.localeCompare('t_rainbow')) {
+              wsEnqueue('T5' + JSON.stringify(json));
+          }
+        });
+
+        // Mirror checkbox
+        $('.mirror').click(function() {
+          // On click(), the new checkbox state has already been set
+          var json = { 'mirror': $(this).prop('checked') };
+          var tmode = $('#tmode option:selected').val();
+
+          if(!tmode.localeCompare('t_chase')) {
+              wsEnqueue('T4' + JSON.stringify(json));
+          }
+          else if(!tmode.localeCompare('t_rainbow')) {
+              wsEnqueue('T5' + JSON.stringify(json));
+          }
         });
 
         // Set page event feeds
@@ -164,10 +192,10 @@ $(function() {
     $('#s_proto').change(function() {
         if ($('select[name=s_proto]').val() == '0')
             $('#s_baud').prop('disabled', true);
-        else 
+        else
             $('#s_baud').prop('disabled', false);
     });
-    
+
     // Hostname, SSID, and Password validation
     $('#hostname').keyup(function() {
         wifiValidation();
@@ -228,7 +256,7 @@ function wifiValidation() {
         WifiSaveDisabled = true;
     }
     if ($('#dhcp').prop('checked') === false) {
-        var iptest = new RegExp('' 
+        var iptest = new RegExp(''
         + /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\./.source
         + /(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\./.source
         + /(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\./.source
@@ -290,7 +318,7 @@ function wsConnect() {
 
             feed();
         };
-        
+
         ws.onmessage = function (event) {
             if(typeof event.data === "string") {
                 var cmd = event.data.substr(0, 2);
@@ -298,7 +326,7 @@ function wsConnect() {
                 switch (cmd) {
                 case 'E1':
                     getElements(data);
-                    break;                
+                    break;
                 case 'G1':
                     getConfig(data);
                     break;
@@ -344,7 +372,7 @@ function wsConnect() {
             }
             wsReadyToSend();
         };
-        
+
         ws.onclose = function() {
             $('#wserror').modal();
             wsConnect();
@@ -356,10 +384,10 @@ function wsConnect() {
 }
 
 function wsEnqueue(message) {
-    //only add a message to the queue if there isn't already one of the same type already queued, otherwise update the message with the latest request. 
+    //only add a message to the queue if there isn't already one of the same type already queued, otherwise update the message with the latest request.
     wsQueueIndex=wsQueue.findIndex(wsCheckQueue,message);
     if(wsQueueIndex == -1) {
-        //add message        
+        //add message
         wsQueue.push(message);
     } else {
         //update message
@@ -370,7 +398,7 @@ function wsEnqueue(message) {
 
 function wsCheckQueue(value) {
     //messages are of the same type if the first two characters match
-    return value.substr(0,2)==this.substr(0,2);    
+    return value.substr(0,2)==this.substr(0,2);
 }
 
 function wsProcessQueue() {
@@ -522,7 +550,7 @@ function getConfig(data) {
         }
         $("input[name='viewStyle'][value='RGB']").trigger('click');
         clearStream();
-        
+
         // Trigger updated elements
         $('#p_type').trigger('click');
         $('#p_count').trigger('change');
@@ -534,7 +562,7 @@ function getConfig(data) {
         $('#s_count').val(config.e131.channel_count);
         $('#s_proto').val(config.serial.type);
         $('#s_baud').val(config.serial.baudrate);
-        
+
         if (config.e131.channel_count<=64 ) {
             $('#v_columns').val(8);
         } else {
@@ -581,7 +609,7 @@ function getConfig(data) {
 
 function getConfigStatus(data) {
     var status = JSON.parse(data);
-    
+
     $('#x_ssid').text(status.ssid);
     $('#x_hostname').text(status.hostname);
     $('#x_ip').text(status.ip);
@@ -602,11 +630,13 @@ function updateTestingGUI(data) {
     }
 
     $('.color').val('rgb(' + data.r + ',' + data.g + ',' + data.b + ')');
+    $('.reverse').prop('checked', data.reverse);
+    $('.mirror').prop('checked', data.mirror);
 }
 
 function getSystemStatus(data) {
     var status = data.split(':');
-   
+
     var rssi = +status[0];
     var quality = 2 * (rssi + 100);
 
@@ -618,7 +648,7 @@ function getSystemStatus(data) {
     $('#x_rssi').text(rssi);
     $('#x_quality').text(quality);
 
-// getHeap(data) 
+// getHeap(data)
     var heap = status[1];
 
     $('#x_freeheap').text(heap);
@@ -666,7 +696,7 @@ function getUptime(data) {
 
 function getE131Status(data) {
     var status = data.split(':');
-   
+
     $('#uni_first').text(status[0]);
     $('#uni_last').text(status[1]);
     $('#pkts').text(status[2]);
@@ -680,8 +710,8 @@ function snackSave() {
     var x = document.getElementById('snackbar');
     x.className = 'show';
     setTimeout(function(){
-        x.className = x.className.replace('show', ''); 
-    }, 3000);    
+        x.className = x.className.replace('show', '');
+    }, 3000);
 }
 
 function setConfig() {
@@ -766,7 +796,7 @@ function submitConfig() {
 }
 
 function refreshPixel() {
-    var proto = $('#p_type option:selected').text();    
+    var proto = $('#p_type option:selected').text();
     var size = parseInt($('#p_count').val());
     var frame = 30;
     var idle = 300;
@@ -815,9 +845,6 @@ function test() {
 
     if (!tmode.localeCompare('t_disabled')) {
         wsEnqueue('T0');
-    }
-    else if (!tmode.localeCompare('t_rainbow')) {
-        wsEnqueue('T5');
     }
     else if (!tmode.localeCompare('t_view')) {
         wsEnqueue('T6');
