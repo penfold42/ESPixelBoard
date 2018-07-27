@@ -5,3 +5,5 @@ node_modules
 *.swp
 data/config.json
 .vscode
+*.gz
+package-lock.json
