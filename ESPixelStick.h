@@ -54,17 +54,17 @@ const char BUILD_DATE[] = __DATE__;
 #define REBOOT_DELAY    100     /* Delay for rebooting once reboot flag is set */
 #define LOG_PORT        Serial  /* Serial port for console logging */
 
-/* E1.33 / RDMnet stuff - to be moved to library */
+// E1.33 / RDMnet stuff - to be moved to library
 #define RDMNET_DNSSD_SRV_TYPE   "draft-e133.tcp"
 #define RDMNET_DEFAULT_SCOPE    "default"
 #define RDMNET_DEFAULT_DOMAIN   "local"
 #define RDMNET_DNSSD_TXTVERS    1
 #define RDMNET_DNSSD_E133VERS   1
 
-/* Configuration file params */
+// Configuration file params
 #define CONFIG_MAX_SIZE 4096    /* Sanity limit for config file */
 
-/* Pixel Types */
+// Pixel Types
 class DevCap {
  public:
     bool MPIXEL : 1;
@@ -75,18 +75,20 @@ class DevCap {
     }
 };
 
-/*
-enum class DevMode : uint8_t {
-    MPIXEL,
-    MSERIAL
+// Data Source to use
+enum class DataSource : uint8_t {
+    E131,
+    MQTT,
+    WEB
 };
-*/
 
-/* Configuration structure */
+// Configuration structure
 typedef struct {
     /* Device */
     String      id;             /* Device ID */
-    DevCap      devmode;        /* Device Mode - used for reporting mode, can't be set */
+    DevCap      devmode;        /* Used for reporting device mode, not stored */
+    DataSource  ds;             /* Used to track current data source, not stored */
+
 
     /* Network */
     String      ssid;
@@ -137,8 +139,7 @@ typedef struct {
 #endif
 } config_t;
 
-
-/* Forward Declarations */
+// Forward Declarations
 void serializeConfig(String &jsonString, bool pretty = false, bool creds = false);
 void dsNetworkConfig(JsonObject &json);
 void dsDeviceConfig(JsonObject &json);
