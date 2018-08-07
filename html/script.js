@@ -13,6 +13,7 @@ var testing_modes = {
     "Rainbow"       : "t_rainbow",
     "Fire flicker"  : "t_fireflicker",
     "Lightning"     : "t_lightning",
+    "Breathe"       : "t_breathe",
     "View" : "t_view"
 };
 
@@ -35,7 +36,7 @@ $(function() {
 
         // kick start the live stream
 	if ($(this).attr('href') == "#stream") {
-            wsEnqueue('T6');
+            wsEnqueue('T9');
 	}
 
         // Collapse the menu on smaller screens
@@ -122,6 +123,9 @@ $(function() {
                 }
                 else if(!tmode.localeCompare('t_lightning')) {
                     wsEnqueue('T7' + JSON.stringify(json));
+                }
+                else if(!tmode.localeCompare('t_breathe')) {
+                    wsEnqueue('T8' + JSON.stringify(json));
                 }
             }
         });
@@ -375,12 +379,8 @@ function wsConnect() {
             } else {
                 streamData= new Uint8Array(event.data);
                 drawStream(streamData);
-<<<<<<< HEAD
-                if ($('#stream').is(':visible')) wsEnqueue('T6');
-//                if (!$('#tmode option:selected').val().localeCompare('t_view')) wsEnqueue('T6');
-=======
-                if (!$('#tmode option:selected').val().localeCompare('t_view')) wsEnqueue('T8');
->>>>>>> 211db44... Added new effects "Fire flicker" and "Lightning".
+                if ($('#stream').is(':visible')) wsEnqueue('T9');
+//                if (!$('#tmode option:selected').val().localeCompare('t_view')) wsEnqueue('T9');
             }
             wsReadyToSend();
         };
@@ -859,7 +859,7 @@ function test() {
         wsEnqueue('T0');
     }
     else if (!tmode.localeCompare('t_view')) {
-        wsEnqueue('T8');
+        wsEnqueue('T9');
     }
 }
 
