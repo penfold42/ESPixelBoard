@@ -65,7 +65,7 @@ void handlePWM() {
 
           if ( pwm_val != last_pwm[gpio]) {
             last_pwm[gpio] = pwm_val;
-            if (config.pwm_gpio_invert[gpio]) {
+            if (config.pwm_gpio_invert & 1<<gpio) {
               analogWrite(gpio, 1023-pwm_val);  // 0..1023 => 1023..0
             } else {
               analogWrite(gpio, pwm_val);       // 0..1023 => 0..1023
