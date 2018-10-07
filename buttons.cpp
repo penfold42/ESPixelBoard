@@ -17,7 +17,8 @@ RotaryEncoder encoder(ROTARY_A, ROTARY_B);
 
 // ESPixelStick globals
 extern  config_t        config;
-extern  testing_t       testing;
+//extern  testing_t       testing;
+extern  EffectEngine        effects;    // Effects Engine
 extern  uint32_t        pwm_valid_gpio_mask;
 
 int done_setup = 0;
@@ -142,7 +143,8 @@ void debounce_buttons() {
 
 void handle_short_release() {
 
-      if (config.testmode == TestMode::STATIC) {
+//      if (config.testmode == TestMode::STATIC) {
+      if ( 0 == strcasecmp( effects.getEffect(), "Solid") ) {
         if (++selected_option > 2) {
           selected_option = 0;
         }
@@ -161,11 +163,13 @@ void handle_long_press(){
 
     switch (button_mode) {
       case 0:
-        config.testmode = TestMode::DISABLED;
+        effects.setEffect("");
+//        config.testmode = TestMode::DISABLED;
         break;
       case 1:
       case 2:
-        config.testmode = TestMode::STATIC;
+//        config.testmode = TestMode::STATIC;
+        effects.setEffect("Solid");
         selected_option = 0;
         anim_mode = button_mode+5; anim_step = 0;   // 6=RRGGBB 7=YYCCPP
         update_pos_from_rgbhsv();
@@ -255,8 +259,9 @@ void update_pos_from_rgbhsv() {
 }
 
 void set_testing_led(int r, int g, int b) {
-      testing.r = r;
-      testing.g = g;
-      testing.b = b;
+//      testing.r = r;
+//      testing.g = g;
+//      testing.b = b;
+      effects.setColor( {r, g, b} );
 }
 

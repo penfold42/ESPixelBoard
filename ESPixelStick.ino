@@ -155,7 +155,7 @@ void setup() {
     SPIFFS.begin();
 
     LOG_PORT.println("");
-    LOG_PORT.print(F("ESPixelStick v"));
+    LOG_PORT.print(F("ESPixelBoard v"));
     for (uint8_t i = 0; i < strlen_P(VERSION); i++)
         LOG_PORT.print((char)(pgm_read_byte(VERSION + i)));
     LOG_PORT.print(F(" ("));
@@ -195,7 +195,7 @@ void setup() {
         if (config.ap_fallback) {
             LOG_PORT.println(F("*** FAILED TO ASSOCIATE WITH AP, GOING SOFTAP ***"));
             WiFi.mode(WIFI_AP);
-            String ssid = "ESPixelStick " + String(config.hostname);
+            String ssid = "ESPixelBoard " + String(config.hostname);
             WiFi.softAP(ssid.c_str());
         } else {
             LOG_PORT.println(F("*** FAILED TO ASSOCIATE WITH AP, REBOOTING ***"));
@@ -311,7 +311,7 @@ void onWifiConnect(const WiFiEventStationModeGotIP &event) {
         MDNS.addServiceTxt("e131", "udp", "ConfScope", RDMNET_DEFAULT_SCOPE);
         MDNS.addServiceTxt("e131", "udp", "E133Vers", String(RDMNET_DNSSD_E133VERS));
         MDNS.addServiceTxt("e131", "udp", "CID", String(chipId));
-        MDNS.addServiceTxt("e131", "udp", "Model", "ESPixelStick");
+        MDNS.addServiceTxt("e131", "udp", "Model", "ESPixelBoard");
         MDNS.addServiceTxt("e131", "udp", "Manuf", "Forkineye");
     } else {
         LOG_PORT.println(F("*** Error setting up mDNS responder ***"));
@@ -475,7 +475,7 @@ void initWeb() {
     web.on("/gamma", HTTP_GET, [](AsyncWebServerRequest *request) {
         AsyncResponseStream *response = request->beginResponseStream("text/plain");
         for (int i=0; i<256; i++) {
-          response->printf ("%5d", GAMMA_TABLE[i]);
+          response->printf ("%5d", GAMMA_TABLE[i] >> 8);
           if (i%16 == 15) {
             response->printf("\r\n");
           } else {
@@ -720,7 +720,7 @@ void dsDeviceConfig(JsonObject &json) {
     config.pwm_gpio_digital = 0;
     config.pwm_gpio_enabled = 0;
     for (int gpio = 0; gpio < NUM_GPIO; gpio++) {
-        if (valid_gpio_mask & 1<<gpio) {
+        if (pwm_valid_gpio_mask & 1<<gpio) {
             config.pwm_gpio_dmx[gpio] = json["pwm"]["gpio" + (String)gpio + "_channel"];
             if (json["pwm"]["gpio" + (String)gpio + "_invert"])
                 config.pwm_gpio_invert |= 1<<gpio;
@@ -845,7 +845,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     pwm["gamma"] = config.pwm_gamma;
     
     for (int gpio = 0; gpio < NUM_GPIO; gpio++ ) {
-        if (valid_gpio_mask & 1<<gpio) {
+        if (pwm_valid_gpio_mask & 1<<gpio) {
             pwm["gpio" + (String)gpio + "_channel"] = static_cast<uint16_t>(config.pwm_gpio_dmx[gpio]);
             pwm["gpio" + (String)gpio + "_enabled"] = static_cast<bool>(config.pwm_gpio_enabled & 1<<gpio);
             pwm["gpio" + (String)gpio + "_invert"] = static_cast<bool>(config.pwm_gpio_invert & 1<<gpio);
