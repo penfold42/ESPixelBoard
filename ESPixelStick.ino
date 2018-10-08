@@ -909,30 +909,6 @@ void loop() {
         ESP.restart();
     }
 
-<<<<<<< HEAD
-    // Local effects override any e131 packets so only read if we
-    // have no active effects
-    if (effects.getEffect() == nullptr) {
-        // Parse a packet and update pixels
-        if (!e131.isEmpty()) {
-            e131.pull(&packet);
-            uint16_t universe = htons(packet.universe);
-            uint8_t *data = packet.property_values + 1;
-            LOG_PORT.print(universe);
-            LOG_PORT.println(packet.sequence_number);
-            if ((universe >= config.universe) && (universe <= uniLast)) {
-                // Universe offset and sequence tracking
-                uint8_t uniOffset = (universe - config.universe);
-                if (packet.sequence_number != seqTracker[uniOffset]++) {
-                    LOG_PORT.print(F("Sequence Error - expected: "));
-                    LOG_PORT.print(seqTracker[uniOffset] - 1);
-                    LOG_PORT.print(F(" actual: "));
-                    LOG_PORT.print(packet.sequence_number);
-                    LOG_PORT.print(F(" universe: "));
-                    LOG_PORT.println(universe);
-                    seqError[uniOffset]++;
-                    seqTracker[uniOffset] = packet.sequence_number + 1;
-=======
     // Render output for current data source
     switch (config.ds) {
         case DataSource::E131:
@@ -989,7 +965,6 @@ void loop() {
     #endif
                         buffloc++;
                     }
->>>>>>> 394196a... Used retained MQTT messages to persist last state
                 }
             }
             break;
@@ -1003,15 +978,11 @@ void loop() {
             break;
     }
 
-<<<<<<< HEAD
     // Run the effect engine loop
     effects.run();
 
-  toggleWebGpio();
+    toggleWebGpio();
 
-
-=======
->>>>>>> 394196a... Used retained MQTT messages to persist last state
 /* Streaming refresh */
 #if defined(ESPS_MODE_PIXEL)
     if (pixels.canRefresh())
