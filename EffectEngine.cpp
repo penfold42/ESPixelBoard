@@ -42,7 +42,7 @@ void EffectEngine::run() {
         uint32_t now = millis();
         if (now > _effectTimeout) {
             uint16_t delay = (this->*_activeEffect->func)();
-            _effectTimeout = now + _max((int)delay, MIN_EFFECT_DELAY);
+            _effectTimeout = now + max((int)delay, MIN_EFFECT_DELAY);
             _effectCounter++;
         }
     }

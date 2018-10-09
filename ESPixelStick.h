@@ -20,7 +20,7 @@
 #ifndef ESPIXELSTICK_H_
 #define ESPIXELSTICK_H_
 
-const char VERSION[] = "3.1-dev (gece uart)";
+const char VERSION[] = "3.1-dev";
 const char BUILD_DATE[] = __DATE__;
 
 // Mode configuration moved to Mode.h to ease things with Travis
@@ -45,7 +45,6 @@ const char BUILD_DATE[] = __DATE__;
 #define HTTP_PORT       80      /* Default web server port */
 #define MQTT_PORT       1883    /* Default MQTT port */
 #define DATA_PIN        2       /* Pixel output - GPIO2 (D4 on NodeMCU) */
-#define EEPROM_BASE     0       /* EEPROM configuration base address */
 #define UNIVERSE_MAX    512     /* Max channels in a DMX Universe */
 #define PIXEL_LIMIT     1360    /* Total pixel limit - 40.85ms for 8 universes */
 #define RENARD_LIMIT    2048    /* Channel limit for serial outputs */
