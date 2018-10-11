@@ -13,14 +13,14 @@ unsigned long       RAW_ctr = 0;
 void handle_raw_port() {
 
   if (!RAWudp) {
-    Serial.println("RE-Starting UDP");
+    LOG_PORT.println("RE-Starting UDP");
     RAWudp.begin(RAWPort);
     MDNS.addService("hyperiond-rgbled", "udp", RAWPort);
-    Serial.print("Local RAWport: ");
-    Serial.println(RAWudp.localPort());
+    LOG_PORT.print("Local RAWport: ");
+    LOG_PORT.println(RAWudp.localPort());
   }
   if (!RAWudp) {
-    Serial.println("RE-Start failed.");
+    LOG_PORT.println("RE-Start failed.");
     return;
   }
 
