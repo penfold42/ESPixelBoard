@@ -366,6 +366,8 @@ void handle_fw_upload(AsyncWebServerRequest *request, String filename,
                 String(efupdate.getError()));
 
     if (final) {
+        request->send(200, "text/plain", "Update Finished: " +
+                String(efupdate.getError()));
         LOG_PORT.println(F("* Upload Finished."));
         efupdate.end();
         SPIFFS.begin();
@@ -404,6 +406,28 @@ void wsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
               }
             } else {
                   LOG_PORT.println(F("-- multiframe WS message --"));              
+                  if(info->index == 0){
+                    if(info->num == 0)
+                      LOG_PORT.printf("ws %s-message start\r\n", (info->message_opcode == WS_TEXT)?"text":"binary");
+                    LOG_PORT.printf("ws frame[%u] start[%lu]\r\n", info->num, info->len);
+                  }
+
+                  LOG_PORT.printf("ws frame[%u] %s[%lu - %lu]: ", info->num, (info->message_opcode == WS_TEXT)?"text":"binary", info->index, info->index + len);
+                  if(info->message_opcode == WS_TEXT){
+                    data[len] = 0;
+                    LOG_PORT.printf("%s\r\n", (char*)data);
+                  }
+
+                  if((info->index + len) == info->len){
+                    LOG_PORT.printf("ws frame[%u] end[%lu]\r\n", info->num, info->len);
+                    if(info->final){
+                      LOG_PORT.printf("ws %s-message end\r\n", (info->message_opcode == WS_TEXT)?"text":"binary");
+                      if(info->message_opcode == WS_TEXT)
+                        client->text("I got your text message");
+                      else
+                        client->binary("I got your binary message");
+                    }
+                  }
             }
             break;
         }
