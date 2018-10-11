@@ -10,7 +10,7 @@ WiFiUDP             RAWudp;             /* Raw UDP packet Server */
 unsigned int        RAWPort = 2801;      // local port to listen for UDP packets
 unsigned long       RAW_ctr = 0;
 
-void handle_raw_port() {
+void setupUDPraw() {
 
   if (!RAWudp) {
     LOG_PORT.println("RE-Starting UDP");
@@ -19,8 +19,10 @@ void handle_raw_port() {
     LOG_PORT.print("Local RAWport: ");
     LOG_PORT.println(RAWudp.localPort());
   }
+}
+
+void handleUDPraw() {
   if (!RAWudp) {
-    LOG_PORT.println("RE-Start failed.");
     return;
   }
 

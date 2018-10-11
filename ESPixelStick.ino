@@ -221,6 +221,11 @@ void setup() {
         }
     }
 
+   /* check for raw packets on port 2801 */
+#if defined(ESPS_ENABLE_UDPRAW)
+    setupUDPraw();
+#endif
+
     // Configure the outputs
 #if defined (ESPS_SUPPORT_PWM)
     setupPWM();
@@ -893,12 +898,12 @@ void saveConfig() {
 void loop() {
    /* check for raw packets on port 2801 */
 #if defined(ESPS_ENABLE_UDPRAW)
-    handle_raw_port();
+    handleUDPraw();
 #endif
 
     /* check for rotary encoder and buttons */
 #if defined(ESPS_ENABLE_BUTTONS)
-    handle_buttons();
+    handleButtons();
 #endif
 
     e131_packet_t packet;

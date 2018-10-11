@@ -49,7 +49,7 @@ int button_duration;  // how long was it held?
 int anim_step;  // which step of the animation to display
 int anim_mode;  // which animation sequence
 
-void setup_buttons() {
+void setupButtons() {
   selected_option = 0;
   pinMode(BUTTON, INPUT_PULLUP);
   pinMode(ROTARY_A, INPUT_PULLUP);
@@ -57,7 +57,7 @@ void setup_buttons() {
   pwm_valid_gpio_mask &= ~( 1<<BUTTON | 1<<ROTARY_A | 1<<ROTARY_B );
 }
 
-void handle_buttons() {
+void handleButtons() {
 
   encoder.tick();   // rotary encoder update
 
