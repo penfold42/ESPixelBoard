@@ -22,8 +22,8 @@
 /*****************************************/
 
 /* Fallback configuration if config.json is empty or fails */
-const char ssid[] = "blaster";
-const char passphrase[] = "omgthisismywirelesskeyhaha";
+const char ssid[] = "ENTER_SSID_HERE";
+const char passphrase[] = "ENTER_PASSPHRASE_HERE";
 
 /*****************************************/
 /*         END - Configuration           */
@@ -41,11 +41,11 @@ const char passphrase[] = "omgthisismywirelesskeyhaha";
 #include <Hash.h>
 #include <SPI.h>
 #include "ESPixelStick.h"
-#include "udpraw.h"
 #include "EFUpdate.h"
 #include "wshandler.h"
-#include "pwm.h"
 #include "gamma.h"
+#include "udpraw.h"
+#include "pwm.h"
 #include "gpio.h"
 #include "buttons.h"
 
@@ -233,7 +233,7 @@ void setup() {
 #endif
 
 #if defined(ESPS_ENABLE_BUTTONS)
-    setup_buttons();
+    setupButtons();
 #endif
 
 #if defined (ESPS_MODE_PIXEL)
@@ -983,9 +983,6 @@ void loop() {
             effects.run();
             break;
     }
-
-    // Run the effect engine loop
-    effects.run();
 
     toggleWebGpio();
 

@@ -28,7 +28,7 @@
 #define ESPS_SUPPORT_PWM
 
 /* Enable support for rotary encoder */
-//#define ESPS_ENABLE_BUTTONS
+#define ESPS_ENABLE_BUTTONS
 
 /* Enable support for udpraw packets on port 2801 */
 #define ESPS_ENABLE_UDPRAW
