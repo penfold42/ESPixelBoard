@@ -13,7 +13,7 @@ unsigned long       RAW_ctr = 0;
 void setupUDPraw() {
 
   if (!RAWudp) {
-    LOG_PORT.println("RE-Starting UDP");
+    LOG_PORT.println("Starting UDP");
     RAWudp.begin(RAWPort);
     MDNS.addService("hyperiond-rgbled", "udp", RAWPort);
     LOG_PORT.print("Local RAWport: ");

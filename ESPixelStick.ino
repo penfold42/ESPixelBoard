@@ -118,6 +118,7 @@ void loadConfig();
 void initWifi();
 void initWeb();
 void updateConfig();
+void publishState();
 
 // Radio config
 RF_PRE_INIT() {
