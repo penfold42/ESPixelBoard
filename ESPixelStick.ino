@@ -70,6 +70,18 @@ static void _u0_putc(char c){
 //
 /////////////////////////////////////////////////////////
 
+// old style MQTT State
+const char MQTT_LIGHT_STATE_TOPIC[] = "/light/status";
+const char MQTT_LIGHT_COMMAND_TOPIC[] = "/light/switch";
+
+ // MQTT Brightness
+const char MQTT_LIGHT_BRIGHTNESS_STATE_TOPIC[] = "/brightness/status";
+const char MQTT_LIGHT_BRIGHTNESS_COMMAND_TOPIC[] = "/brightness/set";
+
+ // MQTT Colors (rgb)
+const char MQTT_LIGHT_RGB_STATE_TOPIC[] = "/rgb/status";
+const char MQTT_LIGHT_RGB_COMMAND_TOPIC[] = "/rgb/set";
+
 // MQTT State
 const char MQTT_SET_COMMAND_TOPIC[] = "/set";
 
@@ -79,6 +91,10 @@ const char LIGHT_OFF[] = "OFF";
 
 // MQTT json buffer size
 const int JSON_BUFFER_SIZE = JSON_OBJECT_SIZE(10);
+
+// MQTT buffer used to send / receive data
+#define MSG_BUFFER_SIZE 20
+char m_msg_buffer[MSG_BUFFER_SIZE];
 
 // Configuration file
 const char CONFIG_FILE[] = "/config.json";
@@ -363,8 +379,18 @@ void onMqttConnect(bool sessionPresent) {
     mqtt.subscribe(config.mqtt_topic.c_str(), 0);
     mqtt.unsubscribe(config.mqtt_topic.c_str());
 
+    // old style Setup subscriptions
+    mqtt.subscribe(String(config.mqtt_topic + MQTT_LIGHT_COMMAND_TOPIC).c_str(), 0);
+    mqtt.subscribe(String(config.mqtt_topic + MQTT_LIGHT_BRIGHTNESS_COMMAND_TOPIC).c_str(), 0);
+    mqtt.subscribe(String(config.mqtt_topic + MQTT_LIGHT_RGB_COMMAND_TOPIC).c_str(), 0);
+
     // Setup subscriptions
     mqtt.subscribe(String(config.mqtt_topic + MQTT_SET_COMMAND_TOPIC).c_str(), 0);
+
+    // old style Publish state
+    publishRGBState();
+    publishRGBBrightness();
+    publishRGBColor();
 
     // Publish state
     publishState();
@@ -379,12 +405,58 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
 
 void onMqttMessage(char* topic, char* payload,
         AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
+
+// old mqtt handling
+    String Spayload;
+    for (uint8_t i = 0; i < len; i++)
+        Spayload.concat((char)payload[i]);
+
     StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(payload);
     bool stateOn = false;
 
     if (!root.success()) {
-        LOG_PORT.println("MQTT: Parsing failed");
+        LOG_PORT.println("MQTT: json Parsing failed");
+//        LOG_PORT.printf("%s", payload);
+
+        // old style Handle message topic
+        if (String(config.mqtt_topic + MQTT_LIGHT_COMMAND_TOPIC).equals(topic)) {
+        // Test if the payload is equal to "ON" or "OFF"
+            if (Spayload.equals(String(LIGHT_ON))) {
+                stateOn = true;
+            } else if (Spayload.equals(String(LIGHT_OFF))) {
+                stateOn = false;
+            }
+            publishRGBState();
+        }
+        else if (String(config.mqtt_topic + MQTT_LIGHT_BRIGHTNESS_COMMAND_TOPIC).equals(topic)) {
+            uint8_t brightness = Spayload.toInt();
+            if (brightness > 100) brightness = 100;
+            stateOn = true;
+            effects.setBrightness(brightness);
+            publishRGBBrightness();
+        }
+        else if (String(config.mqtt_topic + MQTT_LIGHT_RGB_COMMAND_TOPIC).equals(topic)) {
+            // Get the position of the first and second commas
+            uint8_t firstIndex = Spayload.indexOf(',');
+            uint8_t lastIndex = Spayload.lastIndexOf(',');
+
+            uint8_t m_rgb_red = Spayload.substring(0, firstIndex).toInt();
+            uint8_t m_rgb_green = Spayload.substring(firstIndex + 1, lastIndex).toInt();
+            uint8_t m_rgb_blue = Spayload.substring(lastIndex + 1).toInt();
+            stateOn = true;
+            effects.setColor( { m_rgb_red, m_rgb_green, m_rgb_blue } );
+            publishRGBColor();
+        }
+
+        // Set data source based on state - Fall back to E131 when off
+        if (stateOn) {
+            config.ds = DataSource::MQTT;
+        } else {
+            config.ds = DataSource::E131;
+            effects.clearAll();
+        }
+
         return;
     }
 
@@ -450,6 +522,30 @@ void publishState() {
     char buffer[root.measureLength() + 1];
     root.printTo(buffer, sizeof(buffer));
     mqtt.publish(config.mqtt_topic.c_str(), 0, true, buffer);
+}
+
+// Called to publish the state of the led (on/off)
+void publishRGBState() {
+//    if (m_rgb_state) {
+    if (effects.getEffect()) {
+        mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_STATE_TOPIC).c_str(), 0, true, LIGHT_ON);
+    } else {
+        mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_STATE_TOPIC).c_str(), 0, true, LIGHT_OFF);
+    }
+}
+
+// Called to publish the brightness of the led (0-100)
+void publishRGBBrightness() {
+//    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d", m_rgb_brightness);
+    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d", effects.getBrightness());
+    mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_BRIGHTNESS_STATE_TOPIC).c_str(), 0, true, m_msg_buffer);
+}
+
+// Called to publish the colors of the led (xx(x),xx(x),xx(x))
+void publishRGBColor() {
+//    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d,%d,%d", m_rgb_red, m_rgb_green, m_rgb_blue);
+    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d,%d,%d", effects.getColor().r, effects.getColor().g, effects.getColor().b);
+    mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_RGB_STATE_TOPIC).c_str(), 0, true, m_msg_buffer);
 }
 
 /////////////////////////////////////////////////////////
