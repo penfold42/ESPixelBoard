@@ -67,6 +67,7 @@ extern bool         reboot;     // Reboot flag
 */
 
 EFUpdate efupdate;
+char * WSframetemp;
 
 void procX(uint8_t *data, AsyncWebSocketClient *client) {
     switch (data[1]) {
@@ -406,26 +407,47 @@ void wsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
               }
             } else {
                   LOG_PORT.println(F("-- multiframe WS message --"));              
-                  if(info->index == 0){
-                    if(info->num == 0)
+                  if (info->index == 0) {
+                    if (info->num == 0)
+                    {
                       LOG_PORT.printf("ws %s-message start\r\n", (info->message_opcode == WS_TEXT)?"text":"binary");
-                    LOG_PORT.printf("ws frame[%u] start[%lu]\r\n", info->num, info->len);
+                      if (WSframetemp) {
+                        free (WSframetemp);
+                        WSframetemp = nullptr;
+                      }
+                      WSframetemp = (char*) malloc(CONFIG_MAX_SIZE);
+                    }
+                    LOG_PORT.printf("ws start framenum[%u] index[%u] infolen[%u] len[%u]\r\n"
+					, info->num, (uint32_t) info->index, (uint32_t) info->len, len);
                   }
 
-                  LOG_PORT.printf("ws frame[%u] %s[%lu - %lu]: ", info->num, (info->message_opcode == WS_TEXT)?"text":"binary", info->index, info->index + len);
-                  if(info->message_opcode == WS_TEXT){
+                  LOG_PORT.printf("ws conti framenum[%u] index[%u] infolen[%u] len[%u]\r\n"
+					, info->num, (uint32_t) info->index, (uint32_t) info->len, len);
+
+                  if ( (info->message_opcode == WS_TEXT) && (info->len < CONFIG_MAX_SIZE) ) {
+                    memcpy(WSframetemp + info->index, data, len);
+                  }
+
+                  if (info->message_opcode == WS_TEXT) {
                     data[len] = 0;
                     LOG_PORT.printf("%s\r\n", (char*)data);
                   }
 
-                  if((info->index + len) == info->len){
-                    LOG_PORT.printf("ws frame[%u] end[%lu]\r\n", info->num, info->len);
-                    if(info->final){
+                  if ((info->index + len) == info->len) {
+                    LOG_PORT.printf("ws end framenum[%u] index[%u] infolen[%u] len[%u]\r\n"
+					, info->num, (uint32_t) info->index, (uint32_t) info->len, len);
+                    if (info->final) {
                       LOG_PORT.printf("ws %s-message end\r\n", (info->message_opcode == WS_TEXT)?"text":"binary");
-                      if(info->message_opcode == WS_TEXT)
+                      if (info->message_opcode == WS_TEXT)
+                      {
+                        WSframetemp[info->len] = 0;
+                        LOG_PORT.printf("%s\r\n", WSframetemp);
                         client->text("I got your text message");
-                      else
-                        client->binary("I got your binary message");
+                      }
+                      if (WSframetemp) {
+                        free (WSframetemp);
+                        WSframetemp = nullptr;
+                      }
                     }
                   }
             }
