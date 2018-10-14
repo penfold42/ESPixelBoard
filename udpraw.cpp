@@ -10,17 +10,19 @@ WiFiUDP             RAWudp;             /* Raw UDP packet Server */
 unsigned int        RAWPort = 2801;      // local port to listen for UDP packets
 unsigned long       RAW_ctr = 0;
 
-void handle_raw_port() {
+void setupUDPraw() {
 
   if (!RAWudp) {
-    Serial.println("RE-Starting UDP");
+    LOG_PORT.println("Starting UDP");
     RAWudp.begin(RAWPort);
     MDNS.addService("hyperiond-rgbled", "udp", RAWPort);
-    Serial.print("Local RAWport: ");
-    Serial.println(RAWudp.localPort());
+    LOG_PORT.print("Local RAWport: ");
+    LOG_PORT.println(RAWudp.localPort());
   }
+}
+
+void handleUDPraw() {
   if (!RAWudp) {
-    Serial.println("RE-Start failed.");
     return;
   }
 

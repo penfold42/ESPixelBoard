@@ -21,8 +21,6 @@
 /*        BEGIN - Configuration          */
 /*****************************************/
 
-/* Output Mode has been moved to ESPixelStick.h */
-
 /* Fallback configuration if config.json is empty or fails */
 const char ssid[] = "blaster";
 const char passphrase[] = "omgthisismywirelesskeyhaha";
@@ -82,11 +80,6 @@ const char LIGHT_OFF[] = "OFF";
 // MQTT json buffer size
 const int JSON_BUFFER_SIZE = JSON_OBJECT_SIZE(10);
 
-// Effect defaults
-const char DEFAULT_EFFECT[] = "Solid";
-const CRGB DEFAULT_EFFECT_COLOR = { 127, 127, 127 };
-const uint8_t DEFAULT_EFFECT_BRIGHTNESS = 255;
-
 // Configuration file
 const char CONFIG_FILE[] = "/config.json";
 
@@ -104,6 +97,7 @@ WiFiEventHandler    wifiDisconnectHandler;  // WiFi disconnect handler
 Ticker              wifiTicker; // Ticker to handle WiFi
 AsyncMqttClient     mqtt;       // MQTT object
 Ticker              mqttTicker; // Ticker to handle MQTT
+EffectEngine        effects;    // Effects Engine
 
 // Output Drivers
 #if defined(ESPS_MODE_PIXEL)
@@ -114,10 +108,8 @@ SerialDriver    serial;         // Serial object
 #error "No valid output mode defined."
 #endif
 
-EffectEngine effects;
-
 /////////////////////////////////////////////////////////
-// 
+//
 //  Forward Declarations
 //
 /////////////////////////////////////////////////////////
@@ -126,6 +118,7 @@ void loadConfig();
 void initWifi();
 void initWeb();
 void updateConfig();
+void publishState();
 
 // Radio config
 RF_PRE_INIT() {
@@ -154,6 +147,9 @@ void setup() {
     // Enable SPIFFS
     SPIFFS.begin();
 
+    // Set default data source to E131
+    config.ds = DataSource::E131;
+
     LOG_PORT.println("");
     LOG_PORT.print(F("ESPixelBoard v"));
     for (uint8_t i = 0; i < strlen_P(VERSION); i++)
@@ -162,6 +158,7 @@ void setup() {
     for (uint8_t i = 0; i < strlen_P(BUILD_DATE); i++)
         LOG_PORT.print((char)(pgm_read_byte(BUILD_DATE + i)));
     LOG_PORT.println(")");
+    LOG_PORT.println(ESP.getFullVersion());
 
     // Load configuration from SPIFFS and set Hostname
     loadConfig();
@@ -224,6 +221,11 @@ void setup() {
             LOG_PORT.println(F("*** UNICAST INIT FAILED ****"));
         }
     }
+
+   /* check for raw packets on port 2801 */
+#if defined(ESPS_ENABLE_UDPRAW)
+    setupUDPraw();
+#endif
 
     // Configure the outputs
 #if defined (ESPS_SUPPORT_PWM)
@@ -357,6 +359,10 @@ void connectToMqtt() {
 void onMqttConnect(bool sessionPresent) {
     LOG_PORT.println(F("- MQTT Connected"));
 
+    // Get retained MQTT state
+    mqtt.subscribe(config.mqtt_topic.c_str(), 0);
+    mqtt.unsubscribe(config.mqtt_topic.c_str());
+
     // Setup subscriptions
     mqtt.subscribe(String(config.mqtt_topic + MQTT_SET_COMMAND_TOPIC).c_str(), 0);
 
@@ -378,7 +384,7 @@ void onMqttMessage(char* topic, char* payload,
     bool stateOn = false;
 
     if (!root.success()) {
-        Serial.println("MQTT: Parsing failed");
+        LOG_PORT.println("MQTT: Parsing failed");
         return;
     }
 
@@ -405,18 +411,22 @@ void onMqttMessage(char* topic, char* payload,
     if (root.containsKey("effect")) {
         // Set the explict effect provided by the MQTT client
         effects.setEffect(root["effect"]);
-    } else if (root.containsKey("color") && effects.getEffect() == nullptr) {
-        // Only set the effect to solid if we are not in an active effect, otherwise
-        // the color of the current effect will just be updated
-        effects.setEffect("Solid");
-    } else if (stateOn) {
-        // If we are just an "ON" command then set the default color and effect
-        effects.setColor(DEFAULT_EFFECT_COLOR);
-        effects.setBrightness(DEFAULT_EFFECT_BRIGHTNESS);
-        effects.setEffect(DEFAULT_EFFECT);
+    }
+
+    if (root.containsKey("reverse")) {
+        effects.setReverse(root["reverse"]);
+    }
+
+    if (root.containsKey("mirror")) {
+        effects.setMirror(root["mirror"]);
+    }
+
+    // Set data source based on state - Fall back to E131 when off
+    if (stateOn) {
+        config.ds = DataSource::MQTT;
     } else {
-        // Otherwise just disable the effect engine.
-        effects.setEffect("");
+        config.ds = DataSource::E131;
+        effects.clearAll();
     }
 
     publishState();
@@ -425,8 +435,7 @@ void onMqttMessage(char* topic, char* payload,
 void publishState() {
     StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
-
-    root["state"] = effects.getEffect() ? LIGHT_ON : LIGHT_OFF;
+    root["state"] = (config.ds == DataSource::MQTT) ? LIGHT_ON : LIGHT_OFF;
     JsonObject& color = root.createNestedObject("color");
     color["r"] = effects.getColor().r;
     color["g"] = effects.getColor().g;
@@ -435,6 +444,8 @@ void publishState() {
     if (effects.getEffect() != nullptr) {
         root["effect"] = effects.getEffect();
     }
+    root["reverse"] = effects.getReverse();
+    root["mirror"] = effects.getMirror();
 
     char buffer[root.measureLength() + 1];
     root.printTo(buffer, sizeof(buffer));
@@ -442,7 +453,7 @@ void publishState() {
 }
 
 /////////////////////////////////////////////////////////
-// 
+//
 //  Web Section
 //
 /////////////////////////////////////////////////////////
@@ -512,7 +523,7 @@ void initWeb() {
 }
 
 /////////////////////////////////////////////////////////
-// 
+//
 //  JSON / Configuration Section
 //
 /////////////////////////////////////////////////////////
@@ -698,7 +709,7 @@ void dsDeviceConfig(JsonObject &json) {
     config.mqtt_topic = json["mqtt"]["topic"].as<String>();
 
 #if defined(ESPS_MODE_PIXEL)
-    /* Pixel */
+    // Pixel
     config.pixel_type = PixelType(static_cast<uint8_t>(json["pixel"]["type"]));
     config.pixel_color = PixelColor(static_cast<uint8_t>(json["pixel"]["color"]));
     config.gamma = json["pixel"]["gamma"];
@@ -706,7 +717,7 @@ void dsDeviceConfig(JsonObject &json) {
     config.briteVal = json["pixel"]["briteVal"];
 
 #elif defined(ESPS_MODE_SERIAL)
-    /* Serial */
+    // Serial
     config.serial_type = SerialType(static_cast<uint8_t>(json["serial"]["type"]));
     config.baudrate = BaudRate(static_cast<uint32_t>(json["serial"]["baudrate"]));
 #endif
@@ -888,12 +899,12 @@ void saveConfig() {
 void loop() {
    /* check for raw packets on port 2801 */
 #if defined(ESPS_ENABLE_UDPRAW)
-    handle_raw_port();
+    handleUDPraw();
 #endif
 
     /* check for rotary encoder and buttons */
 #if defined(ESPS_ENABLE_BUTTONS)
-    handle_buttons();
+    handleButtons();
 #endif
 
     e131_packet_t packet;
@@ -904,71 +915,79 @@ void loop() {
         ESP.restart();
     }
 
-    // Local effects override any e131 packets so only read if we 
-    // have no active effects
-    if (effects.getEffect() == nullptr) {
-        // Parse a packet and update pixels
-        if (!e131.isEmpty()) {
-            e131.pull(&packet);
-            uint16_t universe = htons(packet.universe);
-            uint8_t *data = packet.property_values + 1;
-            LOG_PORT.print(universe);
-            LOG_PORT.println(packet.sequence_number);
-            if ((universe >= config.universe) && (universe <= uniLast)) {
-                // Universe offset and sequence tracking
-                uint8_t uniOffset = (universe - config.universe);
-                if (packet.sequence_number != seqTracker[uniOffset]++) {
-                    LOG_PORT.print(F("Sequence Error - expected: "));
-                    LOG_PORT.print(seqTracker[uniOffset] - 1);
-                    LOG_PORT.print(F(" actual: "));
-                    LOG_PORT.print(packet.sequence_number);
-                    LOG_PORT.print(F(" universe: "));
-                    LOG_PORT.println(universe);
-                    seqError[uniOffset]++;
-                    seqTracker[uniOffset] = packet.sequence_number + 1;
-                }
+    // Render output for current data source
+    switch (config.ds) {
+        case DataSource::E131:
+            // Parse a packet and update pixels
+            if (!e131.isEmpty()) {
+                e131.pull(&packet);
+                uint16_t universe = htons(packet.universe);
+                uint8_t *data = packet.property_values + 1;
+                //LOG_PORT.print(universe);
+                //LOG_PORT.println(packet.sequence_number);
+                if ((universe >= config.universe) && (universe <= uniLast)) {
+                    // Universe offset and sequence tracking
+                    uint8_t uniOffset = (universe - config.universe);
+                    if (packet.sequence_number != seqTracker[uniOffset]++) {
+                        LOG_PORT.print(F("Sequence Error - expected: "));
+                        LOG_PORT.print(seqTracker[uniOffset] - 1);
+                        LOG_PORT.print(F(" actual: "));
+                        LOG_PORT.print(packet.sequence_number);
+                        LOG_PORT.print(F(" universe: "));
+                        LOG_PORT.println(universe);
+                        seqError[uniOffset]++;
+                        seqTracker[uniOffset] = packet.sequence_number + 1;
+                    }
 
-                // Offset the channels if required
-                uint16_t offset = 0;
-                offset = config.channel_start - 1;
+                    // Offset the channels if required
+                    uint16_t offset = 0;
+                    offset = config.channel_start - 1;
 
-                // Find start of data based off the Universe
-                int16_t dataStart = uniOffset * config.universe_limit - offset;
+                    // Find start of data based off the Universe
+                    int16_t dataStart = uniOffset * config.universe_limit - offset;
 
-                // Calculate how much data we need for this buffer
-                uint16_t dataStop = config.channel_count;
-                uint16_t channels = htons(packet.property_value_count) - 1;
-                if (config.universe_limit < channels)
-                    channels = config.universe_limit;
-                if ((dataStart + channels) < dataStop)
-                    dataStop = dataStart + channels;
+                    // Calculate how much data we need for this buffer
+                    uint16_t dataStop = config.channel_count;
+                    uint16_t channels = htons(packet.property_value_count) - 1;
+                    if (config.universe_limit < channels)
+                        channels = config.universe_limit;
+                    if ((dataStart + channels) < dataStop)
+                        dataStop = dataStart + channels;
 
-                // Set the data
-                uint16_t buffloc = 0;
+                    // Set the data
+                    uint16_t buffloc = 0;
 
-                // ignore data from start of first Universe before channel_start
-                if (dataStart < 0) {
-                    dataStart = 0;
-                    buffloc = config.channel_start - 1;
-                }
+                    // ignore data from start of first Universe before channel_start
+                    if (dataStart < 0) {
+                        dataStart = 0;
+                        buffloc = config.channel_start - 1;
+                    }
 
-                for (int i = dataStart; i < dataStop; i++) {
-#if defined(ESPS_MODE_PIXEL)
-                    pixels.setValue(i, data[buffloc]);
-#elif defined(ESPS_MODE_SERIAL)
-                    serial.setValue(i, data[buffloc]);
-#endif
-                    buffloc++;
+                    for (int i = dataStart; i < dataStop; i++) {
+    #if defined(ESPS_MODE_PIXEL)
+                        pixels.setValue(i, data[buffloc]);
+    #elif defined(ESPS_MODE_SERIAL)
+                        serial.setValue(i, data[buffloc]);
+    #endif
+                        buffloc++;
+                    }
                 }
             }
-        }
-    } 
+            break;
+
+        case DataSource::MQTT:
+            effects.run();
+            break;
+
+        case DataSource::WEB:
+            effects.run();
+            break;
+    }
 
     // Run the effect engine loop
     effects.run();
 
-  toggleWebGpio();
-
+    toggleWebGpio();
 
 /* Streaming refresh */
 #if defined(ESPS_MODE_PIXEL)
@@ -984,3 +1003,4 @@ void loop() {
   handlePWM();
 #endif
 }
+

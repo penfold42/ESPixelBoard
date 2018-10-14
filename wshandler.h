@@ -37,18 +37,23 @@ extern uint16_t     uniLast;    // Last Universe to listen for
 extern bool         reboot;     // Reboot flag
 
 
-/* 
+/*
   Packet Commands
     E1 - Get Elements
 
     G1 - Get Config
     G2 - Get Config Status
-    
+
     T0 - Disable Testing
     T1 - Static Testing
-    T2 - Chase Test
-    T3 - Rainbow Test
-    T4 - View Stream
+    T2 - Blink Test
+    T3 - Flash Test
+    T4 - Chase Test
+    T5 - Rainbow Test
+    T6 - Fire flicker
+    T7 - Lightning
+    T8 - Breathe
+    T9 - View Stream
 
     S1 - Set Network Config
     S2 - Set Device Config
@@ -62,11 +67,12 @@ extern bool         reboot;     // Reboot flag
 */
 
 EFUpdate efupdate;
+uint8_t * WSframetemp;
 
 void procX(uint8_t *data, AsyncWebSocketClient *client) {
     switch (data[1]) {
         case 'S':
-            client->text("XS" + 
+            client->text("XS" +
                      (String)WiFi.RSSI() + ":" +
                      (String)ESP.getFreeHeap() + ":" +
                      (String)millis());
@@ -173,6 +179,8 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             effect["r"] = effects.getColor().r;
             effect["g"] = effects.getColor().g;
             effect["b"] = effects.getColor().b;
+            effect["reverse"] = effects.getReverse();
+            effect["mirror"] = effects.getMirror();
 
             String response;
             json.printTo(response);
@@ -214,35 +222,119 @@ void procS(uint8_t *data, AsyncWebSocketClient *client) {
 }
 
 void procT(uint8_t *data, AsyncWebSocketClient *client) {
+    config.ds = DataSource::WEB;
     switch (data[1]) {
         case '0': { // Clear whole string
-            effects.setEffect("");
+            //TODO: Store previous data source when effect is selected so we can switch back to it
+            config.ds = DataSource::E131;
+            effects.setEffect("blah");
+            effects.clearAll();
             break;
         }
         case '1': {  // Static color
             DynamicJsonBuffer jsonBuffer;
             JsonObject &json = jsonBuffer.parseObject(reinterpret_cast<char*>(data + 2));
 
-            effects.setColor({json["r"], json["g"], json["b"]});
+            if (json.containsKey("r") && json.containsKey("g") && json.containsKey("b")) {
+                effects.setColor({json["r"], json["g"], json["b"]});
+            }
+
             effects.setEffect("Solid");
             client->text("OK");
             break;
         }
-        case '2': {  // Chase
+        case '2': {  // Blink
             DynamicJsonBuffer jsonBuffer;
             JsonObject &json = jsonBuffer.parseObject(reinterpret_cast<char*>(data + 2));
 
-            effects.setColor({json["r"], json["g"], json["b"]});
+            if (json.containsKey("r") && json.containsKey("g") && json.containsKey("b")) {
+                effects.setColor({json["r"], json["g"], json["b"]});
+            }
+
+            effects.setEffect("Blink");
+            break;
+        }
+        case '3': {  // Flash
+            DynamicJsonBuffer jsonBuffer;
+            JsonObject &json = jsonBuffer.parseObject(reinterpret_cast<char*>(data + 2));
+
+            if (json.containsKey("r") && json.containsKey("g") && json.containsKey("b")) {
+                effects.setColor({json["r"], json["g"], json["b"]});
+            }
+
+            effects.setEffect("Flash");
+            break;
+        }
+        case '4': {  // Chase
+            DynamicJsonBuffer jsonBuffer;
+            JsonObject &json = jsonBuffer.parseObject(reinterpret_cast<char*>(data + 2));
+
+            if (json.containsKey("r") && json.containsKey("g") && json.containsKey("b")) {
+                effects.setColor({json["r"], json["g"], json["b"]});
+            }
+
+            if (json.containsKey("reverse")) {
+                effects.setReverse(json["reverse"]);
+            }
+
+            if (json.containsKey("mirror")) {
+                effects.setMirror(json["mirror"]);
+            }
+
             effects.setEffect("Chase");
             client->text("OK");
             break;
         }
-        case '3': { // Rainbow
+        case '5': { // Rainbow
+            DynamicJsonBuffer jsonBuffer;
+            JsonObject &json = jsonBuffer.parseObject(reinterpret_cast<char*>(data + 2));
+
+            if (json.containsKey("reverse")) {
+                effects.setReverse(json["reverse"]);
+            }
+
+            if (json.containsKey("mirror")) {
+                effects.setMirror(json["mirror"]);
+            }
+
             effects.setEffect("Rainbow");
             break;
         }
+        case '6': { // Fire flicker
+            DynamicJsonBuffer jsonBuffer;
+            JsonObject &json = jsonBuffer.parseObject(reinterpret_cast<char*>(data + 2));
 
-        case '4': {  // View stream
+            if (json.containsKey("r") && json.containsKey("g") && json.containsKey("b")) {
+                effects.setColor({json["r"], json["g"], json["b"]});
+            }
+
+            effects.setEffect("Fire flicker");
+            break;
+        }
+        case '7': { // Lightning
+            DynamicJsonBuffer jsonBuffer;
+            JsonObject &json = jsonBuffer.parseObject(reinterpret_cast<char*>(data + 2));
+
+            if (json.containsKey("r") && json.containsKey("g") && json.containsKey("b")) {
+                effects.setColor({json["r"], json["g"], json["b"]});
+            }
+
+            effects.setEffect("Lightning");
+            break;
+        }
+        case '8': { // Breathe
+            DynamicJsonBuffer jsonBuffer;
+            JsonObject &json = jsonBuffer.parseObject(reinterpret_cast<char*>(data + 2));
+
+            if (json.containsKey("r") && json.containsKey("g") && json.containsKey("b")) {
+                effects.setColor({json["r"], json["g"], json["b"]});
+            }
+
+            effects.setEffect("Breathe");
+            break;
+        }
+
+        case '9': {  // View stream
 #if defined(ESPS_MODE_PIXEL)
             client->binary(pixels.getData(), config.channel_count);
 #elif defined(ESPS_MODE_SERIAL)
@@ -275,6 +367,8 @@ void handle_fw_upload(AsyncWebServerRequest *request, String filename,
                 String(efupdate.getError()));
 
     if (final) {
+        request->send(200, "text/plain", "Update Finished: " +
+                String(efupdate.getError()));
         LOG_PORT.println(F("* Upload Finished."));
         efupdate.end();
         SPIFFS.begin();
@@ -311,8 +405,36 @@ void wsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
               } else {
                   LOG_PORT.println(F("-- binary message --"));
               }
-            } else {
-                  LOG_PORT.println(F("-- multiframe WS message --"));              
+            } else { // multiframe WS message
+
+              if ( (info->message_opcode == WS_TEXT) && (info->len < CONFIG_MAX_SIZE) ) {
+
+                  if ( (info->index == 0) && (info->num == 0) ) {
+                    if (WSframetemp) {
+                      free (WSframetemp);
+                      WSframetemp = nullptr;
+                    }
+                    WSframetemp = (uint8_t*) malloc(CONFIG_MAX_SIZE);
+                  }
+
+                  memcpy(WSframetemp + info->index, data, len);
+
+                  if ( (info->index + len) == info->len) {
+                    if (info->final) {
+                      WSframetemp[info->len] = 0;
+                      switch (WSframetemp[0]) {
+                          case 'S':
+                              procS(WSframetemp, client);
+                              break;
+                      }
+
+                      if (WSframetemp) {
+                        free (WSframetemp);
+                        WSframetemp = nullptr;
+                      }
+                    }
+                  }
+              }
             }
             break;
         }

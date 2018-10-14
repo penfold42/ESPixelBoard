@@ -5,6 +5,6 @@ extern PixelDriver     pixels;         // Pixel object
 extern SerialDriver    serial;         // Serial object
 #endif
 
-void handle_raw_port();
-void handle_buttons();
+void setupUDPraw();
+void handleUDPraw();
 

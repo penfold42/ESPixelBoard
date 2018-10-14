@@ -1,6 +1,9 @@
+dist/*.html
 node_modules
 *.gz
 *~
 *.swp
 data/config.json
 .vscode
+*.gz
+package-lock.json
