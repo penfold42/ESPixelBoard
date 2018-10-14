@@ -1095,5 +1095,11 @@ void loop() {
 #if defined(ESPS_SUPPORT_PWM)
   handlePWM();
 #endif
+
+// workaround crash - consume incoming bytes on serial port
+    if (LOG_PORT.available()) {
+        while (LOG_PORT.read() >= 0);
+    }
+
 }
 
