@@ -496,7 +496,7 @@ function getConfig(data) {
     var config = JSON.parse(data);
 
     // Device and Network config
-    $('#title').text('ESPS - ' + config.device.id);
+    $('#title').text('ESPB - ' + config.device.id);
     $('#name').text(config.device.id);
     $('#devid').val(config.device.id);
     $('#ssid').val(config.network.ssid);
