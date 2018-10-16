@@ -59,10 +59,7 @@ extern bool         reboot;     // Reboot flag
     S2 - Set Device Config
 
     XS - Get RSSI:heap:uptime
-    X1 - Get RSSI
     X2 - Get E131 Status
-    Xh - Get Heap
-    XU - Get Uptime
     X6 - Reboot
 */
 
@@ -77,9 +74,6 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
                      (String)ESP.getFreeHeap() + ":" +
                      (String)millis());
             break;
-        case '1':
-            client->text("X1" + (String)WiFi.RSSI());
-            break;
         case '2': {
             uint32_t seqErrors = 0;
             for (int i = 0; i < ((uniLast + 1) - config.universe); i++)
@@ -92,12 +86,6 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
                     e131.stats.last_clientIP.toString());
             break;
         }
-        case 'h':
-            client->text("Xh" + (String)ESP.getFreeHeap());
-            break;
-        case 'U':
-            client->text("XU" + (String)millis());
-            break;
         case '6':  // Init 6 baby, reboot!
             reboot = true;
     }
