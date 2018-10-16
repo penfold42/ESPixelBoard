@@ -227,7 +227,7 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
         case '0': { // Clear whole string
             //TODO: Store previous data source when effect is selected so we can switch back to it
             config.ds = DataSource::E131;
-            effects.setEffect("blah");
+//            effects.setEffect("blah");
             effects.clearAll();
             break;
         }
