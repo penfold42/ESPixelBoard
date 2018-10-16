@@ -1007,6 +1007,21 @@ void loop() {
 
     // Reboot handler
     if (reboot) {
+
+        effects.clearAll();
+
+#if defined(ESPS_MODE_PIXEL)
+        while (!pixels.canRefresh()) {};
+        pixels.show();
+#elif defined(ESPS_MODE_SERIAL)
+        while (!serial.canRefresh()) {};
+        serial.show();
+#endif
+
+#if defined(ESPS_SUPPORT_PWM)
+        handlePWM();
+#endif
+
         delay(REBOOT_DELAY);
         ESP.restart();
     }
