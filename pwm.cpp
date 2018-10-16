@@ -39,7 +39,6 @@ void setupPWM () {
 }
 
 void handlePWM() {
-  int pwm_val;
 
   if ( config.pwm_global_enabled ) {
     for (int gpio=0; gpio < NUM_GPIO; gpio++ ) {
