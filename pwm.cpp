@@ -6,7 +6,7 @@ extern  config_t    config;         // Current configuration
 
 // PWM globals
 
-uint16_t last_pwm[NUM_GPIO];   // 0-255, 0=dark
+uint16_t last_pwm[NUM_GPIO];   // 0-1023, 0=dark
 
 // GPIO 6-11 are for flash chip
 #if defined (ESPS_MODE_PIXEL) || ( defined(ESPS_MODE_SERIAL) && (SEROUT_UART == 1))
@@ -51,14 +51,10 @@ void handlePWM() {
           uint16_t pwm_val = (config.pwm_gamma) ? GAMMA_TABLE[serial.getData()[gpio_dmx]]>>6 : serial.getData()[gpio_dmx]<<2;
 #endif
           if (config.pwm_gpio_digital & 1<<gpio) {
-            if ( pwm_val >= 128) {
-              pwm_val = 255;
+            if ( pwm_val >= 512) {
+              pwm_val = 1023;
             } else {
               pwm_val = 0;
-            }
-          } else {
-            if (config.pwm_gamma) {
-              pwm_val = GAMMA_TABLE[pwm_val];
             }
           }
 
