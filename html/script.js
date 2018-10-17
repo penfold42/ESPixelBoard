@@ -238,6 +238,11 @@ $(function() {
     ctx = canvas.getContext("2d");
     ctx.font = "20px Arial";
     ctx.textAlign = "center";
+
+    // autoload tab based on URL hash
+    var hash = window.location.hash;
+    hash && $('ul.navbar-nav li a[href="' + hash + '"]').click();
+
 });
 
 function wifiValidation() {
@@ -818,6 +823,9 @@ function test() {
 
     if (!tmode.localeCompare('t_disabled')) {
         wsEnqueue('T0');
+    }
+    else if (!tmode.localeCompare('t_rainbow')) {
+        wsEnqueue('T5');
     }
     else if (!tmode.localeCompare('t_view')) {
         wsEnqueue('T9');
