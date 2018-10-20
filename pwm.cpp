@@ -28,28 +28,34 @@ void setupPWM () {
     for (int gpio=0; gpio < NUM_GPIO; gpio++ ) {
       if ( ( pwm_valid_gpio_mask & 1<<gpio ) && (config.pwm_gpio_enabled & 1<<gpio) ) {
         pinMode(gpio, OUTPUT);
-        if (config.pwm_gpio_invert & 1<<gpio) {
-          analogWrite(gpio, 1023);
-        } else {
-          analogWrite(gpio, 0);          
-        }
+        last_pwm[gpio] = 65535;  // invalid value to force initial update
       }
     }
+    handlePWM();
   }
 }
 
 void handlePWM() {
 
+  uint16_t pwm_val = 0;
   if ( config.pwm_global_enabled ) {
     for (int gpio=0; gpio < NUM_GPIO; gpio++ ) {
       if ( ( pwm_valid_gpio_mask & 1<<gpio ) && (config.pwm_gpio_enabled & 1<<gpio) ) {
+
         uint16_t gpio_dmx = config.pwm_gpio_dmx[gpio];
-        if (gpio_dmx < config.channel_count) {
+        if ((gpio_dmx < config.channel_count) || (gpio_dmx == 65535)) {
+
+          if (gpio_dmx < config.channel_count) {
 #if defined (ESPS_MODE_PIXEL)
-          uint16_t pwm_val = (config.pwm_gamma) ? GAMMA_TABLE[pixels.getData()[gpio_dmx]]>>6 : pixels.getData()[gpio_dmx]<<2;
+            pwm_val = (config.pwm_gamma) ? GAMMA_TABLE[pixels.getData()[gpio_dmx]]>>6 : pixels.getData()[gpio_dmx]<<2;
 #elif defined(ESPS_MODE_SERIAL)
-          uint16_t pwm_val = (config.pwm_gamma) ? GAMMA_TABLE[serial.getData()[gpio_dmx]]>>6 : serial.getData()[gpio_dmx]<<2;
+            pwm_val = (config.pwm_gamma) ? GAMMA_TABLE[serial.getData()[gpio_dmx]]>>6 : serial.getData()[gpio_dmx]<<2;
 #endif
+          } else {
+            pwm_val = 0;  // dmx channel 65535 forces 0 pwm value
+          }
+
+          // relays dont like pwm, force output high or low if "digital"
           if (config.pwm_gpio_digital & 1<<gpio) {
             if ( pwm_val >= 512) {
               pwm_val = 1023;
@@ -58,13 +64,14 @@ void handlePWM() {
             }
           }
 
+          // inverted pwm output
+          if (config.pwm_gpio_invert & 1<<gpio) {
+            pwm_val = 1023-pwm_val;  // 0..1023 => 1023..0
+          }
+
           if ( pwm_val != last_pwm[gpio]) {
             last_pwm[gpio] = pwm_val;
-            if (config.pwm_gpio_invert & 1<<gpio) {
-              analogWrite(gpio, 1023-pwm_val);  // 0..1023 => 1023..0
-            } else {
-              analogWrite(gpio, pwm_val);       // 0..1023 => 0..1023
-            }
+            analogWrite(gpio, pwm_val);
           }
         }
       }

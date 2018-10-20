@@ -243,11 +243,6 @@ void setup() {
     setupUDPraw();
 #endif
 
-    // Configure the outputs
-#if defined (ESPS_SUPPORT_PWM)
-    setupPWM();
-#endif
-
 #if defined(ESPS_ENABLE_BUTTONS)
     setupButtons();
 #endif
@@ -259,6 +254,12 @@ void setup() {
 #else
     updateConfig();
 #endif
+
+    // Configure the outputs
+#if defined (ESPS_SUPPORT_PWM)
+    setupPWM();
+#endif
+
 }
 
 /////////////////////////////////////////////////////////
