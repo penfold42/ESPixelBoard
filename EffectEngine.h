@@ -69,7 +69,7 @@ public:
     void begin(DRIVER* ledDriver, uint16_t ledCount);
     void run();
 
-    const char* getEffect()                 { return _activeEffect ? _activeEffect->name : nullptr; }
+    String getEffect()                      { return _activeEffect ? _activeEffect->name : nullptr; }
     bool getReverse()                       { return _effectReverse; }
     bool getMirror()                        { return _effectMirror; }
     bool getAllLeds()                       { return _effectAllLeds; }
@@ -77,7 +77,9 @@ public:
     uint16_t getSpeed()                     { return _effectSpeed; }
     CRGB getColor()                         { return _effectColor; }
 
-    void setEffect(const char* effectName);
+    void setFromConfig();
+    bool isValidEffect(const String effectName);
+    void setEffect(const String effectName);
     void setReverse(bool reverse)           { _effectReverse = reverse; }
     void setMirror(bool mirror)             { _effectMirror = mirror; }
     void setAllLeds(bool allleds)            { _effectAllLeds = allleds; }

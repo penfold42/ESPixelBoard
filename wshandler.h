@@ -36,6 +36,7 @@ extern uint32_t     *seqError;  // Sequence error tracking for each universe
 extern uint16_t     uniLast;    // Last Universe to listen for
 extern bool         reboot;     // Reboot flag
 
+extern const char CONFIG_FILE[];
 
 /*
   Packet Commands
@@ -65,6 +66,7 @@ extern bool         reboot;     // Reboot flag
 
 EFUpdate efupdate;
 uint8_t * WSframetemp;
+uint8_t * confuploadtemp;
 
 void procX(uint8_t *data, AsyncWebSocketClient *client) {
     switch (data[1]) {
@@ -169,6 +171,7 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             effect["b"] = effects.getColor().b;
             effect["reverse"] = effects.getReverse();
             effect["mirror"] = effects.getMirror();
+            effect["allleds"] = effects.getAllLeds();
 
             String response;
             json.printTo(response);
@@ -366,6 +369,52 @@ void handle_fw_upload(AsyncWebServerRequest *request, String filename,
         SPIFFS.begin();
         saveConfig();
         reboot = true;
+    }
+}
+
+void handle_config_upload(AsyncWebServerRequest *request, String filename,
+        size_t index, uint8_t *data, size_t len, bool final) {
+    static File file;
+    if (!index) {
+        WiFiUDP::stopAll();
+        LOG_PORT.print(F("* Config Upload Started: "));
+        LOG_PORT.println(filename.c_str());
+
+        if (confuploadtemp) {
+          free (confuploadtemp);
+          confuploadtemp = nullptr;
+        }
+        confuploadtemp = (uint8_t*) malloc(CONFIG_MAX_SIZE);
+    }
+
+    LOG_PORT.printf("index %d len %d\n", index, len);
+    memcpy(confuploadtemp + index, data, len);
+    confuploadtemp[index + len] = 0;
+
+    if (final) {
+        int filesize = index+len;
+        LOG_PORT.print(F("* Config Upload Finished:"));
+        LOG_PORT.printf(" %d bytes", filesize);
+
+        DynamicJsonBuffer jsonBuffer;
+        JsonObject &json = jsonBuffer.parseObject(reinterpret_cast<char*>(confuploadtemp));
+        if (!json.success()) {
+            LOG_PORT.println(F("*** Parse Error ***"));
+            LOG_PORT.println(reinterpret_cast<char*>(confuploadtemp));
+            request->send(500, "text/plain", "Config Update Error." );
+        } else {
+//          dsNetworkConfig(json);
+//          dsDeviceConfig(json);
+            dsEffectConfig(json);
+            saveConfig();
+            request->send(200, "text/plain", "Config Update Finished: " );
+//          reboot = true;
+        }
+
+        if (confuploadtemp) {
+            free (confuploadtemp);
+            confuploadtemp = nullptr;
+        }
     }
 }
 

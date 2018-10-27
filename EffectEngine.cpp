@@ -3,6 +3,8 @@
 #include "ESPixelStick.h"
 #include "EffectEngine.h"
 
+extern  config_t        config;
+
 // List of all the supported effects and their names
 static const EffectDesc EFFECT_LIST[] = {
     { "Solid",          &EffectEngine::effectSolidColor },
@@ -16,21 +18,31 @@ static const EffectDesc EFFECT_LIST[] = {
 };
 
 // Effect defaults
-const char DEFAULT_EFFECT[] = "Solid";
-const CRGB DEFAULT_EFFECT_COLOR = { 255, 255, 255 };
-const uint8_t DEFAULT_EFFECT_BRIGHTNESS = 255;
-const bool DEFAULT_EFFECT_REVERSE = false;
-const bool DEFAULT_EFFECT_MIRROR = false;
-const bool DEFAULT_EFFECT_ALLLEDS = false;
+#define DEFAULT_EFFECT_NAME "Solid"
+#define DEFAULT_EFFECT_COLOR { 128, 128, 255 }
+#define DEFAULT_EFFECT_BRIGHTNESS 255
+#define DEFAULT_EFFECT_REVERSE false
+#define DEFAULT_EFFECT_MIRROR false
+#define DEFAULT_EFFECT_ALLLEDS false
 
 EffectEngine::EffectEngine() {
     // Initialize with defaults
-    setEffect(DEFAULT_EFFECT);
+    setEffect(DEFAULT_EFFECT_NAME);
     setColor(DEFAULT_EFFECT_COLOR);
     setBrightness(DEFAULT_EFFECT_BRIGHTNESS);
     setReverse(DEFAULT_EFFECT_REVERSE);
     setMirror(DEFAULT_EFFECT_MIRROR);
     setAllLeds(DEFAULT_EFFECT_ALLLEDS);
+}
+
+void EffectEngine::setFromConfig() {
+    // Initialize with defaults
+    setEffect(config.startup_effect_name);
+    setColor(config.startup_effect_color);
+    setBrightness(config.startup_effect_brightness);
+    setReverse(config.startup_effect_reverse);
+    setMirror(config.startup_effect_mirror);
+    setAllLeds(config.startup_effect_allleds);
 }
 
 void EffectEngine::begin(DRIVER* ledDriver, uint16_t ledCount) {
@@ -50,7 +62,9 @@ void EffectEngine::run() {
     }
 }
 
-void EffectEngine::setEffect(const char* effectName) {
+//void EffectEngine::setEffect(const char* effectName) {
+void EffectEngine::setEffect(const String effectNameStr) {
+    const char* effectName = effectNameStr.c_str();
     const uint8_t effectCount = sizeof(EFFECT_LIST) / sizeof(EffectDesc);
     for (uint8_t effect = 0; effect < effectCount; effect++) {
         if (strcmp(effectName, EFFECT_LIST[effect].name) == 0) {
@@ -66,6 +80,17 @@ void EffectEngine::setEffect(const char* effectName) {
 
     _activeEffect = nullptr;
     clearAll();
+}
+
+bool EffectEngine::isValidEffect(const String effectNameStr) {
+    const char* effectName = effectNameStr.c_str();
+    const uint8_t effectCount = sizeof(EFFECT_LIST) / sizeof(EffectDesc);
+    for (uint8_t effect = 0; effect < effectCount; effect++) {
+        if (strcmp(effectName, EFFECT_LIST[effect].name) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void EffectEngine::setPixel(uint16_t idx,  CRGB color) {
@@ -145,7 +170,7 @@ uint16_t EffectEngine::effectChase() {
         setPixel(pixel, _effectColor);
     }
 
-    _effectStep = ++_effectStep % lc;
+    _effectStep = (1+_effectStep) % lc;
     return _effectSpeed / 32;
 }
 
@@ -180,7 +205,7 @@ uint16_t EffectEngine::effectRainbowCycle() {
         }
     }
 
-    _effectStep = ++_effectStep & 0xFF;
+    _effectStep = (1+_effectStep) & 0xFF;
     return _effectSpeed / 256;
 }
 
@@ -193,7 +218,7 @@ uint16_t EffectEngine::effectBlink() {
       setAll(_effectColor);
     }
 
-    _effectStep = ++_effectStep % 2;
+    _effectStep = (1+_effectStep) % 2;
     return _effectSpeed / 1;
 }
 
@@ -212,7 +237,7 @@ uint16_t EffectEngine::effectFlash() {
         clearAll();
     }
 
-    _effectStep = ++_effectStep % 6;
+    _effectStep = (1+_effectStep) % 6;
     return _effectSpeed / 3;
 }
 
@@ -223,7 +248,7 @@ uint16_t EffectEngine::effectFireFlicker() {
     byte flicker = random(lum);
     setPixel(i, CRGB { max(_effectColor.r - flicker, 0), max(_effectColor.g - flicker, 0), max(_effectColor.b - flicker, 0) });
   }
-  _effectStep = ++_effectStep % _ledCount;
+  _effectStep = (1+_effectStep) % _ledCount;
   return _effectSpeed / 10;
 }
 
@@ -349,7 +374,7 @@ CRGB EffectEngine::hsv2rgb(dCHSV in)
     double      hh, p, q, t, ff;
     long        i;
     dCRGB       out;
-    CRGB out_int = {};
+    CRGB out_int = {0,0,0};
 
     if(in.s <= 0.0) {       // < is bogus, just shuts up warnings
         out.r = in.v;
