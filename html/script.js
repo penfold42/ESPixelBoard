@@ -371,6 +371,8 @@ function wsConnect() {
                 case 'S2':
                     setConfig(data);
                     break;
+                case 'S3':
+                    break;
                 case 'XS':
                     getSystemStatus(data);
                     break;
@@ -786,6 +788,24 @@ function submitConfig() {
     }
 
     wsEnqueue('S2' + JSON.stringify(json));
+}
+
+function submitStartupEffect() {
+    var json = {
+            'effects': {
+                'name': "Rainbow",
+                'mirror': $('#t_mirror').prop('checked'),
+                'allleds': $('#t_allleds').prop('checked'),
+                'reverse': $('#t_reverse').prop('checked'),
+                'r': 32,
+                'g': 64,
+                'b': 128,
+                'brightness': 255,
+                'enabled': $('#effectenable').prop('checked')
+            }
+        };
+
+    wsEnqueue('S3' + JSON.stringify(json));
 }
 
 function refreshPixel() {

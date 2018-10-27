@@ -58,6 +58,7 @@ extern const char CONFIG_FILE[];
 
     S1 - Set Network Config
     S2 - Set Device Config
+    S3 - Set Effect Startup Config
 
     XS - Get RSSI:heap:uptime
     X2 - Get E131 Status
@@ -189,6 +190,7 @@ void procS(uint8_t *data, AsyncWebSocketClient *client) {
         return;
     }
 
+    bool reboot = false;
     switch (data[1]) {
         case '1':   // Set Network Config
             dsNetworkConfig(json);
@@ -197,7 +199,6 @@ void procS(uint8_t *data, AsyncWebSocketClient *client) {
             break;
         case '2':   // Set Device Config
             // Reboot if MQTT changed
-            bool reboot = false;
             if (config.mqtt != json["mqtt"]["enabled"])
                 reboot = true;
 
@@ -208,6 +209,11 @@ void procS(uint8_t *data, AsyncWebSocketClient *client) {
                 client->text("S1");
             else
                 client->text("S2");
+            break;
+        case '3':   // Set Effect Startup Config
+            dsEffectConfig(json);
+            saveConfig();
+            client->text("S3");
             break;
     }
 }
