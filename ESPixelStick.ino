@@ -808,9 +808,10 @@ void dsEffectConfig(JsonObject &json) {
         config.startup_effect_name = effectsJson["name"].as<String>();
         config.startup_effect_mirror = effectsJson["mirror"];
         config.startup_effect_allleds = effectsJson["allleds"];
-        effects.setReverse(effectsJson["reverse"]);
+        config.startup_effect_reverse = effectsJson["reverse"];
         config.startup_effect_color = { effectsJson["r"], effectsJson["g"], effectsJson["b"] };
-        config.startup_effect_brightness = effectsJson["brightness"];
+        if (effectsJson.containsKey("brightness"))
+            config.startup_effect_brightness = effectsJson["brightness"];
         config.startup_effect_enabled = effectsJson["enabled"];
     }
 }

@@ -334,11 +334,23 @@ function feed() {
     }
 }
 
+function param(name) {
+    return (location.search.split(name + '=')[1] || '').split('&')[0];
+}
+
 // WebSockets
 function wsConnect() {
     if ('WebSocket' in window) {
+
+// accept ?target=10.0.0.123 to make a WS connection to another device
+        if (target = param('target')) {
+// 
+        } else {
+            target = document.location.host;
+        }
+
         // Open a new web socket and set the binary type
-        ws = new WebSocket('ws://' + document.location.host + '/ws');
+        ws = new WebSocket('ws://' + target + '/ws');
         ws.binaryType = 'arraybuffer';
 
         ws.onopen = function() {
@@ -565,13 +577,15 @@ function getConfig(data) {
         $('#p_gammaVal').val(config.pixel.gammaVal);
         $('#p_briteVal').val(config.pixel.briteVal);
 
-        if(config.e131.channel_count / 3 <8 ) {
-            $('#v_columns').val(config.e131.channel_count / 3);
-        } else if (config.e131.channel_count / 3 <50 ) {
-            $('#v_columns').val(10);
-        } else {
-            $('#v_columns').val(25);
-        }
+//      if(config.e131.channel_count / 3 <8 ) {
+//          $('#v_columns').val(config.e131.channel_count / 3);
+//      } else if (config.e131.channel_count / 3 <50 ) {
+//          $('#v_columns').val(10);
+//      } else {
+//          $('#v_columns').val(25);
+//      }
+        $('#v_columns').val(Math.floor(Math.sqrt(config.e131.channel_count/3)));
+
         $("input[name='viewStyle'][value='RGB']").trigger('click');
         clearStream();
 
@@ -657,6 +671,7 @@ function updateTestingGUI(data) {
     $('.reverse').prop('checked', data.reverse);
     $('.mirror').prop('checked', data.mirror);
     $('.allleds').prop('checked', data.allleds);
+    $('#t_startenabled').prop('checked', data.enabled);
 }
 
 function getSystemStatus(data) {
@@ -791,17 +806,24 @@ function submitConfig() {
 }
 
 function submitStartupEffect() {
+// not pretty - get current r,g,b from color picker
+    var temp = $('.color').val().split(/\D+/);
+//console.log (temp);
+
+    var currentEffectName = getKeyByValue(testing_modes, $('#tmode option:selected').val());
+//console.log (currentEffectName);
+
     var json = {
             'effects': {
-                'name': "Rainbow",
+                'name': currentEffectName,
                 'mirror': $('#t_mirror').prop('checked'),
                 'allleds': $('#t_allleds').prop('checked'),
                 'reverse': $('#t_reverse').prop('checked'),
-                'r': 32,
-                'g': 64,
-                'b': 128,
+                'r': temp[1],
+                'g': temp[2],
+                'b': temp[3],
                 'brightness': 255,
-                'enabled': $('#effectenable').prop('checked')
+                'enabled': $('#t_startenabled').prop('checked')
             }
         };
 
@@ -882,5 +904,13 @@ function showReboot() {
 function reboot() {
     showReboot();
     wsEnqueue('X6');
+}
+
+//function getKeyByValue(object, value) {
+//    return Object.keys(object).find(key => object[key] === value);
+//}
+
+function getKeyByValue(obj, value) {
+    return Object.keys(obj)[Object.values(obj).indexOf(value)];
 }
 

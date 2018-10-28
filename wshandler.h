@@ -173,6 +173,7 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             effect["reverse"] = effects.getReverse();
             effect["mirror"] = effects.getMirror();
             effect["allleds"] = effects.getAllLeds();
+            effect["enabled"] = config.startup_effect_enabled;
 
             String response;
             json.printTo(response);
