@@ -6,15 +6,20 @@
 extern  config_t        config;
 
 // List of all the supported effects and their names
-static const EffectDesc EFFECT_LIST[] = {
-    { "Solid",          &EffectEngine::effectSolidColor },
-    { "Blink",          &EffectEngine::effectBlink },
-    { "Flash",          &EffectEngine::effectFlash },
-    { "Rainbow",        &EffectEngine::effectRainbowCycle },
-    { "Chase",          &EffectEngine::effectChase },
-    { "Fire flicker",   &EffectEngine::effectFireFlicker },
-    { "Lightning",      &EffectEngine::effectLightning },
-    { "Breathe",      &EffectEngine::effectBreathe }
+const EffectDesc EFFECT_LIST[] = {
+//                                                                          Mirror     AllLeds
+//    name;             func;                             htmlid;      Color;     Reverse     DefaultColor
+
+    { "Disabled",     nullptr,                         "t_disabled",     1,    1,    1,    1,    0      },
+    { "Solid",        &EffectEngine::effectSolidColor, "t_static",       1,    0,    0,    0,  0x7f7f7f },
+    { "Blink",        &EffectEngine::effectBlink,      "t_blink",        1,    0,    0,    0,  0x3f007f },
+    { "Flash",        &EffectEngine::effectFlash,      "t_flash",        1,    0,    0,    0,  0x7f0000 },
+    { "Rainbow",      &EffectEngine::effectRainbow,    "t_rainbow",      0,    1,    1,    1,    0      },
+    { "Chase",        &EffectEngine::effectChase,      "t_chase",        1,    1,    1,    0,  0xffffff },
+    { "Fire flicker", &EffectEngine::effectFireFlicker,"t_fireflicker",  1,    0,    0,    0,  0xff3f00 },
+    { "Lightning",    &EffectEngine::effectLightning,  "t_lightning",    1,    0,    0,    0,  0xffffff },
+    { "Breathe",      &EffectEngine::effectBreathe,    "t_breathe",      1,    0,    0,    0,  0xffffff },
+    { "View",         nullptr,                         "t_view",         0,    0,    0,    0,    0      }
 };
 
 // Effect defaults
@@ -80,6 +85,17 @@ void EffectEngine::setEffect(const String effectNameStr) {
 
     _activeEffect = nullptr;
     clearAll();
+}
+
+int EffectEngine::getEffectCount() {
+    return sizeof(EFFECT_LIST) / sizeof(EffectDesc);
+}
+
+const EffectDesc* EffectEngine::getEffectInfo(unsigned a) {
+    if (a >= sizeof(EFFECT_LIST) / sizeof(EffectDesc))
+	a = 0;
+
+    return &EFFECT_LIST[a];
 }
 
 bool EffectEngine::isValidEffect(const String effectNameStr) {
@@ -174,7 +190,7 @@ uint16_t EffectEngine::effectChase() {
     return _effectSpeed / 32;
 }
 
-uint16_t EffectEngine::effectRainbowCycle() {
+uint16_t EffectEngine::effectRainbow() {
     // calculate only half the pixels if mirroring
     uint16_t lc = _ledCount;
     if (_effectMirror) {

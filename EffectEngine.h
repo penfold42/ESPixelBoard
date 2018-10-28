@@ -41,6 +41,12 @@ typedef uint16_t (EffectEngine::*EffectFunc)(void);
 struct EffectDesc {
     const char* name;
     EffectFunc  func;
+    const char* htmlid;
+    bool        hasColor;
+    bool        hasMirror;
+    bool        hasReverse;
+    bool        hasAllLeds;
+    uint32_t    defaultColor;
 };
 
 class EffectEngine {
@@ -77,6 +83,8 @@ public:
     uint16_t getSpeed()                     { return _effectSpeed; }
     CRGB getColor()                         { return _effectColor; }
 
+    int getEffectCount();
+    const EffectDesc* getEffectInfo(unsigned a);
     void setFromConfig();
     bool isValidEffect(const String effectName);
     void setEffect(const String effectName);
@@ -89,13 +97,14 @@ public:
 
     // Effect functions
     uint16_t effectSolidColor();
-    uint16_t effectRainbowCycle();
+    uint16_t effectRainbow();
     uint16_t effectChase();
     uint16_t effectBlink();
     uint16_t effectFlash();
     uint16_t effectFireFlicker();
     uint16_t effectLightning();
     uint16_t effectBreathe();
+    uint16_t effectNull();
     void clearAll();
 
 private:

@@ -358,6 +358,7 @@ function wsConnect() {
             wsEnqueue('E1'); // Get html elements
             wsEnqueue('G1'); // Get Config
             wsEnqueue('G2'); // Get Net Status
+            wsEnqueue('G3'); // Get Effect Info
 
             feed();
         };

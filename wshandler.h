@@ -44,6 +44,7 @@ extern const char CONFIG_FILE[];
 
     G1 - Get Config
     G2 - Get Config Status
+    G3 - Get Effect Config Options
 
     T0 - Disable Testing
     T1 - Static Testing
@@ -147,7 +148,8 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             client->text("G1" + response);
             break;
         }
-        case '2':
+
+        case '2': {
             // Create buffer and root object
             DynamicJsonBuffer jsonBuffer;
             JsonObject &json = jsonBuffer.createObject();
@@ -179,6 +181,30 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             json.printTo(response);
             client->text("G2" + response);
             break;
+        }
+
+        case '3': {
+            String response;
+            DynamicJsonBuffer jsonBuffer;
+            JsonObject &json = jsonBuffer.createObject();
+            JsonArray &effectsAr = json.createNestedArray("effects");
+            for(int i=0; i < effects.getEffectCount(); i++){
+                JsonObject& effect = effectsAr.createNestedObject();
+                effect["name"] = effects.getEffectInfo(i)->name;
+                effect["htmlid"] = effects.getEffectInfo(i)->htmlid;
+                effect["hasColor"] = effects.getEffectInfo(i)->hasColor;
+                effect["hasMirror"] = effects.getEffectInfo(i)->hasMirror;
+                effect["hasReverse"] = effects.getEffectInfo(i)->hasReverse;
+                effect["hasAllLeds"] = effects.getEffectInfo(i)->hasAllLeds;
+//            effect["brightness"] = effects.getBrightness();
+//            effect["speed"] = effects.getSpeed();
+            }
+
+            json.printTo(response);
+            client->text("G3" + response);
+//LOG_PORT.print(response);
+            break;
+        }
     }
 }
 
