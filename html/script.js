@@ -17,6 +17,12 @@ var testing_modes = {
     "View" : "t_view"
 };
 
+// json with effect definitions
+var effect_info;
+
+// json with current effect info
+var current_effect_info;
+
 // Default modal properties
 $.fn.modal.Constructor.DEFAULTS.backdrop = 'static';
 $.fn.modal.Constructor.DEFAULTS.keyboard = false;
@@ -377,6 +383,9 @@ function wsConnect() {
                 case 'G2':
                     getConfigStatus(data);
                     break;
+                case 'G3':
+                    getEffectInfo(data);
+                    break;
                 case 'S1':
                     setConfig(data);
                     reboot();
@@ -659,10 +668,24 @@ function getConfigStatus(data) {
     $('#x_usedflashsize').text(status.usedflashsize);
     $('#x_realflashsize').text(status.realflashsize);
     $('#x_freeheap').text(status.freeheap);
-    updateTestingGUI(status.effect);
+    current_effect_info = status.effect;
 }
 
-function updateTestingGUI(data) {
+function getEffectInfo(data) {
+    effect_info = JSON.parse(data);
+//  console.log (effect_info);
+
+    for (var i in effect_info.effects) {
+        var htmlid =  effect_info.effects[i].htmlid;
+        var name =  effect_info.effects[i].name;
+//      console.log ('htmlid ' + htmlid + ' name ' + name);
+        $('#tmode').append('<option value="' + htmlid + '">' + name + '</option>');
+    }
+
+//    updateTestingGUI(current_effect_info);
+//}
+//function updateTestingGUI(data) {
+    var data = current_effect_info;
     if ($('#tmode option:selected').val().localeCompare(testing_modes[data.name])) {
         $('#tmode').val(testing_modes[data.name]);
         hideShowTestSections();
