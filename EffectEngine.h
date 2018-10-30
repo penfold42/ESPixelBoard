@@ -46,7 +46,7 @@ struct EffectDesc {
     bool        hasMirror;
     bool        hasReverse;
     bool        hasAllLeds;
-    uint32_t    defaultColor;
+    const char* wsTCode;
 };
 
 class EffectEngine {

@@ -18,10 +18,7 @@ var testing_modes = {
 };
 
 // json with effect definitions
-var effect_info;
-
-// json with current effect info
-var current_effect_info;
+var effectInfo;
 
 // Default modal properties
 $.fn.modal.Constructor.DEFAULTS.backdrop = 'static';
@@ -668,24 +665,23 @@ function getConfigStatus(data) {
     $('#x_usedflashsize').text(status.usedflashsize);
     $('#x_realflashsize').text(status.realflashsize);
     $('#x_freeheap').text(status.freeheap);
-    current_effect_info = status.effect;
 }
 
 function getEffectInfo(data) {
-    effect_info = JSON.parse(data);
-//  console.log (effect_info);
+    parsed = JSON.parse(data);
+    effectInfo = parsed.effectList;
 
-    for (var i in effect_info.effects) {
-        var htmlid =  effect_info.effects[i].htmlid;
-        var name =  effect_info.effects[i].name;
+  console.log (effectInfo);
+  console.log (effectInfo.t_chase);
+
+    for (var i in effectInfo) {
+        var htmlid = effectInfo[i].htmlid;
+        var name =   effectInfo[i].name;
 //      console.log ('htmlid ' + htmlid + ' name ' + name);
         $('#tmode').append('<option value="' + htmlid + '">' + name + '</option>');
     }
 
-//    updateTestingGUI(current_effect_info);
-//}
-//function updateTestingGUI(data) {
-    var data = current_effect_info;
+    var data = parsed.currentEffect;
     if ($('#tmode option:selected').val().localeCompare(testing_modes[data.name])) {
         $('#tmode').val(testing_modes[data.name]);
         hideShowTestSections();
@@ -902,14 +898,9 @@ function test() {
 
     var tmode = $('#tmode option:selected').val();
 
-    if (!tmode.localeCompare('t_disabled')) {
-        wsEnqueue('T0');
-    }
-    else if (!tmode.localeCompare('t_rainbow')) {
-        wsEnqueue('T5');
-    }
-    else if (!tmode.localeCompare('t_view')) {
-        wsEnqueue('T9');
+console.log ('found tcode ' + effectInfo[tmode].wsTCode);
+    if (typeof effectInfo[tmode].wsTCode !== 'undefined') {
+        wsEnqueue( effectInfo[tmode].wsTCode );
     }
 }
 

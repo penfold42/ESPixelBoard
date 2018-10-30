@@ -44,7 +44,7 @@ extern const char CONFIG_FILE[];
 
     G1 - Get Config
     G2 - Get Config Status
-    G3 - Get Effect Config Options
+    G3 - Get Current Effect and Effect Config Options
 
     T0 - Disable Testing
     T1 - Static Testing
@@ -165,7 +165,19 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             json["realflashsize"] = (String)ESP.getFlashChipRealSize();
             json["freeheap"] = (String)ESP.getFreeHeap();
 
-            JsonObject &effect = json.createNestedObject("effect");
+            String response;
+            json.printTo(response);
+            client->text("G2" + response);
+            break;
+        }
+
+        case '3': {
+            String response;
+            DynamicJsonBuffer jsonBuffer;
+            JsonObject &json = jsonBuffer.createObject();
+
+// dump the current running effect options
+            JsonObject &effect = json.createNestedObject("currentEffect");
             effect["name"] = (String)effects.getEffect() ? effects.getEffect() : "";
             effect["brightness"] = effects.getBrightness();
             effect["speed"] = effects.getSpeed();
@@ -177,25 +189,17 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             effect["allleds"] = effects.getAllLeds();
             effect["enabled"] = config.startup_effect_enabled;
 
-            String response;
-            json.printTo(response);
-            client->text("G2" + response);
-            break;
-        }
-
-        case '3': {
-            String response;
-            DynamicJsonBuffer jsonBuffer;
-            JsonObject &json = jsonBuffer.createObject();
-            JsonArray &effectsAr = json.createNestedArray("effects");
+// dump all the known effect and options
+            JsonObject &effectList = json.createNestedObject("effectList");
             for(int i=0; i < effects.getEffectCount(); i++){
-                JsonObject& effect = effectsAr.createNestedObject();
+                JsonObject &effect = effectList.createNestedObject( effects.getEffectInfo(i)->htmlid );
                 effect["name"] = effects.getEffectInfo(i)->name;
                 effect["htmlid"] = effects.getEffectInfo(i)->htmlid;
                 effect["hasColor"] = effects.getEffectInfo(i)->hasColor;
                 effect["hasMirror"] = effects.getEffectInfo(i)->hasMirror;
                 effect["hasReverse"] = effects.getEffectInfo(i)->hasReverse;
                 effect["hasAllLeds"] = effects.getEffectInfo(i)->hasAllLeds;
+                effect["wsTCode"] = effects.getEffectInfo(i)->wsTCode;
 //            effect["brightness"] = effects.getBrightness();
 //            effect["speed"] = effects.getSpeed();
             }
