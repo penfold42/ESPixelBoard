@@ -108,27 +108,10 @@ $(function() {
                 }).text(this.color.toString($elm._colorMode)); // $elm.val();
 
                 var tmode = $('#tmode option:selected').val();
-
-                if (!tmode.localeCompare('t_static')) {
-                    wsEnqueue('T1' + JSON.stringify(json));
-                }
-                else if(!tmode.localeCompare('t_blink')) {
-                    wsEnqueue('T2' + JSON.stringify(json));
-                }
-                else if(!tmode.localeCompare('t_flash')) {
-                    wsEnqueue('T3' + JSON.stringify(json));
-                }
-                else if(!tmode.localeCompare('t_chase')) {
-                    wsEnqueue('T4' + JSON.stringify(json));
-                }
-                else if(!tmode.localeCompare('t_fireflicker')) {
-                    wsEnqueue('T6' + JSON.stringify(json));
-                }
-                else if(!tmode.localeCompare('t_lightning')) {
-                    wsEnqueue('T7' + JSON.stringify(json));
-                }
-                else if(!tmode.localeCompare('t_breathe')) {
-                    wsEnqueue('T8' + JSON.stringify(json));
+                if (typeof effectInfo[tmode].wsTCode !== 'undefined') {
+                    if (effectInfo[tmode].hasColor) {
+                        wsEnqueue( effectInfo[tmode].wsTCode + JSON.stringify(json) );
+                    }
                 }
             }
         });
@@ -143,11 +126,10 @@ $(function() {
       var json = { 'reverse': $(this).prop('checked') };
       var tmode = $('#tmode option:selected').val();
 
-      if(!tmode.localeCompare('t_chase')) {
-          wsEnqueue('T4' + JSON.stringify(json));
-      }
-      else if(!tmode.localeCompare('t_rainbow')) {
-          wsEnqueue('T5' + JSON.stringify(json));
+      if (typeof effectInfo[tmode].wsTCode !== 'undefined') {
+          if (effectInfo[tmode].hasReverse) {
+              wsEnqueue( effectInfo[tmode].wsTCode + JSON.stringify(json) );
+          }
       }
     });
 
@@ -157,11 +139,10 @@ $(function() {
       var json = { 'mirror': $(this).prop('checked') };
       var tmode = $('#tmode option:selected').val();
 
-      if(!tmode.localeCompare('t_chase')) {
-          wsEnqueue('T4' + JSON.stringify(json));
-      }
-      else if(!tmode.localeCompare('t_rainbow')) {
-          wsEnqueue('T5' + JSON.stringify(json));
+      if (typeof effectInfo[tmode].wsTCode !== 'undefined') {
+          if (effectInfo[tmode].hasMirror) {
+              wsEnqueue( effectInfo[tmode].wsTCode + JSON.stringify(json) );
+          }
       }
     });
 
@@ -171,11 +152,10 @@ $(function() {
       var json = { 'allleds': $(this).prop('checked') };
       var tmode = $('#tmode option:selected').val();
 
-      if(!tmode.localeCompare('t_chase')) {
-          wsEnqueue('T4' + JSON.stringify(json));
-      }
-      else if(!tmode.localeCompare('t_rainbow')) {
-          wsEnqueue('T5' + JSON.stringify(json));
+      if (typeof effectInfo[tmode].wsTCode !== 'undefined') {
+          if (effectInfo[tmode].hasAllLeds) {
+              wsEnqueue( effectInfo[tmode].wsTCode + JSON.stringify(json) );
+          }
       }
     });
 
@@ -507,7 +487,9 @@ function drawStream(streamData) {
 }
 
 function clearStream() {
+    if (typeof ctx !== 'undefined') {
      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
 }
 
 function getElements(data) {
@@ -671,8 +653,8 @@ function getEffectInfo(data) {
     parsed = JSON.parse(data);
     effectInfo = parsed.effectList;
 
-  console.log (effectInfo);
-  console.log (effectInfo.t_chase);
+//  console.log (effectInfo);
+//  console.log (effectInfo.t_chase);
 
     for (var i in effectInfo) {
         var htmlid = effectInfo[i].htmlid;
@@ -891,14 +873,40 @@ function hideShowTestSections() {
     // Test mode toggles
     $('.tdiv').addClass('hidden');
     $('#'+$('select[name=tmode]').val()).removeClass('hidden');
+
+    var tmode = $('#tmode option:selected').val();
+//console.log('tmode is: ' + tmode);
+    if ( (typeof tmode !== 'undefined') && (typeof effectInfo[tmode].wsTCode !== 'undefined') ) {
+        if (effectInfo[tmode].hasColor) {
+            $('#div_color').removeClass('hidden');
+	} else {
+            $('#div_color').addClass('hidden');
+        }
+        if (effectInfo[tmode].hasMirror) {
+            $('#div_mirror').removeClass('hidden');
+	} else {
+            $('#div_mirror').addClass('hidden');
+        }
+        if (effectInfo[tmode].hasReverse) {
+            $('#div_reverse').removeClass('hidden');
+	} else {
+            $('#div_reverse').addClass('hidden');
+        }
+        if (effectInfo[tmode].hasAllLeds) {
+            $('#div_allleds').removeClass('hidden');
+	} else {
+            $('#div_allleds').addClass('hidden');
+        }
+    }
 }
 
-function test() {
+// effect selector changed
+function effectChanged() {
     hideShowTestSections();
 
     var tmode = $('#tmode option:selected').val();
 
-console.log ('found tcode ' + effectInfo[tmode].wsTCode);
+//console.log ('found tcode ' + effectInfo[tmode].wsTCode);
     if (typeof effectInfo[tmode].wsTCode !== 'undefined') {
         wsEnqueue( effectInfo[tmode].wsTCode );
     }

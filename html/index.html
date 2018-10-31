@@ -382,18 +382,7 @@
           <div class="form-group">
             <label class="control-label col-sm-2" for="t_mode">Testing Mode</label>
             <div class="col-sm-10">
-              <select class="form-control" id="tmode" name="tmode" onchange="test()">
-<!--
-                <option value="t_disabled">Disabled</option>
-                <option value="t_static">Static</option>
-                <option value="t_blink">Blink</option>
-                <option value="t_flash">Flash</option>
-                <option value="t_chase">Chase</option>
-                <option value="t_rainbow">Rainbow</option>
-                <option value="t_fireflicker">Fire flicker</option>
-                <option value="t_lightning">Lightning</option>
-                <option value="t_breathe">Breathe</option>
--->
+              <select class="form-control" id="tmode" name="tmode" onchange="effectChanged()">
               </select>
             </div>
           </div>
@@ -404,16 +393,16 @@
             <legend class="esps-legend">Effect Options</legend>
             <div class="form-group">
               <label class="control-label col-sm-2" for="t_color">Color</label>
-              <div class="col-sm-10">
+              <div class="col-sm-10" id="div_color">
                 <input type="button" id="t_color" class="form-control color no-alpha" value="rgb(255,255,255)" />
               </div>
-              <div class="col-sm-offset-2 col-sm-10">
+              <div class="col-sm-offset-2 col-sm-10" id="div_reverse">
                 <div class="checkbox"><label><input type="checkbox" id="t_reverse" class="reverse" name="t_reverse">Reverse pattern</label></div>
               </div>
-              <div class="col-sm-offset-2 col-sm-10">
+              <div class="col-sm-offset-2 col-sm-10" id="div_mirror">
                 <div class="checkbox"><label><input type="checkbox" id="t_mirror" class="mirror" name="t_mirror">Mirror pattern</label></div>
               </div>
-              <div class="col-sm-offset-2 col-sm-10">
+              <div class="col-sm-offset-2 col-sm-10" id="div_allleds">
                 <div class="checkbox"><label><input type="checkbox" id="t_allleds" class="allleds" name="t_allleds">All leds same </label></div>
               </div>
             </div>
