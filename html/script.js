@@ -4,19 +4,6 @@ var wsQueue = [];
 var wsBusy = false;
 var wsTimerId;
 
-var testing_modes = {
-    "" : "t_disabled",
-    "Solid"         : "t_static",
-    "Blink"         : "t_blink",
-    "Flash"         : "t_flash",
-    "Chase"         : "t_chase",
-    "Rainbow"       : "t_rainbow",
-    "Fire flicker"  : "t_fireflicker",
-    "Lightning"     : "t_lightning",
-    "Breathe"       : "t_breathe",
-    "View" : "t_view"
-};
-
 // json with effect definitions
 var effectInfo;
 
@@ -651,29 +638,31 @@ function getConfigStatus(data) {
 
 function getEffectInfo(data) {
     parsed = JSON.parse(data);
-    effectInfo = parsed.effectList;
+
+    effectInfo = parsed.effectList;	// global effectInfo
+    var running = parsed.currentEffect;
 
 //  console.log (effectInfo);
 //  console.log (effectInfo.t_chase);
 
+    // process the effect configuration options
     for (var i in effectInfo) {
         var htmlid = effectInfo[i].htmlid;
         var name =   effectInfo[i].name;
-//      console.log ('htmlid ' + htmlid + ' name ' + name);
         $('#tmode').append('<option value="' + htmlid + '">' + name + '</option>');
+        if ( ! name.localeCompare(running.name) ) {
+            $('#tmode').val(htmlid);
+            hideShowTestSections();
+        }
     }
 
-    var data = parsed.currentEffect;
-    if ($('#tmode option:selected').val().localeCompare(testing_modes[data.name])) {
-        $('#tmode').val(testing_modes[data.name]);
-        hideShowTestSections();
-    }
-
-    $('.color').val('rgb(' + data.r + ',' + data.g + ',' + data.b + ')');
-    $('.reverse').prop('checked', data.reverse);
-    $('.mirror').prop('checked', data.mirror);
-    $('.allleds').prop('checked', data.allleds);
-    $('#t_startenabled').prop('checked', data.enabled);
+    // set html based on current running effect
+    $('.color').val('rgb(' + running.r + ',' + running.g + ',' + running.b + ')');
+    $('.color').css('background-color', 'rgb(' + running.r + ',' + running.g + ',' + running.b + ')');
+    $('#t_reverse').prop('checked', running.reverse);
+    $('#t_mirror').prop('checked', running.mirror);
+    $('#t_allleds').prop('checked', running.allleds);
+    $('#t_startenabled').prop('checked', running.enabled);
 }
 
 function getSystemStatus(data) {
@@ -810,9 +799,8 @@ function submitConfig() {
 function submitStartupEffect() {
 // not pretty - get current r,g,b from color picker
     var temp = $('.color').val().split(/\D+/);
-//console.log (temp);
 
-    var currentEffectName = getKeyByValue(testing_modes, $('#tmode option:selected').val());
+    var currentEffectName = effectInfo[ $('#tmode option:selected').val() ].name;
 //console.log (currentEffectName);
 
     var json = {
