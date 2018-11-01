@@ -143,8 +143,7 @@ void debounce_buttons() {
 
 void handle_short_release() {
 
-//      if (config.testmode == TestMode::STATIC) {
-      if ( 0 == strcasecmp( effects.getEffect(), "Solid") ) {
+      if ( effects.getEffect() == "Solid") {
         if (++selected_option > 2) {
           selected_option = 0;
         }

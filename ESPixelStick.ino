@@ -618,6 +618,11 @@ void initWeb() {
 
     DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), "*");
 
+    // Config file upload handler
+    web.on("/config", HTTP_POST, [](AsyncWebServerRequest *request) {
+        ws.textAll("X6");
+    }, handle_config_upload);
+
     web.begin();
 
     LOG_PORT.print(F("- Web Server started on port "));
@@ -661,7 +666,6 @@ void validateConfig() {
 
 #if defined(ESPS_MODE_PIXEL)
     // Set Mode
-//    config.devmode = DevMode::MPIXEL;
     config.devmode.MPIXEL = true;
     config.devmode.MSERIAL = false;
 
@@ -692,7 +696,6 @@ void validateConfig() {
     }
 #elif defined(ESPS_MODE_SERIAL)
     // Set Mode
-//    config.devmode = DevMode::MSERIAL;
     config.devmode.MPIXEL = false;
     config.devmode.MSERIAL = true;
 
@@ -711,6 +714,13 @@ void validateConfig() {
     else if (config.baudrate < BaudRate::BR_38400)
         config.baudrate = BaudRate::BR_57600;
 #endif
+
+    if (config.startup_effect_enabled) {
+        if (effects.isValidEffect(config.startup_effect_name)) {
+            effects.setFromConfig();
+            config.ds = DataSource::WEB;
+        }
+    }
 }
 
 void updateConfig() {
@@ -787,6 +797,22 @@ void dsNetworkConfig(JsonObject &json) {
         char chipId[7] = { 0 };
         snprintf(chipId, sizeof(chipId), "%06x", ESP.getChipId());
         config.hostname = "esps-" + String(chipId);
+    }
+}
+
+// De-serialize Effect Config
+void dsEffectConfig(JsonObject &json) {
+    // Effects
+    if (json.containsKey("effects")) {
+        JsonObject& effectsJson = json["effects"];
+        config.startup_effect_name = effectsJson["name"].as<String>();
+        config.startup_effect_mirror = effectsJson["mirror"];
+        config.startup_effect_allleds = effectsJson["allleds"];
+        config.startup_effect_reverse = effectsJson["reverse"];
+        config.startup_effect_color = { effectsJson["r"], effectsJson["g"], effectsJson["b"] };
+        if (effectsJson.containsKey("brightness"))
+            config.startup_effect_brightness = effectsJson["brightness"];
+        config.startup_effect_enabled = effectsJson["enabled"];
     }
 }
 
@@ -881,6 +907,7 @@ void loadConfig() {
 
         dsNetworkConfig(json);
         dsDeviceConfig(json);
+        dsEffectConfig(json);
 
         LOG_PORT.println(F("- Configuration loaded."));
     }
@@ -916,6 +943,21 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     }
     network["dhcp"] = config.dhcp;
     network["ap_fallback"] = config.ap_fallback;
+
+    // Effects
+    JsonObject &_effects = json.createNestedObject("effects");
+    _effects["name"] = config.startup_effect_name;
+
+    _effects["mirror"] = config.startup_effect_mirror;
+    _effects["allleds"] = config.startup_effect_allleds;
+    _effects["reverse"] = config.startup_effect_reverse;
+
+    _effects["r"] = config.startup_effect_color.r;
+    _effects["g"] = config.startup_effect_color.g;
+    _effects["b"] = config.startup_effect_color.b;
+
+    _effects["brightness"] = config.startup_effect_brightness;
+    _effects["enabled"] = config.startup_effect_enabled;
 
     // MQTT
     JsonObject &_mqtt = json.createNestedObject("mqtt");
