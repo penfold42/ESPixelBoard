@@ -193,7 +193,7 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             JsonObject &effectList = json.createNestedObject("effectList");
             for(int i=0; i < effects.getEffectCount(); i++){
               // hide the "view" option from effect list
-              if ( strcasecmp(effects.getEffectInfo(i)->name, "View") ) {
+              if ( effects.getEffectInfo(i)->name != "View") {
                 JsonObject &effect = effectList.createNestedObject( effects.getEffectInfo(i)->htmlid );
                 effect["name"] = effects.getEffectInfo(i)->name;
                 effect["htmlid"] = effects.getEffectInfo(i)->htmlid;
