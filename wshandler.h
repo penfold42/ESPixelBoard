@@ -192,6 +192,8 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
 // dump all the known effect and options
             JsonObject &effectList = json.createNestedObject("effectList");
             for(int i=0; i < effects.getEffectCount(); i++){
+              // hide the "view" option from effect list
+              if ( strcasecmp(effects.getEffectInfo(i)->name, "View") ) {
                 JsonObject &effect = effectList.createNestedObject( effects.getEffectInfo(i)->htmlid );
                 effect["name"] = effects.getEffectInfo(i)->name;
                 effect["htmlid"] = effects.getEffectInfo(i)->htmlid;
@@ -200,8 +202,9 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
                 effect["hasReverse"] = effects.getEffectInfo(i)->hasReverse;
                 effect["hasAllLeds"] = effects.getEffectInfo(i)->hasAllLeds;
                 effect["wsTCode"] = effects.getEffectInfo(i)->wsTCode;
-//            effect["brightness"] = effects.getBrightness();
-//            effect["speed"] = effects.getSpeed();
+//              effect["brightness"] = effects.getBrightness();
+//              effect["speed"] = effects.getSpeed();
+              }
             }
 
             json.printTo(response);

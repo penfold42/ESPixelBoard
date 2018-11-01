@@ -392,7 +392,7 @@
           <div id="t_options">
             <legend class="esps-legend">Effect Options</legend>
             <div class="form-group">
-              <label class="control-label col-sm-2" for="t_color">Color</label>
+              <label class="control-label col-sm-2" id="lab_color" for="t_color">Color</label>
               <div class="col-sm-10" id="div_color">
                 <input type="button" id="t_color" class="form-control color no-alpha" value="rgb(255,255,255)" />
               </div>
@@ -409,7 +409,7 @@
           </div>
 
           <!-- Startup Effect Config -->
-          <div id="t_startup">
+          <div class="t_startup">
             <legend class="esps-legend">Startup Effect</legend>
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
@@ -417,7 +417,7 @@
               </div>
             </div>
           </div>
-          <div class="form-group">
+          <div class="form-group t_startup">
             <div class="col-sm-offset-2 col-sm-10">
               <button type="button" onclick="submitStartupEffect()" class="btn btn-primary">Set Startup</button>
             </div>

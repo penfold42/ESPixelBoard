@@ -859,15 +859,17 @@ function refreshSerial() {
 
 function hideShowTestSections() {
     // Test mode toggles
-    $('.tdiv').addClass('hidden');
-    $('#'+$('select[name=tmode]').val()).removeClass('hidden');
+//    $('.tdiv').addClass('hidden');
+//    $('#'+$('select[name=tmode]').val()).removeClass('hidden');
 
     var tmode = $('#tmode option:selected').val();
 //console.log('tmode is: ' + tmode);
     if ( (typeof tmode !== 'undefined') && (typeof effectInfo[tmode].wsTCode !== 'undefined') ) {
         if (effectInfo[tmode].hasColor) {
+            $('#lab_color').removeClass('hidden');
             $('#div_color').removeClass('hidden');
 	} else {
+            $('#lab_color').addClass('hidden');
             $('#div_color').addClass('hidden');
         }
         if (effectInfo[tmode].hasMirror) {

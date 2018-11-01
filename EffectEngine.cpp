@@ -24,7 +24,7 @@ const EffectDesc EFFECT_LIST[] = {
 
 // Effect defaults
 #define DEFAULT_EFFECT_NAME "Solid"
-#define DEFAULT_EFFECT_COLOR { 128, 128, 255 }
+#define DEFAULT_EFFECT_COLOR { 255, 255, 255 }
 #define DEFAULT_EFFECT_BRIGHTNESS 255
 #define DEFAULT_EFFECT_REVERSE false
 #define DEFAULT_EFFECT_MIRROR false
@@ -57,7 +57,7 @@ void EffectEngine::begin(DRIVER* ledDriver, uint16_t ledCount) {
 }
 
 void EffectEngine::run() {
-    if (_initialized && _activeEffect) {
+    if (_initialized && _activeEffect && _activeEffect->func) {
         uint32_t now = millis();
         if (now > _effectTimeout) {
             uint16_t delay = (this->*_activeEffect->func)();
