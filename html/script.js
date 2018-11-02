@@ -358,6 +358,7 @@ function wsConnect() {
                     setConfig(data);
                     break;
                 case 'S3':
+                    snackSave();
                     break;
                 case 'XS':
                     getSystemStatus(data);
