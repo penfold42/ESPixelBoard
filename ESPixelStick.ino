@@ -518,7 +518,7 @@ void publishState() {
     color["g"] = effects.getColor().g;
     color["b"] = effects.getColor().b;
     root["brightness"] = effects.getBrightness();
-    if (effects.getEffect() != nullptr) {
+    if (effects.getEffect() != "") {
         root["effect"] = effects.getEffect();
     }
     root["reverse"] = effects.getReverse();
@@ -773,30 +773,34 @@ void updateConfig() {
 
 // De-Serialize Network config
 void dsNetworkConfig(JsonObject &json) {
-    // Fallback to embedded ssid and passphrase if null in config
-    config.ssid = json["network"]["ssid"].as<String>();
-    if (!config.ssid.length())
-        config.ssid = ssid;
+    if (json.containsKey("network")) {
+        JsonObject& networkJson = json["network"];
 
-    config.passphrase = json["network"]["passphrase"].as<String>();
-    if (!config.passphrase.length())
-        config.passphrase = passphrase;
+        // Fallback to embedded ssid and passphrase if null in config
+        config.ssid = networkJson["ssid"].as<String>();
+        if (!config.ssid.length())
+            config.ssid = ssid;
 
-    // Network
-    for (int i = 0; i < 4; i++) {
-        config.ip[i] = json["network"]["ip"][i];
-        config.netmask[i] = json["network"]["netmask"][i];
-        config.gateway[i] = json["network"]["gateway"][i];
-    }
-    config.dhcp = json["network"]["dhcp"];
-    config.ap_fallback = json["network"]["ap_fallback"];
+        config.passphrase = networkJson["passphrase"].as<String>();
+        if (!config.passphrase.length())
+            config.passphrase = passphrase;
 
-    // Generate default hostname if needed
-    config.hostname = json["network"]["hostname"].as<String>();
-    if (!config.hostname.length()) {
-        char chipId[7] = { 0 };
-        snprintf(chipId, sizeof(chipId), "%06x", ESP.getChipId());
-        config.hostname = "esps-" + String(chipId);
+        // Network
+        for (int i = 0; i < 4; i++) {
+            config.ip[i] = networkJson["ip"][i];
+            config.netmask[i] = networkJson["netmask"][i];
+            config.gateway[i] = networkJson["gateway"][i];
+        }
+        config.dhcp = networkJson["dhcp"];
+        config.ap_fallback = networkJson["ap_fallback"];
+
+        // Generate default hostname if needed
+        config.hostname = networkJson["hostname"].as<String>();
+        if (!config.hostname.length()) {
+            char chipId[7] = { 0 };
+            snprintf(chipId, sizeof(chipId), "%06x", ESP.getChipId());
+            config.hostname = "esps-" + String(chipId);
+        }
     }
 }
 
@@ -852,21 +856,24 @@ void dsDeviceConfig(JsonObject &json) {
 
 #if defined(ESPS_SUPPORT_PWM)
     /* PWM */
-    config.pwm_global_enabled = json["pwm"]["enabled"];
-    config.pwm_freq = json["pwm"]["freq"];
-    config.pwm_gamma = json["pwm"]["gamma"];
-    config.pwm_gpio_invert = 0;
-    config.pwm_gpio_digital = 0;
-    config.pwm_gpio_enabled = 0;
-    for (int gpio = 0; gpio < NUM_GPIO; gpio++) {
-        if (pwm_valid_gpio_mask & 1<<gpio) {
-            config.pwm_gpio_dmx[gpio] = json["pwm"]["gpio" + (String)gpio + "_channel"];
-            if (json["pwm"]["gpio" + (String)gpio + "_invert"])
-                config.pwm_gpio_invert |= 1<<gpio;
-            if (json["pwm"]["gpio" + (String)gpio + "_digital"])
-                config.pwm_gpio_digital |= 1<<gpio;
-            if (json["pwm"]["gpio" + (String)gpio + "_enabled"])
-                config.pwm_gpio_enabled |= 1<<gpio;
+    if (json.containsKey("pwn")) {
+        JsonObject& pwmJson = json["pwm"];
+        config.pwm_global_enabled = pwmJson["enabled"];
+        config.pwm_freq = pwmJson["freq"];
+        config.pwm_gamma = pwmJson["gamma"];
+        config.pwm_gpio_invert = 0;
+        config.pwm_gpio_digital = 0;
+        config.pwm_gpio_enabled = 0;
+        for (int gpio = 0; gpio < NUM_GPIO; gpio++) {
+            if (pwm_valid_gpio_mask & 1<<gpio) {
+                config.pwm_gpio_dmx[gpio] = pwmJson["gpio" + (String)gpio + "_channel"];
+                if (pwmJson["gpio" + (String)gpio + "_invert"])
+                    config.pwm_gpio_invert |= 1<<gpio;
+                if (pwmJson["gpio" + (String)gpio + "_digital"])
+                    config.pwm_gpio_digital |= 1<<gpio;
+                if (pwmJson["gpio" + (String)gpio + "_enabled"])
+                    config.pwm_gpio_enabled |= 1<<gpio;
+            }
         }
     }
 #endif
