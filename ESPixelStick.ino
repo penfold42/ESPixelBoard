@@ -415,18 +415,16 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
 void onMqttMessage(char* topic, char* payload,
         AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
 
-// old mqtt handling
-    String Spayload;
-    for (uint8_t i = 0; i < len; i++)
-        Spayload.concat((char)payload[i]);
+//  LOG_PORT.printf("%s", payload);
 
-    StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
-    JsonObject& root = jsonBuffer.parseObject(payload);
-    bool stateOn = false;
+// check first char for {, if so, its new style json message
+    if (payload[0] != '{') { // old mqtt handling
 
-    if (!root.success()) {
-        LOG_PORT.println("MQTT: json Parsing failed");
-//        LOG_PORT.printf("%s", payload);
+	String Spayload;
+        for (uint8_t i = 0; i < len; i++)
+            Spayload.concat((char)payload[i]);
+
+        bool stateOn = false;
 
         // old style Handle message topic
         if (String(config.mqtt_topic + MQTT_LIGHT_COMMAND_TOPIC).equals(topic)) {
@@ -466,55 +464,64 @@ void onMqttMessage(char* topic, char* payload,
             effects.clearAll();
         }
 
-        return;
-    }
-
-    if (root.containsKey("state")) {
-        if (strcmp(root["state"], LIGHT_ON) == 0) {
-            stateOn = true;
-        } else if (strcmp(root["state"], LIGHT_OFF) == 0) {
-            stateOn = false;
-        }
-    }
-
-    if (root.containsKey("brightness")) {
-        effects.setBrightness(root["brightness"]);
-    }
-
-    if (root.containsKey("color")) {
-        effects.setColor({
-            root["color"]["r"],
-            root["color"]["g"],
-            root["color"]["b"]
-        });
-    }
-
-    if (root.containsKey("effect")) {
-        // Set the explict effect provided by the MQTT client
-        effects.setEffect(root["effect"]);
-    }
-
-    if (root.containsKey("reverse")) {
-        effects.setReverse(root["reverse"]);
-    }
-
-    if (root.containsKey("mirror")) {
-        effects.setMirror(root["mirror"]);
-    }
-
-    if (root.containsKey("allleds")) {
-        effects.setAllLeds(root["allleds"]);
-    }
-
-    // Set data source based on state - Fall back to E131 when off
-    if (stateOn) {
-        config.ds = DataSource::MQTT;
     } else {
-        config.ds = DataSource::E131;
-        effects.clearAll();
-    }
 
-    publishState();
+        StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+        JsonObject& root = jsonBuffer.parseObject(payload);
+        bool stateOn = false;
+
+        if (!root.success()) {
+            LOG_PORT.println("MQTT: json Parsing failed");
+            return;
+        }
+
+        if (root.containsKey("state")) {
+            if (strcmp(root["state"], LIGHT_ON) == 0) {
+                stateOn = true;
+            } else if (strcmp(root["state"], LIGHT_OFF) == 0) {
+                stateOn = false;
+            }
+        }
+
+        if (root.containsKey("brightness")) {
+            effects.setBrightness(root["brightness"]);
+        }
+
+        if (root.containsKey("color")) {
+            effects.setColor({
+                root["color"]["r"],
+                root["color"]["g"],
+                root["color"]["b"]
+            });
+        }
+
+        if (root.containsKey("effect")) {
+            // Set the explict effect provided by the MQTT client
+            effects.setEffect(root["effect"]);
+        }
+
+        if (root.containsKey("reverse")) {
+            effects.setReverse(root["reverse"]);
+        }
+
+        if (root.containsKey("mirror")) {
+            effects.setMirror(root["mirror"]);
+        }
+
+        if (root.containsKey("allleds")) {
+            effects.setAllLeds(root["allleds"]);
+        }
+
+        // Set data source based on state - Fall back to E131 when off
+        if (stateOn) {
+            config.ds = DataSource::MQTT;
+        } else {
+            config.ds = DataSource::E131;
+            effects.clearAll();
+        }
+
+        publishState();
+    }
 }
 
 void publishState() {
@@ -868,7 +875,7 @@ void dsDeviceConfig(JsonObject &json) {
 
 #if defined(ESPS_SUPPORT_PWM)
     /* PWM */
-    if (json.containsKey("pwn")) {
+    if (json.containsKey("pwm")) {
         JsonObject& pwmJson = json["pwm"];
         config.pwm_global_enabled = pwmJson["enabled"];
         config.pwm_freq = pwmJson["freq"];
