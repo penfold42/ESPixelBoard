@@ -195,6 +195,12 @@ void setup() {
     updateConfig();
 #endif
 
+    // Configure the pwm outputs
+#if defined (ESPS_SUPPORT_PWM)
+    setupPWM();
+    handlePWM(); // Do one update cycle as early as possible
+#endif
+
     // Setup WiFi Handlers
     wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
 
@@ -261,11 +267,6 @@ void setup() {
 
 #if defined(ESPS_ENABLE_BUTTONS)
     setupButtons();
-#endif
-
-    // Configure the outputs
-#if defined (ESPS_SUPPORT_PWM)
-    setupPWM();
 #endif
 
 }
