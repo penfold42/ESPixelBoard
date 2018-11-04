@@ -418,6 +418,11 @@ void onMqttMessage(char* topic, char* payload,
 
 //  LOG_PORT.printf("%s", payload);
 
+// if its a retained message and we want clean session, ignore it
+    if ( properties.retain && config.mqtt_clean ) {
+        return;
+    }
+
 // check first char for {, if so, its new style json message
     if (payload[0] != '{') { // old mqtt handling
 
