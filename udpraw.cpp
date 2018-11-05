@@ -1,53 +1,85 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <Arduino.h>
 #include <WiFiUdp.h>
+#include <ArduinoJson.h>
+#include <lwip/ip_addr.h>
+#include <lwip/igmp.h>
 
 #include "ESPixelStick.h"
 #include "udpraw.h"
 
-extern  config_t        config;
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-WiFiUDP             RAWudp;             /* Raw UDP packet Server */
-unsigned int        RAWPort = 2801;      // local port to listen for UDP packets
-unsigned long       RAW_ctr = 0;
+#ifdef ESPS_ENABLE_UDPRAW
 
-void setupUDPraw() {
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  if (!RAWudp) {
-    LOG_PORT.println("Starting UDP");
-    RAWudp.begin(RAWPort);
-    MDNS.addService("hyperiond-rgbled", "udp", RAWPort);
-    LOG_PORT.print("Local RAWport: ");
-    LOG_PORT.println(RAWudp.localPort());
-  }
+extern config_t config;
+
+#if defined(ESPS_MODE_PIXEL)
+extern PixelDriver     pixels;         // Pixel object
+#define _driver pixels
+#elif defined(ESPS_MODE_SERIAL)
+extern SerialDriver    serial;         // Serial object
+#define _driver serial
+#endif
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void UdpRaw::begin(uint16_t port /*= ESPS_UDP_RAW_DEFAULT_PORT*/)
+{
+    bool isListening = false;
+
+    if(config.multicast)
+    {
+        uint16_t universe = config.universe;
+        IPAddress address = IPAddress(239, 255, ((universe >> 8) & 0xff), ((universe >> 0) & 0xff));
+
+        isListening = _udp.listenMulticast(address, port);
+    }
+    else
+    {
+        isListening = _udp.listen(port);
+    }
+
+    if(isListening)
+    {
+        MDNS.addService("hyperiond-rgbled", "udp", port);
+
+        _udp.onPacket(std::bind(&UdpRaw::onPacket, this, std::placeholders::_1));
+
+        LOG_PORT.print(" - Local UDP RAW Port: ");
+        LOG_PORT.println(port);
+    }
 }
 
-void handleUDPraw() {
-  if (!RAWudp) {
-    return;
-  }
+void UdpRaw::onPacket(AsyncUDPPacket packet)
+{
 
-// Do we have a packet?
-  int size = RAWudp.parsePacket();
+    stats.last_clientIP = packet.remoteIP();
+    stats.num_packets++;
+    if (packet.length() < config.channel_count)
+        stats.short_packets++;
+    if (packet.length() > config.channel_count)
+        stats.long_packets++;
 
-// yep, go read it
-  if (size) {
-    int i=0;
-    for (i = 0; i < _min(size,config.channel_count); i++) {
-#if defined(ESPS_MODE_PIXEL)
-        pixels.setValue(i, RAWudp.read());
-#elif defined(ESPS_MODE_SERIAL)
-        serial.setValue(i, RAWudp.read());
-#endif
+    // do not disturb effects...
+    if(config.ds == DataSource::E131)
+    {
+        int nread = _min(packet.length(), config.channel_count);
+        memcpy(_driver.getData(), packet.data(), nread);
+
+        if (zeropad) {
+            int nzero = config.channel_count - nread;
+            if (nzero > 0)
+                memset(_driver.getData() + nread, 0, nzero);
+        }
     }
-    /* fill the rest with 0s*/
-    for (      ; i < config.channel_count; i++) {
-#if defined(ESPS_MODE_PIXEL)
-        pixels.setValue(i, 0);
-#elif defined(ESPS_MODE_SERIAL)
-        serial.setValue(i, 0);
-#endif
-    }
-  }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#endif //#ifdef ESPS_ENABLE_UDPRAW
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

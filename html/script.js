@@ -297,6 +297,7 @@ function feed() {
     if ($('#home').is(':visible')) {
         wsEnqueue('XS');
         wsEnqueue('X2');
+        wsEnqueue('X3');
 
         setTimeout(function() {
             feed();
@@ -365,6 +366,9 @@ function wsConnect() {
                     break;
                 case 'X2':
                     getE131Status(data);
+                    break;
+                case 'X3':
+                    getUDPStatus(data);
                     break;
                 case 'X6':
                     showReboot();
@@ -707,6 +711,15 @@ function getE131Status(data) {
     $('#serr').text(status[3]);
     $('#perr').text(status[4]);
     $('#clientip').text(status[5]);
+}
+
+function getUDPStatus(data) {
+    var status = data.split(':');
+
+    $('#udp_pkts').text(status[0]);
+    $('#udp_shortpkts').text(status[1]);
+    $('#udp_longpkts').text(status[2]);
+    $('#udp_clientip').text(status[3]);
 }
 
 function snackSave() {

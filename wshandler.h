@@ -28,6 +28,11 @@ extern PixelDriver  pixels;     // Pixel object
 extern SerialDriver serial;     // Serial object
 #endif
 
+#if defined(ESPS_MODE_PIXEL)
+#include "udpraw.h"
+extern UdpRaw       udpraw;
+#endif
+
 extern EffectEngine effects;    // EffectEngine for test modes
 
 extern ESPAsyncE131 e131;       // ESPAsyncE131 with X buffers
@@ -88,6 +93,14 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
                     (String)seqErrors + ":" +
                     (String)e131.stats.packet_errors + ":" +
                     e131.stats.last_clientIP.toString());
+            break;
+        }
+        case '3': {
+            client->text("X3" +
+                    (String)udpraw.stats.num_packets + ":" +
+                    (String)udpraw.stats.short_packets + ":" +
+                    (String)udpraw.stats.long_packets + ":" +
+                    udpraw.stats.last_clientIP.toString());
             break;
         }
         case '6':  // Init 6 baby, reboot!
