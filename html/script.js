@@ -295,9 +295,7 @@ function wifiValidation() {
 // Page event feeds
 function feed() {
     if ($('#home').is(':visible')) {
-        wsEnqueue('XS');
-        wsEnqueue('X2');
-        wsEnqueue('X3');
+        wsEnqueue('XJ');
 
         setTimeout(function() {
             feed();
@@ -361,14 +359,8 @@ function wsConnect() {
                 case 'S3':
                     snackSave();
                     break;
-                case 'XS':
-                    getSystemStatus(data);
-                    break;
-                case 'X2':
-                    getE131Status(data);
-                    break;
-                case 'X3':
-                    getUDPStatus(data);
+                case 'XJ':
+                    getJsonStatus(data);
                     break;
                 case 'X6':
                     showReboot();
@@ -672,10 +664,10 @@ function getEffectInfo(data) {
     $('#t_startenabled').prop('checked', running.enabled);
 }
 
-function getSystemStatus(data) {
-    var status = data.split(':');
+function getJsonStatus(data) {
+    var status = JSON.parse(data);
 
-    var rssi = +status[0];
+    var rssi = +status.system.rssi;
     var quality = 2 * (rssi + 100);
 
     if (rssi <= -100)
@@ -687,12 +679,10 @@ function getSystemStatus(data) {
     $('#x_quality').text(quality);
 
 // getHeap(data)
-    var heap = status[1];
+    $('#x_freeheap').text( status.system.freeheap );
 
-    $('#x_freeheap').text(heap);
-
-// function getUptime
-    var date = new Date(+status[2]);
+// getUptime
+    var date = new Date(+status.system.uptime);
     var str = '';
 
     str += Math.floor(date.getTime()/86400000) + " days, ";
@@ -700,26 +690,20 @@ function getSystemStatus(data) {
     str += ("0" + date.getUTCMinutes()).slice(-2) + ":";
     str += ("0" + date.getUTCSeconds()).slice(-2);
     $('#x_uptime').text(str);
-}
 
-function getE131Status(data) {
-    var status = data.split(':');
+// getE131Status(data)
+    $('#uni_first').text(status.e131.universe);
+    $('#uni_last').text(status.e131.uniLast);
+    $('#pkts').text(status.e131.num_packets);
+    $('#serr').text(status.e131.seq_errors);
+    $('#perr').text(status.e131.packet_errors);
+    $('#clientip').text(status.e131.last_clientIP);
 
-    $('#uni_first').text(status[0]);
-    $('#uni_last').text(status[1]);
-    $('#pkts').text(status[2]);
-    $('#serr').text(status[3]);
-    $('#perr').text(status[4]);
-    $('#clientip').text(status[5]);
-}
-
-function getUDPStatus(data) {
-    var status = data.split(':');
-
-    $('#udp_pkts').text(status[0]);
-    $('#udp_shortpkts').text(status[1]);
-    $('#udp_longpkts').text(status[2]);
-    $('#udp_clientip').text(status[3]);
+// getUDPStatus(data)
+    $('#udp_pkts').text(status.udp.num_packets);
+    $('#udp_shortpkts').text(status.udp.short_packets);
+    $('#udp_longpkts').text(status.udp.long_packets);
+    $('#udp_clientip').text(status.udp.last_clientIP);
 }
 
 function snackSave() {

@@ -66,8 +66,8 @@ extern const char CONFIG_FILE[];
     S2 - Set Device Config
     S3 - Set Effect Startup Config
 
-    XS - Get RSSI:heap:uptime
-    X2 - Get E131 Status
+    XJ - Get RSSI,heap,uptime, e131 stats
+
     X6 - Reboot
 */
 
@@ -101,6 +101,42 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
                     (String)udpraw.stats.short_packets + ":" +
                     (String)udpraw.stats.long_packets + ":" +
                     udpraw.stats.last_clientIP.toString());
+            break;
+        }
+        case 'J': {
+
+            DynamicJsonBuffer jsonBuffer;
+            JsonObject &json = jsonBuffer.createObject();
+
+            // system statistics
+            JsonObject &system = json.createNestedObject("system");
+            system["rssi"] = (String)WiFi.RSSI();
+            system["freeheap"] = (String)ESP.getFreeHeap();
+            system["uptime"] = (String)millis();
+
+            // E131 statistics
+            JsonObject &e131J = json.createNestedObject("e131");
+            uint32_t seqErrors = 0;
+            for (int i = 0; i < ((uniLast + 1) - config.universe); i++)
+                seqErrors =+ seqError[i];
+
+            e131J["universe"] = (String)config.universe;
+            e131J["uniLast"] = (String)uniLast;
+            e131J["num_packets"] = (String)e131.stats.num_packets;
+            e131J["seq_errors"] = (String)seqErrors;
+            e131J["packet_errors"] = (String)e131.stats.packet_errors;
+            e131J["last_clientIP"] = e131.stats.last_clientIP.toString();
+
+            // UDP raw statistics
+            JsonObject &udp = json.createNestedObject("udp");
+            udp["num_packets"] = (String)udpraw.stats.num_packets;
+            udp["short_packets"] = (String)udpraw.stats.short_packets;
+            udp["long_packets"] = (String)udpraw.stats.long_packets;
+            udp["last_clientIP"] = udpraw.stats.last_clientIP.toString();
+
+            String response;
+            json.printTo(response);
+            client->text("XJ" + response);
             break;
         }
         case '6':  // Init 6 baby, reboot!
