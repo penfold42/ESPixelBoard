@@ -181,6 +181,26 @@ void setup() {
     if (config.hostname)
         WiFi.hostname(config.hostname);
 
+#if defined (ESPS_MODE_PIXEL)
+    pixels.setPin(DATA_PIN);
+    updateConfig();
+
+    // Do one effects cycle as early as possible
+    if (config.ds == DataSource::WEB) {
+        effects.run();
+    }
+
+    pixels.show();
+#else
+    updateConfig();
+#endif
+
+    // Configure the pwm outputs
+#if defined (ESPS_SUPPORT_PWM)
+    setupPWM();
+    handlePWM(); // Do one update cycle as early as possible
+#endif
+
     // Setup WiFi Handlers
     wifiConnectHandler = WiFi.onStationModeGotIP(onWifiConnect);
 
@@ -190,6 +210,8 @@ void setup() {
         mqtt.onDisconnect(onMqttDisconnect);
         mqtt.onMessage(onMqttMessage);
         mqtt.setServer(config.mqtt_ip.c_str(), config.mqtt_port);
+        // Unset clean session (defaults to true) so we get retained messages of QoS > 0
+        mqtt.setCleanSession(config.mqtt_clean);
         if (config.mqtt_user.length() > 0)
             mqtt.setCredentials(config.mqtt_user.c_str(), config.mqtt_password.c_str());
     }
@@ -245,19 +267,6 @@ void setup() {
 
 #if defined(ESPS_ENABLE_BUTTONS)
     setupButtons();
-#endif
-
-#if defined (ESPS_MODE_PIXEL)
-    pixels.setPin(DATA_PIN);
-    updateConfig();
-    pixels.show();
-#else
-    updateConfig();
-#endif
-
-    // Configure the outputs
-#if defined (ESPS_SUPPORT_PWM)
-    setupPWM();
 #endif
 
 }
@@ -407,18 +416,21 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
 void onMqttMessage(char* topic, char* payload,
         AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
 
-// old mqtt handling
-    String Spayload;
-    for (uint8_t i = 0; i < len; i++)
-        Spayload.concat((char)payload[i]);
+//  LOG_PORT.printf("%s", payload);
 
-    StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
-    JsonObject& root = jsonBuffer.parseObject(payload);
-    bool stateOn = false;
+// if its a retained message and we want clean session, ignore it
+    if ( properties.retain && config.mqtt_clean ) {
+        return;
+    }
 
-    if (!root.success()) {
-        LOG_PORT.println("MQTT: json Parsing failed");
-//        LOG_PORT.printf("%s", payload);
+// check first char for {, if so, its new style json message
+    if (payload[0] != '{') { // old mqtt handling
+
+	String Spayload;
+        for (uint8_t i = 0; i < len; i++)
+            Spayload.concat((char)payload[i]);
+
+        bool stateOn = false;
 
         // old style Handle message topic
         if (String(config.mqtt_topic + MQTT_LIGHT_COMMAND_TOPIC).equals(topic)) {
@@ -458,55 +470,64 @@ void onMqttMessage(char* topic, char* payload,
             effects.clearAll();
         }
 
-        return;
-    }
-
-    if (root.containsKey("state")) {
-        if (strcmp(root["state"], LIGHT_ON) == 0) {
-            stateOn = true;
-        } else if (strcmp(root["state"], LIGHT_OFF) == 0) {
-            stateOn = false;
-        }
-    }
-
-    if (root.containsKey("brightness")) {
-        effects.setBrightness(root["brightness"]);
-    }
-
-    if (root.containsKey("color")) {
-        effects.setColor({
-            root["color"]["r"],
-            root["color"]["g"],
-            root["color"]["b"]
-        });
-    }
-
-    if (root.containsKey("effect")) {
-        // Set the explict effect provided by the MQTT client
-        effects.setEffect(root["effect"]);
-    }
-
-    if (root.containsKey("reverse")) {
-        effects.setReverse(root["reverse"]);
-    }
-
-    if (root.containsKey("mirror")) {
-        effects.setMirror(root["mirror"]);
-    }
-
-    if (root.containsKey("allleds")) {
-        effects.setAllLeds(root["allleds"]);
-    }
-
-    // Set data source based on state - Fall back to E131 when off
-    if (stateOn) {
-        config.ds = DataSource::MQTT;
     } else {
-        config.ds = DataSource::E131;
-        effects.clearAll();
-    }
 
-    publishState();
+        StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+        JsonObject& root = jsonBuffer.parseObject(payload);
+        bool stateOn = false;
+
+        if (!root.success()) {
+            LOG_PORT.println("MQTT: json Parsing failed");
+            return;
+        }
+
+        if (root.containsKey("state")) {
+            if (strcmp(root["state"], LIGHT_ON) == 0) {
+                stateOn = true;
+            } else if (strcmp(root["state"], LIGHT_OFF) == 0) {
+                stateOn = false;
+            }
+        }
+
+        if (root.containsKey("brightness")) {
+            effects.setBrightness(root["brightness"]);
+        }
+
+        if (root.containsKey("color")) {
+            effects.setColor({
+                root["color"]["r"],
+                root["color"]["g"],
+                root["color"]["b"]
+            });
+        }
+
+        if (root.containsKey("effect")) {
+            // Set the explict effect provided by the MQTT client
+            effects.setEffect(root["effect"]);
+        }
+
+        if (root.containsKey("reverse")) {
+            effects.setReverse(root["reverse"]);
+        }
+
+        if (root.containsKey("mirror")) {
+            effects.setMirror(root["mirror"]);
+        }
+
+        if (root.containsKey("allleds")) {
+            effects.setAllLeds(root["allleds"]);
+        }
+
+        // Set data source based on state - Fall back to E131 when off
+        if (stateOn) {
+            config.ds = DataSource::MQTT;
+        } else {
+            config.ds = DataSource::E131;
+            effects.clearAll();
+        }
+
+        publishState();
+    }
 }
 
 void publishState() {
@@ -833,12 +854,16 @@ void dsDeviceConfig(JsonObject &json) {
     config.multicast = json["e131"]["multicast"];
 
     // MQTT
-    config.mqtt = json["mqtt"]["enabled"];
-    config.mqtt_ip = json["mqtt"]["ip"].as<String>();
-    config.mqtt_port = json["mqtt"]["port"];
-    config.mqtt_user = json["mqtt"]["user"].as<String>();
-    config.mqtt_password = json["mqtt"]["password"].as<String>();
-    config.mqtt_topic = json["mqtt"]["topic"].as<String>();
+    if (json.containsKey("mqtt")) {
+        JsonObject& mqttJson = json["mqtt"];
+        config.mqtt = mqttJson["enabled"];
+        config.mqtt_ip = mqttJson["ip"].as<String>();
+        config.mqtt_port = mqttJson["port"];
+        config.mqtt_user = mqttJson["user"].as<String>();
+        config.mqtt_password = mqttJson["password"].as<String>();
+        config.mqtt_topic = mqttJson["topic"].as<String>();
+        config.mqtt_clean = mqttJson["clean"] | false;
+    }
 
 #if defined(ESPS_MODE_PIXEL)
     // Pixel
@@ -856,7 +881,7 @@ void dsDeviceConfig(JsonObject &json) {
 
 #if defined(ESPS_SUPPORT_PWM)
     /* PWM */
-    if (json.containsKey("pwn")) {
+    if (json.containsKey("pwm")) {
         JsonObject& pwmJson = json["pwm"];
         config.pwm_global_enabled = pwmJson["enabled"];
         config.pwm_freq = pwmJson["freq"];
@@ -974,6 +999,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     _mqtt["user"] = config.mqtt_user.c_str();
     _mqtt["password"] = config.mqtt_password.c_str();
     _mqtt["topic"] = config.mqtt_topic.c_str();
+    _mqtt["clean"] = config.mqtt_clean;
 
     // E131
     JsonObject &e131 = json.createNestedObject("e131");
