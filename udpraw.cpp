@@ -45,7 +45,7 @@ void UdpRaw::begin(uint16_t port /*= ESPS_UDP_RAW_DEFAULT_PORT*/)
 
     if(isListening)
     {
-        MDNS.addService("espixelstick-udpraw", "udp", port);
+        MDNS.addService("hyperiond-rgbled", "udp", port);
 
         _udp.onPacket(std::bind(&UdpRaw::onPacket, this, std::placeholders::_1));
 
@@ -54,17 +54,27 @@ void UdpRaw::begin(uint16_t port /*= ESPS_UDP_RAW_DEFAULT_PORT*/)
     }
 }
 
-void UdpRaw::onPacket(AsyncUDPPacket &packet) const
+void UdpRaw::onPacket(AsyncUDPPacket packet)
 {
+
+    stats.last_clientIP = packet.remoteIP();
+    stats.num_packets++;
+    if (packet.length() < config.channel_count)
+        stats.short_packets++;
+    if (packet.length() > config.channel_count)
+        stats.long_packets++;
+
     // do not disturb effects...
     if(config.ds == DataSource::E131)
     {
         int nread = _min(packet.length(), config.channel_count);
         memcpy(_driver.getData(), packet.data(), nread);
 
-        int nzero = config.channel_count - nread;
-        if (nzero > 0)
-            memset(_driver.getData() + nread, 0, nzero);
+        if (zeropad) {
+            int nzero = config.channel_count - nread;
+            if (nzero > 0)
+                memset(_driver.getData() + nread, 0, nzero);
+        }
     }
 }
 

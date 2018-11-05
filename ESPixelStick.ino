@@ -114,6 +114,7 @@ Ticker              wifiTicker; // Ticker to handle WiFi
 AsyncMqttClient     mqtt;       // MQTT object
 Ticker              mqttTicker; // Ticker to handle MQTT
 EffectEngine        effects;    // Effects Engine
+UdpRaw              udpraw;
 
 // Output Drivers
 #if defined(ESPS_MODE_PIXEL)
@@ -262,7 +263,7 @@ void setup() {
 
    /* check for raw packets on port 2801 */
 #if defined(ESPS_ENABLE_UDPRAW)
-    setupUDPraw();
+    udpraw.begin();
 #endif
 
 #if defined(ESPS_ENABLE_BUTTONS)
@@ -1074,10 +1075,6 @@ void saveConfig() {
 //
 /////////////////////////////////////////////////////////
 void loop() {
-   /* check for raw packets on port 2801 */
-#if defined(ESPS_ENABLE_UDPRAW)
-    handleUDPraw();
-#endif
 
     /* check for rotary encoder and buttons */
 #if defined(ESPS_ENABLE_BUTTONS)
