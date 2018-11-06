@@ -441,14 +441,12 @@ void onMqttMessage(char* topic, char* payload,
             } else if (Spayload.equals(String(LIGHT_OFF))) {
                 stateOn = false;
             }
-            publishRGBState();
         }
         else if (String(config.mqtt_topic + MQTT_LIGHT_BRIGHTNESS_COMMAND_TOPIC).equals(topic)) {
             uint8_t brightness = Spayload.toInt();
             if (brightness > 100) brightness = 100;
             stateOn = true;
-            effects.setBrightness(brightness);
-            publishRGBBrightness();
+            effects.setBrightness((brightness*255)/100);
         }
         else if (String(config.mqtt_topic + MQTT_LIGHT_RGB_COMMAND_TOPIC).equals(topic)) {
             // Get the position of the first and second commas
@@ -460,16 +458,19 @@ void onMqttMessage(char* topic, char* payload,
             uint8_t m_rgb_blue = Spayload.substring(lastIndex + 1).toInt();
             stateOn = true;
             effects.setColor( { m_rgb_red, m_rgb_green, m_rgb_blue } );
-            publishRGBColor();
         }
 
         // Set data source based on state - Fall back to E131 when off
         if (stateOn) {
+            effects.setEffect("Solid");
             config.ds = DataSource::MQTT;
         } else {
             config.ds = DataSource::E131;
             effects.clearAll();
         }
+        publishRGBState();
+        publishRGBBrightness();
+        publishRGBColor();
 
     } else {
 
@@ -554,7 +555,6 @@ void publishState() {
 
 // Called to publish the state of the led (on/off)
 void publishRGBState() {
-//    if (m_rgb_state) {
     if (effects.getEffect()) {
         mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_STATE_TOPIC).c_str(), 0, true, LIGHT_ON);
     } else {
@@ -564,14 +564,12 @@ void publishRGBState() {
 
 // Called to publish the brightness of the led (0-100)
 void publishRGBBrightness() {
-//    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d", m_rgb_brightness);
-    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d", effects.getBrightness());
+    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d", (effects.getBrightness()*100)/255);
     mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_BRIGHTNESS_STATE_TOPIC).c_str(), 0, true, m_msg_buffer);
 }
 
 // Called to publish the colors of the led (xx(x),xx(x),xx(x))
 void publishRGBColor() {
-//    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d,%d,%d", m_rgb_red, m_rgb_green, m_rgb_blue);
     snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d,%d,%d", effects.getColor().r, effects.getColor().g, effects.getColor().b);
     mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_RGB_STATE_TOPIC).c_str(), 0, true, m_msg_buffer);
 }
