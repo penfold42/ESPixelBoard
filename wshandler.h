@@ -20,6 +20,8 @@
 #ifndef WSHANDLER_H_
 #define WSHANDLER_H_
 
+#include "ESPixelStick.h"
+
 #if defined(ESPS_MODE_PIXEL)
 #include "PixelDriver.h"
 extern PixelDriver  pixels;     // Pixel object
@@ -87,6 +89,20 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
             system["rssi"] = (String)WiFi.RSSI();
             system["freeheap"] = (String)ESP.getFreeHeap();
             system["uptime"] = (String)millis();
+            switch (config.ds) {
+                case DataSource::E131:
+                    system["datasource"] = "e131";
+                    break;
+                case DataSource::MQTT:
+                    system["datasource"] = "mqtt";
+                    break;
+                case DataSource::WEB:
+                    system["datasource"] = "web";
+                    break;
+                default:
+                    system["datasource"] = "unknown";
+                    break;
+            }
 
             // E131 statistics
             JsonObject &e131J = json.createNestedObject("e131");
@@ -276,12 +292,13 @@ void procS(uint8_t *data, AsyncWebSocketClient *client) {
 }
 
 void procT(uint8_t *data, AsyncWebSocketClient *client) {
-    config.ds = DataSource::WEB;
+    // T9 is view stream, DONT change source when we get this
+    if ( (data[1] >= '1') && (data[1] <= '8') ) config.ds = DataSource::WEB;
+
     switch (data[1]) {
         case '0': { // Clear whole string
             //TODO: Store previous data source when effect is selected so we can switch back to it
             config.ds = DataSource::E131;
-//            effects.setEffect("blah");
             effects.clearAll();
             break;
         }

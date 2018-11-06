@@ -691,6 +691,9 @@ function getJsonStatus(data) {
     str += ("0" + date.getUTCSeconds()).slice(-2);
     $('#x_uptime').text(str);
 
+// data source
+    $('#x_datasource').text( status.system.datasource );
+
 // getE131Status(data)
     $('#uni_first').text(status.e131.universe);
     $('#uni_last').text(status.e131.uniLast);
