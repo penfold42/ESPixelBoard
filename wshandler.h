@@ -77,32 +77,6 @@ uint8_t * confuploadtemp;
 
 void procX(uint8_t *data, AsyncWebSocketClient *client) {
     switch (data[1]) {
-        case 'S':
-            client->text("XS" +
-                     (String)WiFi.RSSI() + ":" +
-                     (String)ESP.getFreeHeap() + ":" +
-                     (String)millis());
-            break;
-        case '2': {
-            uint32_t seqErrors = 0;
-            for (int i = 0; i < ((uniLast + 1) - config.universe); i++)
-                seqErrors =+ seqError[i];
-            client->text("X2" + (String)config.universe + ":" +
-                    (String)uniLast + ":" +
-                    (String)e131.stats.num_packets + ":" +
-                    (String)seqErrors + ":" +
-                    (String)e131.stats.packet_errors + ":" +
-                    e131.stats.last_clientIP.toString());
-            break;
-        }
-        case '3': {
-            client->text("X3" +
-                    (String)udpraw.stats.num_packets + ":" +
-                    (String)udpraw.stats.short_packets + ":" +
-                    (String)udpraw.stats.long_packets + ":" +
-                    udpraw.stats.last_clientIP.toString());
-            break;
-        }
         case 'J': {
 
             DynamicJsonBuffer jsonBuffer;
