@@ -477,48 +477,52 @@
 
     <!-- Administration -->
     <div id="admin" class="mdiv hidden anchor">
-      <fieldset>
-        <legend class="esps-legend">Administration</legend>
-        <form class="form-horizontal" id="updatefw" action="/updatefw" method="post" enctype="multipart/form-data">
-          <div class="form-group">
-            <label class="control-label col-sm-2">FW Version</label>
-            <div class="col-sm-10"><p class="form-control-static" id="x_version"></p></div>
-          </div>
-          <div class="form-group">
-            <label class="control-label col-sm-2">Build Date</label>
-            <div class="col-sm-10"><p class="form-control-static" id="x_built"></p></div>
-          </div>
-          <div class="form-group">
-            <label class="control-label col-sm-2">Used Flash Size</label>
-            <div class="col-sm-10"><p class="form-control-static" id="x_usedflashsize"></p></div>
-          </div>
-          <div class="form-group">
-            <label class="control-label col-sm-2">Real Flash Size</label>
-            <div class="col-sm-10"><p class="form-control-static" id="x_realflashsize"></p></div>
-          </div>
-          <div class="form-group">
-            <label class="control-label col-sm-2">Flash Chip ID</label>
-            <div class="col-sm-10"><p class="form-control-static" id="x_flashchipid"></p></div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <label class="btn btn-primary btn-file">
+
+      <div class="row">
+        <div class="col-sm-6">
+          <fieldset>
+            <legend class="esps-legend">System Information</legend>
+            <table class="esps-table">
+              <tr><td width="50%">FW Version</td><td><span id="x_version"></span></td></tr>
+              <tr><td width="50%">Build Date</td><td><span id="x_built"></span></td></tr>
+              <tr><td width="50%">Firmware Flash Size</td><td><span id="x_usedflashsize"></span></td></tr>
+              <tr><td width="50%">Physical Flash Size</td><td><span id="x_realflashsize"></span></td></tr>
+              <tr><td width="50%">Flash chip ID</td><td><span id="x_flashchipid"></span></td></tr>
+            </table>
+          </fieldset>
+        </div>
+
+        <div class="col-sm-6">
+          <fieldset>
+            <legend class="esps-legend">Administration</legend>
+            <div class="col-sm-offset-0 col-sm-6">
+              <form class="form-horizontal" id="updatefw" action="/updatefw" method="post" enctype="multipart/form-data">
+              <label class="btn btn-block btn-primary btn-file">
                 Update Firmware <input type="file" id="efu" name="file" accept=".efu" style="display: none;">
               </label>
+              </form>
             </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <button type="button" onclick="window.open('/config.json')" class="btn btn-primary" >Backup Config</button>
+
+            <div class="col-sm-offset-0 col-sm-6">
+              <button type="button" onclick="reboot()" class="btn btn-block btn-danger">Reboot</button>
             </div>
-          </div>
-          <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <button type="button" onclick="reboot()" class="btn btn-danger">Reboot</button>
+
+            <div class="col-sm-offset-0 col-sm-6">
+              <button type="button" onclick="window.open('/config.json')" class="btn btn-block btn-primary" >Backup Config</button>
             </div>
-          </div>
-        </form>
-      </fieldset>
+
+            <div class="col-sm-offset-0 col-sm-6">
+              <form class="form-horizontal" id="restoreForm" action="/config" method="post" enctype="multipart/form-data">
+              <label class="btn btn-block btn-primary btn-file">
+               Restore Config <input type="file" id="restoreFile" name="file" accept=".json" style="display: none;">
+              </label>
+              </form>
+            </div>
+
+          </fieldset>
+        </div>
+
+      </div>
     </div>
   </div>
 
