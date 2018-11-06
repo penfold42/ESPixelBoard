@@ -555,7 +555,8 @@ void publishState() {
 
 // Called to publish the state of the led (on/off)
 void publishRGBState() {
-    if (effects.getEffect()) {
+//    if (effects.getEffect()) {
+    if (config.ds != DataSource::E131) {
         mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_STATE_TOPIC).c_str(), 0, true, LIGHT_ON);
     } else {
         mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_STATE_TOPIC).c_str(), 0, true, LIGHT_OFF);
