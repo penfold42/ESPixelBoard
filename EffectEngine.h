@@ -46,7 +46,7 @@ struct EffectDesc {
     bool        hasMirror;
     bool        hasReverse;
     bool        hasAllLeds;
-    const char* wsTCode;
+    String      wsTCode;
 };
 
 class EffectEngine {
@@ -85,6 +85,7 @@ public:
 
     int getEffectCount();
     const EffectDesc* getEffectInfo(unsigned a);
+    const EffectDesc* getEffectInfo(String s);
     void setFromConfig();
     bool isValidEffect(const String effectName);
     void setEffect(const String effectName);
