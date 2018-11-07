@@ -89,9 +89,6 @@ const char MQTT_SET_COMMAND_TOPIC[] = "/set";
 const char LIGHT_ON[] = "ON";
 const char LIGHT_OFF[] = "OFF";
 
-// MQTT json buffer size
-const int JSON_BUFFER_SIZE = JSON_OBJECT_SIZE(10);
-
 // MQTT buffer used to send / receive data
 #define MSG_BUFFER_SIZE 20
 char m_msg_buffer[MSG_BUFFER_SIZE];
@@ -474,7 +471,7 @@ void onMqttMessage(char* topic, char* payload,
 
     } else {
 
-        StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+        DynamicJsonBuffer jsonBuffer;
         JsonObject& root = jsonBuffer.parseObject(payload);
         bool stateOn = false;
 
@@ -533,7 +530,7 @@ void onMqttMessage(char* topic, char* payload,
 }
 
 void publishState() {
-    StaticJsonBuffer<JSON_BUFFER_SIZE> jsonBuffer;
+    DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
     root["state"] = (config.ds == DataSource::MQTT) ? LIGHT_ON : LIGHT_OFF;
     JsonObject& color = root.createNestedObject("color");
