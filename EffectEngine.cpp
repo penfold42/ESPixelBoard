@@ -14,7 +14,7 @@ const EffectDesc EFFECT_LIST[] = {
     { "Solid",        &EffectEngine::effectSolidColor, "t_static",       1,    0,    0,    0,  "T1"     },
     { "Blink",        &EffectEngine::effectBlink,      "t_blink",        1,    0,    0,    0,  "T2"     },
     { "Flash",        &EffectEngine::effectFlash,      "t_flash",        1,    0,    0,    0,  "T3"     },
-    { "Rainbow",      &EffectEngine::effectRainbow,    "t_rainbow",      0,    1,    1,    1,  "T5"     },
+    { "Rainbow",      &EffectEngine::effectRainbow,    "t_rainbow",      1,    1,    1,    1,  "T5"     },
     { "Chase",        &EffectEngine::effectChase,      "t_chase",        1,    1,    1,    0,  "T4"     },
     { "Fire flicker", &EffectEngine::effectFireFlicker,"t_fireflicker",  1,    0,    0,    0,  "T6"     },
     { "Lightning",    &EffectEngine::effectLightning,  "t_lightning",    1,    0,    0,    0,  "T7"     },
@@ -214,8 +214,10 @@ uint16_t EffectEngine::effectRainbow() {
         } else {
             hue = 360.0 * (((i * 256 / lc) + _effectStep) & 0xFF) / 255;
         }
-        double sat = 1.0;
-        double val = 1.0;
+// dCHSV hue 0->360 sat 0->1.0 val 0->1.0
+        dCHSV my_hsv = rgb2hsv(_effectColor);
+        double sat = my_hsv.s;
+        double val = my_hsv.v;
         CRGB color = hsv2rgb ( { hue, sat, val } );
 
         uint16_t pixel = i;
@@ -350,7 +352,7 @@ uint16_t EffectEngine::effectBreathe() {
 dCHSV EffectEngine::rgb2hsv(CRGB in_int)
 {
     dCHSV       out;
-    dCRGB       in = {in_int.r, in_int.g, in_int.b};
+    dCRGB       in = {in_int.r/255.0d, in_int.g/255.0d, in_int.b/255.0d};
     double      min, max, delta;
 
     min = in.r < in.g ? in.r : in.g;
