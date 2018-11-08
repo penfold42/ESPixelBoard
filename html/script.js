@@ -167,6 +167,15 @@ $(function() {
        }
     });
 
+    // Gamma graph
+    $('#showgamma').click(function() {
+        if ($(this).is(':checked')) {
+            $('.gammagraph').removeClass('hidden');
+       } else {
+            $('.gammagraph').addClass('hidden');
+       }
+    });
+
     // PWM field toggles
     $('#pwm_enabled').click(function() {
         if ($(this).is(':checked')) {
@@ -328,6 +337,7 @@ function wsConnect() {
             wsEnqueue('G1'); // Get Config
             wsEnqueue('G2'); // Get Net Status
             wsEnqueue('G3'); // Get Effect Info
+            wsEnqueue('G4'); // Get Gamma Table
 
             feed();
         };
@@ -348,6 +358,9 @@ function wsConnect() {
                     break;
                 case 'G3':
                     getEffectInfo(data);
+                    break;
+                case 'G4':
+                    refreshGamma(data);
                     break;
                 case 'S1':
                     setConfig(data);
@@ -707,6 +720,23 @@ function getJsonStatus(data) {
     $('#udp_shortpkts').text(status.udp.short_packets);
     $('#udp_longpkts').text(status.udp.long_packets);
     $('#udp_clientip').text(status.udp.last_clientIP);
+}
+
+function refreshGamma(data) {
+    var gammaData = JSON.parse(data);
+
+    var polyline = document.getElementById('cracker');
+    var points = polyline.getAttribute('points');
+
+    points = "";
+    for (X=0; X<256; X++) {
+	var Y = 255-gammaData.gamma[X];
+	points += X + ", "+ Y +" ";
+//	console.log ( X + ", "+ Y +" ") ;
+
+    }
+
+    polyline.setAttribute('points', points);
 }
 
 function snackSave() {
