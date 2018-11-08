@@ -154,6 +154,7 @@ void dsNetworkConfig(JsonObject &json);
 void dsDeviceConfig(JsonObject &json);
 void dsEffectConfig(JsonObject &json);
 void saveConfig();
+void dsGammaConfig(JsonObject &json);
 
 void connectWifi();
 void onWifiConnect(const WiFiEventStationModeGotIP &event);

@@ -167,6 +167,22 @@ $(function() {
        }
     });
 
+    $('#p_gammaVal').change(function() {
+            sendGamma();
+    });
+    $('#p_briteVal').change(function() {
+            sendGamma();
+    });
+
+    // Gamma graph
+    $('#showgamma').click(function() {
+        if ($(this).is(':checked')) {
+            $('.gammagraph').removeClass('hidden');
+       } else {
+            $('.gammagraph').addClass('hidden');
+       }
+    });
+
     // PWM field toggles
     $('#pwm_enabled').click(function() {
         if ($(this).is(':checked')) {
@@ -328,6 +344,7 @@ function wsConnect() {
             wsEnqueue('G1'); // Get Config
             wsEnqueue('G2'); // Get Net Status
             wsEnqueue('G3'); // Get Effect Info
+            wsEnqueue('G4'); // Get Gamma Table
 
             feed();
         };
@@ -349,6 +366,9 @@ function wsConnect() {
                 case 'G3':
                     getEffectInfo(data);
                     break;
+                case 'G4':
+                    refreshGamma(data);
+                    break;
                 case 'S1':
                     setConfig(data);
                     reboot();
@@ -358,6 +378,8 @@ function wsConnect() {
                     break;
                 case 'S3':
                     snackSave();
+                    break;
+                case 'S4':
                     break;
                 case 'XJ':
                     getJsonStatus(data);
@@ -709,6 +731,23 @@ function getJsonStatus(data) {
     $('#udp_clientip').text(status.udp.last_clientIP);
 }
 
+function refreshGamma(data) {
+    var gammaData = JSON.parse(data);
+
+    var polyline = document.getElementById('cracker');
+    var points = polyline.getAttribute('points');
+
+    points = "";
+    for (X=0; X<256; X++) {
+	var Y = 255-gammaData.gamma[X];
+	points += X + ", "+ Y +" ";
+//	console.log ( X + ", "+ Y +" ") ;
+
+    }
+
+    polyline.setAttribute('points', points);
+}
+
 function snackSave() {
     // Show snackbar for 3sec
     var x = document.getElementById('snackbar');
@@ -786,8 +825,6 @@ function submitConfig() {
                "gamma": $('#pwm_gamma').prop('checked'),
             }
         };
-
-// TODO: Need to fix this, it's crashing procS() in wshandler.h
 
     for(var i = 0, len = gpio_list.length; i < len; i++) {
         var tg = gpio_list[i];
@@ -931,3 +968,14 @@ function getKeyByValue(obj, value) {
     return Object.keys(obj)[Object.values(obj).indexOf(value)];
 }
 
+function sendGamma() {
+    var json = {
+        'pixel': {
+            'gamma': $('#p_gamma').prop('checked'),
+            'gammaVal': parseFloat($('#p_gammaVal').val()),
+            'briteVal': parseFloat($('#p_briteVal').val())
+        }
+    }
+    wsEnqueue('S4' + JSON.stringify(json));
+    wsEnqueue('G4'); // Get Gamma Table
+}

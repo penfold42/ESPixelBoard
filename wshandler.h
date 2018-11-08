@@ -52,6 +52,7 @@ extern const char CONFIG_FILE[];
     G1 - Get Config
     G2 - Get Config Status
     G3 - Get Current Effect and Effect Config Options
+    G4 - Get Gamma table values
 
     T0 - Disable Testing
     T1 - Static Testing
@@ -67,6 +68,7 @@ extern const char CONFIG_FILE[];
     S1 - Set Network Config
     S2 - Set Device Config
     S3 - Set Effect Startup Config
+    S4 - Set Gamma and Brightness (but dont save)
 
     XJ - Get RSSI,heap,uptime, e131 stats
 
@@ -251,6 +253,18 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
 //LOG_PORT.print(response);
             break;
         }
+        case '4': {
+            DynamicJsonBuffer jsonBuffer;
+            JsonObject &json = jsonBuffer.createObject();
+            JsonArray &gamma = json.createNestedArray("gamma");
+            for (int i=0; i<256; i++) {
+                gamma.add(GAMMA_TABLE[i] >> 8);
+            }
+            String response;
+            json.printTo(response);
+            client->text("G4" + response);
+            break;
+        }
     }
 }
 
@@ -287,6 +301,10 @@ void procS(uint8_t *data, AsyncWebSocketClient *client) {
             dsEffectConfig(json);
             saveConfig();
             client->text("S3");
+            break;
+        case '4':   // Set Gamma (but no save)
+            dsGammaConfig(json);
+            client->text("S4");
             break;
     }
 }
@@ -408,7 +426,7 @@ void handle_config_upload(AsyncWebServerRequest *request, String filename,
             request->send(500, "text/plain", "Config Update Error." );
         } else {
             dsNetworkConfig(json);
-//          dsDeviceConfig(json);
+            dsDeviceConfig(json);
             dsEffectConfig(json);
             saveConfig();
             request->send(200, "text/plain", "Config Update Finished: " );
