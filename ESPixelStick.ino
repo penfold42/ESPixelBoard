@@ -1046,6 +1046,10 @@ void dsGammaConfig(JsonObject &json) {
         config.gamma = json["pixel"]["gamma"];
         config.gammaVal = json["pixel"]["gammaVal"];
         config.briteVal = json["pixel"]["briteVal"];
+
+        if (config.gammaVal <= 0) { config.gammaVal = 2.2; }
+        if (config.briteVal <= 0) { config.briteVal = 1.0; }
+
         pixels.setGamma(config.gamma);
         updateGammaTable(config.gammaVal, config.briteVal);
     }
