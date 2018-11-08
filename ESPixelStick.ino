@@ -602,20 +602,6 @@ void initWeb() {
         request->send(200, "text/json", jsonString);
     });
 
-    // gamma debugging Config Handler
-    web.on("/gamma", HTTP_GET, [](AsyncWebServerRequest *request) {
-        AsyncResponseStream *response = request->beginResponseStream("text/plain");
-        for (int i=0; i<256; i++) {
-          response->printf ("%5d", GAMMA_TABLE[i] >> 8);
-          if (i%16 == 15) {
-            response->printf("\r\n");
-          } else {
-            response->printf(", ");            
-          }
-        }
-        request->send(response);
-    });
-
     // Firmware upload handler
     web.on("/updatefw", HTTP_POST, [](AsyncWebServerRequest *request) {
         ws.textAll("X6");
@@ -623,6 +609,8 @@ void initWeb() {
 
     // Static Handler
     web.serveStatic("/", SPIFFS, "/www/").setDefaultFile("index.html");
+
+    // Raw config file Handler
     web.serveStatic("/config.json", SPIFFS, "/config.json");
 
     web.onNotFound([](AsyncWebServerRequest *request) {
