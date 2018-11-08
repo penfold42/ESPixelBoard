@@ -167,6 +167,13 @@ $(function() {
        }
     });
 
+    $('#p_gammaVal').change(function() {
+            sendGamma();
+    });
+    $('#p_briteVal').change(function() {
+            sendGamma();
+    });
+
     // Gamma graph
     $('#showgamma').click(function() {
         if ($(this).is(':checked')) {
@@ -371,6 +378,8 @@ function wsConnect() {
                     break;
                 case 'S3':
                     snackSave();
+                    break;
+                case 'S4':
                     break;
                 case 'XJ':
                     getJsonStatus(data);
@@ -817,8 +826,6 @@ function submitConfig() {
             }
         };
 
-// TODO: Need to fix this, it's crashing procS() in wshandler.h
-
     for(var i = 0, len = gpio_list.length; i < len; i++) {
         var tg = gpio_list[i];
         json['pwm']['gpio'+tg+'_channel'] = parseInt($('#gpio'+tg+'_channel').val());
@@ -961,3 +968,14 @@ function getKeyByValue(obj, value) {
     return Object.keys(obj)[Object.values(obj).indexOf(value)];
 }
 
+function sendGamma() {
+    var json = {
+        'pixel': {
+            'gamma': $('#p_gamma').prop('checked'),
+            'gammaVal': parseFloat($('#p_gammaVal').val()),
+            'briteVal': parseFloat($('#p_briteVal').val())
+        }
+    }
+    wsEnqueue('S4' + JSON.stringify(json));
+    wsEnqueue('G4'); // Get Gamma Table
+}
