@@ -99,6 +99,9 @@ typedef struct {
     bool        dhcp;           /* Use DHCP? */
     bool        ap_fallback;    /* Fallback to AP if fail to associate? */
 
+    bool        udp_enabled;
+    uint16_t    udp_port;
+
     /* Effects */
     String startup_effect_name;
     CRGB startup_effect_color;

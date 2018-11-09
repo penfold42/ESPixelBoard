@@ -28,7 +28,7 @@
       <div id="navbar" class="collapse navbar-collapse">
         <ul class="nav navbar-nav">
           <li class="active"><a href="#home">Home</a></li>
-          <li><a href="#wifi">Wireless Setup</a></li>
+          <li><a href="#wifi">Network Setup</a></li>
           <li><a href="#config">Device Setup</a></li>
           <li><a href="#effect">Effects</a></li>
           <li><a href="#stream">Live View</a></li>
@@ -85,10 +85,10 @@
       </div>
     </div>
 
-    <!-- Network Configuration -->
     <div id="wifi" class="mdiv hidden anchor">
+      <!-- Wireless Configuration -->
       <fieldset>
-        <legend class="esps-legend">Network Configuration</legend>
+        <legend class="esps-legend">Wireless Configuration</legend>
         <form class="form-horizontal">
           <div class="form-group" id="fg_ssid">
             <label class="control-label col-sm-2" for="ssid">SSID</label>
@@ -124,6 +124,19 @@
               <div class="checkbox"><label><input type="checkbox" id="ap" name="ap"> AP Fallback</label></div>
             </div>
           </div>
+
+      <!-- UDP Configuration -->
+        <legend class="esps-legend">UDP Configuration</legend>
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <div class="checkbox"><label><input type="checkbox" id="udp_enabled" name="udp_enabled"> Enable UDP Raw </label></div>
+            </div>
+          </div>
+          <div class="form-group" id="fg_udpport">
+            <label class="control-label col-sm-2" for="ssid">UDP Raw Port</label>
+            <div class="col-sm-10"><input type="text" class="form-control" id="udp_port" name="udp_port" placeholder="Enter UDP Port"></div>
+          </div>
+
           <div class="form-group">
             <div class="col-sm-offset-2 col-sm-10">
               <button id="btn_wifi" type="button" onclick="submitWiFi()" class="btn btn-primary" disabled>Save Changes</button>

@@ -233,6 +233,12 @@ $(function() {
     $('#netmask').keyup(function () {
         wifiValidation();
     });
+    $('#udp_port').keyup(function () {
+        wifiValidation();
+    });
+    $('#udp_enabled').change(function () {
+        wifiValidation();
+    });
 
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
@@ -304,6 +310,14 @@ function wifiValidation() {
             $('#fg_gateway').addClass('has-error');
             WifiSaveDisabled = true;
         }
+    }
+    if ( ($('#udp_port').val() >= 1) && ($('#udp_port').val() <= 64000) ) {
+        $('#fg_udpport').removeClass('has-error');
+        $('#fg_udpport').addClass('has-success');
+    } else {
+        $('#fg_udpport').removeClass('has-success');
+        $('#fg_udpport').addClass('has-error');
+        WifiSaveDisabled = true;
     }
     $('#btn_wifi').prop('disabled', WifiSaveDisabled);
 }
@@ -541,6 +555,9 @@ function getConfig(data) {
             config.network.gateway[2] + '.' +
             config.network.gateway[3]);
 
+    $('#udp_enabled').prop('checked', config.network.udp_enabled);
+    $('#udp_port').val(config.network.udp_port);
+
     // MQTT Config
     $('#mqtt').prop('checked', config.mqtt.enabled);
     if (config.mqtt.enabled) {
@@ -777,7 +794,9 @@ function submitWiFi() {
                 'netmask': [parseInt(netmask[0]), parseInt(netmask[1]), parseInt(netmask[2]), parseInt(netmask[3])],
                 'gateway': [parseInt(gateway[0]), parseInt(gateway[1]), parseInt(gateway[2]), parseInt(gateway[3])],
                 'dhcp': $('#dhcp').prop('checked'),
-                'ap_fallback': $('#ap').prop('checked')
+                'ap_fallback': $('#ap').prop('checked'),
+                'udp_enabled': $('#udp_enabled').prop('checked'),
+                'udp_port': $('#udp_port').val()
             }
         };
     wsEnqueue('S1' + JSON.stringify(json));
