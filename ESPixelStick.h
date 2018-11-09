@@ -78,7 +78,8 @@ class DevCap {
 enum class DataSource : uint8_t {
     E131,
     MQTT,
-    WEB
+    WEB,
+    IDLEWEB
 };
 
 // Configuration structure

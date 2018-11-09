@@ -701,6 +701,8 @@ function getEffectInfo(data) {
     $('#t_mirror').prop('checked', running.mirror);
     $('#t_allleds').prop('checked', running.allleds);
     $('#t_startenabled').prop('checked', running.enabled);
+    $('#t_idleenabled').prop('checked', running.idleenabled);
+    $('#t_idletimeout').val(running.idletimeout);
 }
 
 function getJsonStatus(data) {
@@ -873,7 +875,9 @@ function submitStartupEffect() {
                 'g': temp[2],
                 'b': temp[3],
                 'brightness': 255,
-                'enabled': $('#t_startenabled').prop('checked')
+                'enabled': $('#t_startenabled').prop('checked'),
+                'idleenabled': $('#t_idleenabled'),
+                'idletimeout': $('#t_idletimeout')
             }
         };
 
