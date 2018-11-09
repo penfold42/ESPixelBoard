@@ -260,7 +260,9 @@ void setup() {
 
    /* check for raw packets on port 2801 */
 #if defined(ESPS_ENABLE_UDPRAW)
-    udpraw.begin();
+    if (config.udp_enabled) {
+        udpraw.begin(config.udp_port ? config.udp_port : ESPS_UDP_RAW_DEFAULT_PORT );
+    }
 #endif
 
 #if defined(ESPS_ENABLE_BUTTONS)
@@ -800,6 +802,9 @@ void dsNetworkConfig(JsonObject &json) {
         config.dhcp = networkJson["dhcp"];
         config.ap_fallback = networkJson["ap_fallback"];
 
+        config.udp_enabled = networkJson["udp_enabled"];
+        config.udp_port = networkJson["udp_port"] | ESPS_UDP_RAW_DEFAULT_PORT;
+
         // Generate default hostname if needed
         config.hostname = networkJson["hostname"].as<String>();
         if (!config.hostname.length()) {
@@ -968,6 +973,9 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     }
     network["dhcp"] = config.dhcp;
     network["ap_fallback"] = config.ap_fallback;
+
+    network["udp_enabled"] = config.udp_enabled;
+    network["udp_port"] = config.udp_port;
 
     // Effects
     JsonObject &_effects = json.createNestedObject("effects");
