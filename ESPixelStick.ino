@@ -108,6 +108,7 @@ uint32_t            lastUpdate;     // Update timeout tracker
 WiFiEventHandler    wifiConnectHandler;     // WiFi connect handler
 WiFiEventHandler    wifiDisconnectHandler;  // WiFi disconnect handler
 Ticker              wifiTicker; // Ticker to handle WiFi
+Ticker              idleTicker; // Ticker for effect on idle
 AsyncMqttClient     mqtt;       // MQTT object
 Ticker              mqttTicker; // Ticker to handle MQTT
 EffectEngine        effects;    // Effects Engine
@@ -186,6 +187,10 @@ void setup() {
     // Do one effects cycle as early as possible
     if (config.ds == DataSource::WEB) {
         effects.run();
+    }
+    // set the effect idle timer
+    if ( (config.effect_idleenabled) && (config.ds == DataSource::E131) ) {
+	idleTicker.attach(config.effect_idletimeout, idleTimeout);
     }
 
     pixels.show();
@@ -426,7 +431,7 @@ void onMqttMessage(char* topic, char* payload,
 // check first char for {, if so, its new style json message
     if (payload[0] != '{') { // old mqtt handling
 
-	String Spayload;
+        String Spayload;
         for (uint8_t i = 0; i < len; i++)
             Spayload.concat((char)payload[i]);
 
@@ -729,6 +734,10 @@ void validateConfig() {
             effects.setEffect(config.startup_effect_name);
             config.ds = DataSource::WEB;
         }
+    }
+
+    if (config.effect_idletimeout == 0) {
+        config.effect_idleenabled = false;
     }
 }
 
@@ -1088,6 +1097,13 @@ void saveConfig() {
     }
 }
 
+void idleTimeout() {
+    if (config.ds == DataSource::E131) {
+        config.ds = DataSource::IDLEWEB;
+        effects.setFromConfig();
+    }
+}
+
 /////////////////////////////////////////////////////////
 //
 //  Main Loop
@@ -1124,10 +1140,15 @@ void loop() {
     }
 
     // Render output for current data source
-    switch (config.ds) {
-        case DataSource::E131:
+    if ( (config.ds == DataSource::E131) || (config.ds == DataSource::IDLEWEB) ) {
             // Parse a packet and update pixels
             if (!e131.isEmpty()) {
+                if (config.ds == DataSource::IDLEWEB) {
+                    config.ds = DataSource::E131;
+                    if (config.effect_idleenabled) {
+                        idleTicker.attach(config.effect_idletimeout, idleTimeout);
+                    }
+                }
                 e131.pull(&packet);
                 uint16_t universe = htons(packet.universe);
                 uint8_t *data = packet.property_values + 1;
@@ -1181,15 +1202,12 @@ void loop() {
                     }
                 }
             }
-            break;
+    }
 
-        case DataSource::MQTT:
+    if ( (config.ds == DataSource::WEB)
+      || (config.ds == DataSource::IDLEWEB)
+      || (config.ds == DataSource::MQTT) ) {
             effects.run();
-            break;
-
-        case DataSource::WEB:
-            effects.run();
-            break;
     }
 
     toggleWebGpio();

@@ -174,5 +174,7 @@ void publishRGBState();
 void publishRGBBrightness();
 void publishRGBColor();
 void setStatic(uint8_t r, uint8_t g, uint8_t b);
+void idleTimeout();
+
 
 #endif  // ESPIXELSTICK_H_
