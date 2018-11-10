@@ -729,9 +729,9 @@ void validateConfig() {
 #endif
 
     effects.setFromConfig();
-    if (config.startup_effect_enabled) {
-        if (effects.isValidEffect(config.startup_effect_name)) {
-            effects.setEffect(config.startup_effect_name);
+    if (config.effect_startenabled) {
+        if (effects.isValidEffect(config.effect_name)) {
+            effects.setEffect(config.effect_name);
             config.ds = DataSource::WEB;
         }
     }
@@ -830,14 +830,14 @@ void dsEffectConfig(JsonObject &json) {
     // Effects
     if (json.containsKey("effects")) {
         JsonObject& effectsJson = json["effects"];
-        config.startup_effect_name = effectsJson["name"].as<String>();
-        config.startup_effect_mirror = effectsJson["mirror"];
-        config.startup_effect_allleds = effectsJson["allleds"];
-        config.startup_effect_reverse = effectsJson["reverse"];
-        config.startup_effect_color = { effectsJson["r"], effectsJson["g"], effectsJson["b"] };
+        config.effect_name = effectsJson["name"].as<String>();
+        config.effect_mirror = effectsJson["mirror"];
+        config.effect_allleds = effectsJson["allleds"];
+        config.effect_reverse = effectsJson["reverse"];
+        config.effect_color = { effectsJson["r"], effectsJson["g"], effectsJson["b"] };
         if (effectsJson.containsKey("brightness"))
-            config.startup_effect_brightness = effectsJson["brightness"];
-        config.startup_effect_enabled = effectsJson["enabled"];
+            config.effect_brightness = effectsJson["brightness"];
+        config.effect_startenabled = effectsJson["startenabled"];
         config.effect_idleenabled = effectsJson["idleenabled"];
         config.effect_idletimeout = effectsJson["idletimeout"];
     }
@@ -991,18 +991,18 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
 
     // Effects
     JsonObject &_effects = json.createNestedObject("effects");
-    _effects["name"] = config.startup_effect_name;
+    _effects["name"] = config.effect_name;
 
-    _effects["mirror"] = config.startup_effect_mirror;
-    _effects["allleds"] = config.startup_effect_allleds;
-    _effects["reverse"] = config.startup_effect_reverse;
+    _effects["mirror"] = config.effect_mirror;
+    _effects["allleds"] = config.effect_allleds;
+    _effects["reverse"] = config.effect_reverse;
 
-    _effects["r"] = config.startup_effect_color.r;
-    _effects["g"] = config.startup_effect_color.g;
-    _effects["b"] = config.startup_effect_color.b;
+    _effects["r"] = config.effect_color.r;
+    _effects["g"] = config.effect_color.g;
+    _effects["b"] = config.effect_color.b;
 
-    _effects["brightness"] = config.startup_effect_brightness;
-    _effects["enabled"] = config.startup_effect_enabled;
+    _effects["brightness"] = config.effect_brightness;
+    _effects["startenabled"] = config.effect_startenabled;
     _effects["idleenabled"] = config.effect_idleenabled;
     _effects["idletimeout"] = config.effect_idletimeout;
 
@@ -1141,67 +1141,67 @@ void loop() {
 
     // Render output for current data source
     if ( (config.ds == DataSource::E131) || (config.ds == DataSource::IDLEWEB) ) {
-            // Parse a packet and update pixels
-            if (!e131.isEmpty()) {
-                if (config.ds == DataSource::IDLEWEB) {
-                    config.ds = DataSource::E131;
-                    if (config.effect_idleenabled) {
-                        idleTicker.attach(config.effect_idletimeout, idleTimeout);
-                    }
-                }
-                e131.pull(&packet);
-                uint16_t universe = htons(packet.universe);
-                uint8_t *data = packet.property_values + 1;
-                //LOG_PORT.print(universe);
-                //LOG_PORT.println(packet.sequence_number);
-                if ((universe >= config.universe) && (universe <= uniLast)) {
-                    // Universe offset and sequence tracking
-                    uint8_t uniOffset = (universe - config.universe);
-                    if (packet.sequence_number != seqTracker[uniOffset]++) {
-                        LOG_PORT.print(F("Sequence Error - expected: "));
-                        LOG_PORT.print(seqTracker[uniOffset] - 1);
-                        LOG_PORT.print(F(" actual: "));
-                        LOG_PORT.print(packet.sequence_number);
-                        LOG_PORT.print(F(" universe: "));
-                        LOG_PORT.println(universe);
-                        seqError[uniOffset]++;
-                        seqTracker[uniOffset] = packet.sequence_number + 1;
-                    }
-
-                    // Offset the channels if required
-                    uint16_t offset = 0;
-                    offset = config.channel_start - 1;
-
-                    // Find start of data based off the Universe
-                    int16_t dataStart = uniOffset * config.universe_limit - offset;
-
-                    // Calculate how much data we need for this buffer
-                    uint16_t dataStop = config.channel_count;
-                    uint16_t channels = htons(packet.property_value_count) - 1;
-                    if (config.universe_limit < channels)
-                        channels = config.universe_limit;
-                    if ((dataStart + channels) < dataStop)
-                        dataStop = dataStart + channels;
-
-                    // Set the data
-                    uint16_t buffloc = 0;
-
-                    // ignore data from start of first Universe before channel_start
-                    if (dataStart < 0) {
-                        dataStart = 0;
-                        buffloc = config.channel_start - 1;
-                    }
-
-                    for (int i = dataStart; i < dataStop; i++) {
-    #if defined(ESPS_MODE_PIXEL)
-                        pixels.setValue(i, data[buffloc]);
-    #elif defined(ESPS_MODE_SERIAL)
-                        serial.setValue(i, data[buffloc]);
-    #endif
-                        buffloc++;
-                    }
+        // Parse a packet and update pixels
+        if (!e131.isEmpty()) {
+            if (config.ds == DataSource::IDLEWEB) {
+                config.ds = DataSource::E131;
+                if (config.effect_idleenabled) {
+                    idleTicker.attach(config.effect_idletimeout, idleTimeout);
                 }
             }
+            e131.pull(&packet);
+            uint16_t universe = htons(packet.universe);
+            uint8_t *data = packet.property_values + 1;
+            //LOG_PORT.print(universe);
+            //LOG_PORT.println(packet.sequence_number);
+            if ((universe >= config.universe) && (universe <= uniLast)) {
+                // Universe offset and sequence tracking
+                uint8_t uniOffset = (universe - config.universe);
+                if (packet.sequence_number != seqTracker[uniOffset]++) {
+                    LOG_PORT.print(F("Sequence Error - expected: "));
+                    LOG_PORT.print(seqTracker[uniOffset] - 1);
+                    LOG_PORT.print(F(" actual: "));
+                    LOG_PORT.print(packet.sequence_number);
+                    LOG_PORT.print(F(" universe: "));
+                    LOG_PORT.println(universe);
+                    seqError[uniOffset]++;
+                    seqTracker[uniOffset] = packet.sequence_number + 1;
+                }
+
+                // Offset the channels if required
+                uint16_t offset = 0;
+                offset = config.channel_start - 1;
+
+                // Find start of data based off the Universe
+                int16_t dataStart = uniOffset * config.universe_limit - offset;
+
+                // Calculate how much data we need for this buffer
+                uint16_t dataStop = config.channel_count;
+                uint16_t channels = htons(packet.property_value_count) - 1;
+                if (config.universe_limit < channels)
+                    channels = config.universe_limit;
+                if ((dataStart + channels) < dataStop)
+                    dataStop = dataStart + channels;
+
+                // Set the data
+                uint16_t buffloc = 0;
+
+                // ignore data from start of first Universe before channel_start
+                if (dataStart < 0) {
+                    dataStart = 0;
+                    buffloc = config.channel_start - 1;
+                }
+
+                for (int i = dataStart; i < dataStop; i++) {
+#if defined(ESPS_MODE_PIXEL)
+                    pixels.setValue(i, data[buffloc]);
+#elif defined(ESPS_MODE_SERIAL)
+                    serial.setValue(i, data[buffloc]);
+#endif
+                    buffloc++;
+                }
+            }
+        }
     }
 
     if ( (config.ds == DataSource::WEB)

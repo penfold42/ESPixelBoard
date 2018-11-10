@@ -42,12 +42,12 @@ EffectEngine::EffectEngine() {
 
 void EffectEngine::setFromConfig() {
     // Initialize with defaults
-    setEffect(config.startup_effect_name);
-    setColor(config.startup_effect_color);
-    setBrightness(config.startup_effect_brightness);
-    setReverse(config.startup_effect_reverse);
-    setMirror(config.startup_effect_mirror);
-    setAllLeds(config.startup_effect_allleds);
+    setEffect(config.effect_name);
+    setColor(config.effect_color);
+    setBrightness(config.effect_brightness);
+    setReverse(config.effect_reverse);
+    setMirror(config.effect_mirror);
+    setAllLeds(config.effect_allleds);
 }
 
 void EffectEngine::begin(DRIVER* ledDriver, uint16_t ledCount) {

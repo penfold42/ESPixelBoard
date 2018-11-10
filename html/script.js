@@ -700,7 +700,7 @@ function getEffectInfo(data) {
     $('#t_reverse').prop('checked', running.reverse);
     $('#t_mirror').prop('checked', running.mirror);
     $('#t_allleds').prop('checked', running.allleds);
-    $('#t_startenabled').prop('checked', running.enabled);
+    $('#t_startenabled').prop('checked', running.startenabled);
     $('#t_idleenabled').prop('checked', running.idleenabled);
     $('#t_idletimeout').val(running.idletimeout);
 }
@@ -875,7 +875,7 @@ function submitStartupEffect() {
                 'g': temp[2],
                 'b': temp[3],
                 'brightness': 255,
-                'enabled': $('#t_startenabled').prop('checked'),
+                'startenabled': $('#t_startenabled').prop('checked'),
                 'idleenabled': $('#t_idleenabled'),
                 'idletimeout': parseInt($('#t_idletimeout').val())
             }
