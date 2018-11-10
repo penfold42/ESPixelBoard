@@ -111,6 +111,8 @@ typedef struct {
     bool startup_effect_mirror;
     bool startup_effect_allleds;
     bool startup_effect_enabled;
+    bool effect_idleenabled;
+    uint16_t effect_idletimeout;
 
     /* MQTT */
     bool        mqtt;           /* Use MQTT? */

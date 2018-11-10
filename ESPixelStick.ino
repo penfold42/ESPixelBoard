@@ -723,9 +723,10 @@ void validateConfig() {
         config.baudrate = BaudRate::BR_57600;
 #endif
 
+    effects.setFromConfig();
     if (config.startup_effect_enabled) {
         if (effects.isValidEffect(config.startup_effect_name)) {
-            effects.setFromConfig();
+            effects.setEffect(config.startup_effect_name);
             config.ds = DataSource::WEB;
         }
     }
@@ -828,6 +829,8 @@ void dsEffectConfig(JsonObject &json) {
         if (effectsJson.containsKey("brightness"))
             config.startup_effect_brightness = effectsJson["brightness"];
         config.startup_effect_enabled = effectsJson["enabled"];
+        config.effect_idleenabled = effectsJson["idleenabled"];
+        config.effect_idletimeout = effectsJson["idletimeout"];
     }
 }
 
@@ -991,6 +994,8 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
 
     _effects["brightness"] = config.startup_effect_brightness;
     _effects["enabled"] = config.startup_effect_enabled;
+    _effects["idleenabled"] = config.effect_idleenabled;
+    _effects["idletimeout"] = config.effect_idletimeout;
 
     // MQTT
     JsonObject &_mqtt = json.createNestedObject("mqtt");
