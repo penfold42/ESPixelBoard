@@ -16,6 +16,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 extern config_t config;
+extern Ticker idleTicker;
 
 #if defined(ESPS_MODE_PIXEL)
 extern PixelDriver     pixels;         // Pixel object
@@ -65,8 +66,14 @@ void UdpRaw::onPacket(AsyncUDPPacket packet)
         stats.long_packets++;
 
     // do not disturb effects...
-    if(config.ds == DataSource::E131)
-    {
+    if ( (config.ds == DataSource::E131) || (config.ds == DataSource::IDLEWEB) ) {
+        if (config.ds == DataSource::IDLEWEB) {
+            config.ds = DataSource::E131;
+            if (config.effect_idleenabled) {
+                idleTicker.attach(config.effect_idletimeout, idleTimeout);
+            }
+        }
+
         int nread = _min(packet.length(), config.channel_count);
         memcpy(_driver.getData(), packet.data(), nread);
 

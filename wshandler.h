@@ -93,13 +93,16 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
             system["uptime"] = (String)millis();
             switch (config.ds) {
                 case DataSource::E131:
-                    system["datasource"] = "e131";
+                    system["datasource"] = "E131";
                     break;
                 case DataSource::MQTT:
-                    system["datasource"] = "mqtt";
+                    system["datasource"] = "MQTT";
                     break;
                 case DataSource::WEB:
                     system["datasource"] = "web";
+                    break;
+                case DataSource::IDLEWEB:
+                    system["datasource"] = "Idle Effect";
                     break;
                 default:
                     system["datasource"] = "unknown";
@@ -229,6 +232,8 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             effect["mirror"] = effects.getMirror();
             effect["allleds"] = effects.getAllLeds();
             effect["enabled"] = config.startup_effect_enabled;
+            effect["idleenabled"] = config.effect_idleenabled;
+            effect["idletimeout"] = config.effect_idletimeout;
 
 // dump all the known effect and options
             JsonObject &effectList = json.createNestedObject("effectList");

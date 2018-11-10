@@ -78,7 +78,8 @@ class DevCap {
 enum class DataSource : uint8_t {
     E131,
     MQTT,
-    WEB
+    WEB,
+    IDLEWEB
 };
 
 // Configuration structure
@@ -110,6 +111,8 @@ typedef struct {
     bool startup_effect_mirror;
     bool startup_effect_allleds;
     bool startup_effect_enabled;
+    bool effect_idleenabled;
+    uint16_t effect_idletimeout;
 
     /* MQTT */
     bool        mqtt;           /* Use MQTT? */
@@ -171,5 +174,7 @@ void publishRGBState();
 void publishRGBBrightness();
 void publishRGBColor();
 void setStatic(uint8_t r, uint8_t g, uint8_t b);
+void idleTimeout();
+
 
 #endif  // ESPIXELSTICK_H_
