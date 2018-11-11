@@ -189,9 +189,7 @@ void setup() {
         effects.run();
     }
     // set the effect idle timer
-    if ( (config.effect_idleenabled) && (config.ds == DataSource::E131) ) {
-	idleTicker.attach(config.effect_idletimeout, idleTimeout);
-    }
+   idleTicker.attach(config.effect_idletimeout, idleTimeout);
 
     pixels.show();
 #else
@@ -1098,7 +1096,8 @@ void saveConfig() {
 }
 
 void idleTimeout() {
-    if (config.ds == DataSource::E131) {
+   idleTicker.attach(config.effect_idletimeout, idleTimeout);
+    if ( (config.effect_idleenabled) && (config.ds == DataSource::E131) ) {
         config.ds = DataSource::IDLEWEB;
         effects.setFromConfig();
     }
@@ -1143,12 +1142,11 @@ void loop() {
     if ( (config.ds == DataSource::E131) || (config.ds == DataSource::IDLEWEB) ) {
         // Parse a packet and update pixels
         if (!e131.isEmpty()) {
+            idleTicker.attach(config.effect_idletimeout, idleTimeout);
             if (config.ds == DataSource::IDLEWEB) {
                 config.ds = DataSource::E131;
-                if (config.effect_idleenabled) {
-                    idleTicker.attach(config.effect_idletimeout, idleTimeout);
-                }
             }
+
             e131.pull(&packet);
             uint16_t universe = htons(packet.universe);
             uint8_t *data = packet.property_values + 1;
