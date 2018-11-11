@@ -94,18 +94,23 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
             switch (config.ds) {
                 case DataSource::E131:
                     system["datasource"] = "E131";
+                    system["effectname"] = "N/A";
                     break;
                 case DataSource::MQTT:
                     system["datasource"] = "MQTT";
+                    system["effectname"] = (String)effects.getEffect();
                     break;
                 case DataSource::WEB:
                     system["datasource"] = "web";
+                    system["effectname"] = (String)effects.getEffect();
                     break;
                 case DataSource::IDLEWEB:
                     system["datasource"] = "Idle Effect";
+                    system["effectname"] = (String)effects.getEffect();
                     break;
                 default:
                     system["datasource"] = "unknown";
+                    system["effectname"] = (String)effects.getEffect();
                     break;
             }
 

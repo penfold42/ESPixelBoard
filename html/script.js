@@ -740,6 +740,7 @@ function getJsonStatus(data) {
 
 // data source
     $('#x_datasource').text( status.system.datasource );
+    $('#x_effectname').text( status.system.effectname );
 
 // getE131Status(data)
     $('#uni_first').text(status.e131.universe);
