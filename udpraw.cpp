@@ -67,11 +67,9 @@ void UdpRaw::onPacket(AsyncUDPPacket packet)
 
     // do not disturb effects...
     if ( (config.ds == DataSource::E131) || (config.ds == DataSource::IDLEWEB) ) {
+        idleTicker.attach(config.effect_idletimeout, idleTimeout);
         if (config.ds == DataSource::IDLEWEB) {
             config.ds = DataSource::E131;
-            if (config.effect_idleenabled) {
-                idleTicker.attach(config.effect_idletimeout, idleTimeout);
-            }
         }
 
         int nread = _min(packet.length(), config.channel_count);
