@@ -39,6 +39,12 @@ $(function() {
             $('#update').modal();
         });
 
+        // Restore config selection and upload
+        $('#restoreFile').change(function () {
+            $('#restoreForm').submit();
+            $('#update').modal();
+        });
+
         // Color Picker
         $('.color').colorPicker({
             buildCallback: function($elm) {
