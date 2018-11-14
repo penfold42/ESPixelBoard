@@ -21,6 +21,7 @@ typedef struct {
     uint32_t    packet_errors;
     IPAddress   last_clientIP;
     uint16_t    last_clientPort;
+    unsigned long    last_seen;
 } udpraw_stats_t;
 
 

@@ -43,6 +43,9 @@ extern uint32_t     *seqError;  // Sequence error tracking for each universe
 extern uint16_t     uniLast;    // Last Universe to listen for
 extern bool         reboot;     // Reboot flag
 
+extern unsigned long       mqtt_last_seen;         // millis() timestamp of last message
+extern uint32_t            mqtt_num_packets;       // count of message rcvd
+
 extern const char CONFIG_FILE[];
 
 /*
@@ -126,6 +129,12 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
             e131J["seq_errors"] = (String)seqErrors;
             e131J["packet_errors"] = (String)e131.stats.packet_errors;
             e131J["last_clientIP"] = e131.stats.last_clientIP.toString();
+            e131J["last_seen"] = e131.stats.last_seen ? (String) (millis() - e131.stats.last_seen) : "never";
+
+            // MQTT statistics
+            JsonObject &mqtt = json.createNestedObject("mqtt");
+            mqtt["num_packets"] = (String)mqtt_num_packets;
+            mqtt["last_seen"] = mqtt_last_seen ? (String) (millis() - mqtt_last_seen) : "never";
 
             // UDP raw statistics
             JsonObject &udp = json.createNestedObject("udp");
@@ -133,6 +142,7 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
             udp["short_packets"] = (String)udpraw.stats.short_packets;
             udp["long_packets"] = (String)udpraw.stats.long_packets;
             udp["last_clientIP"] = udpraw.stats.last_clientIP.toString();
+            udp["last_seen"] = udpraw.stats.last_seen ? (String) (millis() - udpraw.stats.last_seen) : "never";
 
             String response;
             json.printTo(response);

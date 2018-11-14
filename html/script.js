@@ -749,12 +749,19 @@ function getJsonStatus(data) {
     $('#serr').text(status.e131.seq_errors);
     $('#perr').text(status.e131.packet_errors);
     $('#clientip').text(status.e131.last_clientIP);
+    $('#e131_lastseen').text(status.e131.last_seen);
+    $('#e131_lastseen').text( millsToDateString(status.e131.last_seen, "Never") );
+
+// getMQTTStatus(data)
+    $('#mqtt_pkts').text(status.mqtt.num_packets);
+    $('#mqtt_lastseen').text( millsToDateString(status.mqtt.last_seen, "Never") );
 
 // getUDPStatus(data)
     $('#udp_pkts').text(status.udp.num_packets);
     $('#udp_shortpkts').text(status.udp.short_packets);
     $('#udp_longpkts').text(status.udp.long_packets);
     $('#udp_clientip').text(status.udp.last_clientIP);
+    $('#udp_lastseen').text( millsToDateString(status.udp.last_seen, "Never") );
 }
 
 function refreshGamma(data) {
@@ -990,13 +997,6 @@ function reboot() {
     wsEnqueue('X6');
 }
 
-//function getKeyByValue(object, value) {
-//    return Object.keys(object).find(key => object[key] === value);
-//}
-
-function getKeyByValue(obj, value) {
-    return Object.keys(obj)[Object.values(obj).indexOf(value)];
-}
 
 function sendGamma() {
     var json = {
@@ -1008,4 +1008,19 @@ function sendGamma() {
     }
     wsEnqueue('S4' + JSON.stringify(json));
     wsEnqueue('G4'); // Get Gamma Table
+}
+
+function millsToDateString(millis, stringIfZero) {
+
+    if ( (millis > 0) || (stringIfZero.length == 0) ){
+        var date = new Date(+millis);
+        var str = '';
+        str += Math.floor(date.getTime()/86400000) + " days, ";
+        str += ("0" + date.getUTCHours()).slice(-2) + ":";
+        str += ("0" + date.getUTCMinutes()).slice(-2) + ":";
+        str += ("0" + date.getUTCSeconds()).slice(-2);
+        return (str);
+    } else {
+        return (stringIfZero);
+    }
 }
