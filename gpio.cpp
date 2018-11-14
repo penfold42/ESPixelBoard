@@ -36,10 +36,19 @@ extern uint32_t        pwm_valid_gpio_mask;
 extern config_t        config;
 
 
-void handleGPIO (AsyncWebServerRequest *request) {
+void handleWebGPIO (AsyncWebServerRequest *request) {
     AsyncResponseStream *response = request->beginResponseStream("text/html");
+
+    response->print( handleGPIO(request->url()) );
+    request->send(response);
+}
+
+String handleGPIO ( String request ) {
+    String reply;
+    char tempstr[40];
+
     String substrings[10];
-    splitString('/', request->url(), substrings, sizeof(substrings) / sizeof(substrings[0]));
+    splitString('/', request, substrings, sizeof(substrings) / sizeof(substrings[0]));
 //  /gpio/<n>/set/1  
 //    1    2   3  4
 
@@ -54,15 +63,15 @@ void handleGPIO (AsyncWebServerRequest *request) {
       && ( config.pwm_gpio_enabled & 1<<gpio ) ) {
 
         if (substrings[3] == "get") {
-            response->printf("gpio%d is %d\r\n", gpio, digitalRead(gpio));
+            snprintf(tempstr, 40, "gpio%d is %d\r\n", gpio, digitalRead(gpio));
 
         } else if (substrings[3] == "set") {
             int state = substrings[4].toInt();
             digitalWrite(gpio, state);
-            response->printf("gpio%d set to %d\r\n", gpio, state);
+            snprintf(tempstr, 40, "gpio%d set to %d\r\n", gpio, state);
 
         } else if (substrings[3] == "toggle") {
-            response->printf("gpio%d toggled to %s\r\n", gpio, substrings[4].c_str());
+            snprintf(tempstr, 40, "gpio%d toggled to %s", gpio, substrings[4].c_str());
             toggleGpio = gpio;
             toggleString = substrings[4];
             toggleCounter = 0;
@@ -76,14 +85,14 @@ void handleGPIO (AsyncWebServerRequest *request) {
             } else {
               int state = substrings[4].toInt();
               pinMode(gpio, state);
-              response->printf("gpio%d mode %d\r\n", gpio, state);
+              snprintf(tempstr, 40, "gpio%d mode %d\r\n", gpio, state);
             }
         }
     } else {
-        response->printf("Invalid gpio %d\r\n",gpio);
+        snprintf(tempstr, 40, "Invalid gpio %d\r\n",gpio);
     }
 
-    request->send(response);
+    return (String) tempstr;
 }
 
 
@@ -144,7 +153,7 @@ void handleToggleGpio() {
 void setupWebGpio() {
     lWaitMillis = millis() + toggleMS;  // initial setup
     // gpio url handler
-    web.on("/gpio", HTTP_GET, handleGPIO).setFilter(ON_STA_FILTER);
+    web.on("/gpio", HTTP_GET, handleWebGPIO).setFilter(ON_STA_FILTER);
 
     // uptime Handler
     web.on("/uptime", HTTP_GET, [](AsyncWebServerRequest *request) {

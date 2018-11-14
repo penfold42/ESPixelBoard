@@ -22,6 +22,8 @@
 
 #include "ESPixelStick.h"
 
+#include "gpio.h"
+
 #if defined(ESPS_MODE_PIXEL)
 #include "PixelDriver.h"
 extern PixelDriver  pixels;     // Pixel object
@@ -30,7 +32,7 @@ extern PixelDriver  pixels;     // Pixel object
 extern SerialDriver serial;     // Serial object
 #endif
 
-#if defined(ESPS_MODE_PIXEL)
+#if defined(ESPS_ENABLE_UDPRAW)
 #include "udpraw.h"
 extern UdpRaw       udpraw;
 #endif
@@ -136,6 +138,7 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
             mqtt["num_packets"] = (String)mqtt_num_packets;
             mqtt["last_seen"] = mqtt_last_seen ? (String) (millis() - mqtt_last_seen) : "never";
 
+#if defined(ESPS_ENABLE_UDPRAW)
             // UDP raw statistics
             JsonObject &udp = json.createNestedObject("udp");
             udp["num_packets"] = (String)udpraw.stats.num_packets;
@@ -143,6 +146,7 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
             udp["long_packets"] = (String)udpraw.stats.long_packets;
             udp["last_clientIP"] = udpraw.stats.last_clientIP.toString();
             udp["last_seen"] = udpraw.stats.last_seen ? (String) (millis() - udpraw.stats.last_seen) : "never";
+#endif
 
             String response;
             json.printTo(response);
@@ -286,6 +290,10 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             break;
         }
     }
+}
+
+void procP(uint8_t *data, AsyncWebSocketClient *client) {
+    client->text("PP" + handleGPIO(reinterpret_cast<char*>(data + 2)) );
 }
 
 void procS(uint8_t *data, AsyncWebSocketClient *client) {
@@ -477,6 +485,9 @@ void wsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
                           break;
                       case 'G':
                           procG(data, client);
+                          break;
+                      case 'P':
+                          procP(data, client);
                           break;
                       case 'S':
                           procS(data, client);
