@@ -729,14 +729,7 @@ function getJsonStatus(data) {
     $('#x_freeheap').text( status.system.freeheap );
 
 // getUptime
-    var date = new Date(+status.system.uptime);
-    var str = '';
-
-    str += Math.floor(date.getTime()/86400000) + " days, ";
-    str += ("0" + date.getUTCHours()).slice(-2) + ":";
-    str += ("0" + date.getUTCMinutes()).slice(-2) + ":";
-    str += ("0" + date.getUTCSeconds()).slice(-2);
-    $('#x_uptime').text(str);
+    $('#x_uptime').text( millsToDateString(+status.system.uptime, "") );
 
 // data source
     $('#x_datasource').text( status.system.datasource );
