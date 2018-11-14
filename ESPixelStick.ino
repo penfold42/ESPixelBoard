@@ -111,6 +111,8 @@ Ticker              wifiTicker; // Ticker to handle WiFi
 Ticker              idleTicker; // Ticker for effect on idle
 AsyncMqttClient     mqtt;       // MQTT object
 Ticker              mqttTicker; // Ticker to handle MQTT
+unsigned long       mqtt_last_seen;         // millis() timestamp of last message
+uint32_t            mqtt_num_packets;       // count of message rcvd
 EffectEngine        effects;    // Effects Engine
 UdpRaw              udpraw;
 
@@ -418,6 +420,9 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
 
 void onMqttMessage(char* topic, char* payload,
         AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
+
+    mqtt_last_seen = millis();
+    mqtt_num_packets++;
 
 //  LOG_PORT.printf("%s", payload);
 

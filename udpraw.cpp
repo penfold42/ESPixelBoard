@@ -58,6 +58,7 @@ void UdpRaw::begin(uint16_t port /*= ESPS_UDP_RAW_DEFAULT_PORT*/)
 void UdpRaw::onPacket(AsyncUDPPacket packet)
 {
 
+    stats.last_seen = millis();
     stats.last_clientIP = packet.remoteIP();
     stats.num_packets++;
     if (packet.length() < config.channel_count)
