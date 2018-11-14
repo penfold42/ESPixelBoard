@@ -1213,7 +1213,7 @@ void loop() {
             effects.run();
     }
 
-    toggleWebGpio();
+    handleToggleGpio();
 
 /* Streaming refresh */
 #if defined(ESPS_MODE_PIXEL)
