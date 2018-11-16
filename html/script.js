@@ -646,12 +646,14 @@ function getConfig(data) {
         $('#pwm_freq').val(config.pwm.freq);
         $('#pwm_gamma').prop('checked', config.pwm.gamma);
 
-        var after = '#gpio_start';
+        addPWMTable( '#gpio_start' );
+
+        var after = '#pwmtbody';
         for(var i=0, len=gpio_list.length; i < len; i++){
             var gpio_num = gpio_list[i];
             var gpioN = 'gpio' + gpio_num;
 
-            addPWMOptionSelect( after, gpio_list[i] )
+            addPWMTableRow( after, gpio_list[i] )
             if (typeof config['pwm']['gpio'][gpio_num] === 'undefined') {
                 $('#' + gpioN +'_enabled').attr('disabled', 'true');
                 $('#' + gpioN +'_invert').attr('disabled', 'true');
@@ -677,22 +679,45 @@ function getConfig(data) {
     }
 }
 
-function addPWMOptionSelect( afterID, gpio ) {
+function addPWMTable( afterID) {
+    var newitem = "";
+    newitem += '<div class="pwm table-responsive col-sm-offset-2 col-sm-10">'
+    newitem += '<table class="table esps-table" id="pwmtable">'
+    newitem += '<thead>'
+    newitem += '<tr>'
+    newitem += '<th class="text-center" scope="col">GPIO</th>'
+    newitem += '<th class="text-center" scope="col">Enabled</th>'
+    newitem += '<th class="text-center" scope="col">Inverted</th>'
+    newitem += '<th class="text-center" scope="col">Digital</th>'
+    newitem += '<th class="text-center" scope="col">DMX</th>'
+    newitem += '<th class="text-center" scope="col">Description</th>'
+    newitem += '</tr>'
+    newitem += '</thead>'
 
-var newitem = "";
-newitem += '<div class="form-group pwm" id="gpio' + gpio + '">'
-newitem += '  <label class="control-label col-sm-2" for="gpio' + gpio + '_enabled">GPIO ' + gpio + '</label>'
-newitem += '  <div class="checkbox col-sm-1"><label><input type="checkbox" id="gpio' + gpio + '_enabled" name="gpio' + gpio + '_enabled">enabled</label></div>'
-newitem += '  <div class="checkbox col-sm-1"><label><input type="checkbox" id="gpio' + gpio + '_invert" name="gpio' + gpio + '_invert">inverted</label></div>'
-newitem += '  <div class="checkbox col-sm-1"><label><input type="checkbox" id="gpio' + gpio + '_digital" name="gpio' + gpio + '_digital">digital</label></div>'
-newitem += '  <div class="col-sm-1"><input type="text" class="form-control" id="gpio' + gpio + '_channel" name="gpio' + gpio + '_channel" placeholder="DMX Channel"></div>'
-newitem += '  <div class="col-sm-5"><input type="text" class="form-control" id="gpio' + gpio + '_comment" name="gpio' + gpio + '_comment" placeholder="Description"></div>'
-newitem += '</div>'
+    newitem += '<tbody id="pwmtbody">'
+    newitem += '</tbody>'
+    newitem += '</table>'
+    newitem += '</div>'
 
-$( '#gpio'+gpio ).remove();
-$( afterID ).after( newitem );
-
+    $( '#pwmtable').remove();
+    $( afterID ).after( newitem );
 }
+
+function addPWMTableRow( afterID, gpio ) {
+var newitem = "";
+newitem += '<tr id="gpio' + gpio + '">'
+newitem += '  <td class="text-center">' + gpio + '</td>'
+newitem += '  <td class="text-center"><input type="checkbox" id="gpio' + gpio + '_enabled" name="gpio' + gpio + '_enabled"></td>'
+newitem += '  <td class="text-center"><input type="checkbox" id="gpio' + gpio + '_invert" name="gpio' + gpio + '_invert"></td>'
+newitem += '  <td class="text-center"><input type="checkbox" id="gpio' + gpio + '_digital" name="gpio' + gpio + '_digital"></td>'
+newitem += '  <td><input type="text" class="form-control" id="gpio' + gpio + '_channel" name="gpio' + gpio + '_channel" placeholder="DMX Channel"></td>'
+newitem += '  <td><input type="text" class="form-control" id="gpio' + gpio + '_comment" name="gpio' + gpio + '_comment" placeholder="Description"></td>'
+newitem += '</tr>'
+
+//$( '#gpio'+gpio ).remove();
+$( afterID ).after( newitem );
+}
+
 
 function getConfigStatus(data) {
     var status = JSON.parse(data);
