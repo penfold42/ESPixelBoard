@@ -903,14 +903,29 @@ void dsDeviceConfig(JsonObject &json) {
         config.pwm_gpio_digital = 0;
         config.pwm_gpio_enabled = 0;
         for (int gpio = 0; gpio < NUM_GPIO; gpio++) {
+            JsonObject& gpioJson = pwmJson["gpio"][(String)gpio];
+
+            config.pwm_gpio_comment[gpio] = gpioJson["comment"].as<String>();
             if (pwm_valid_gpio_mask & 1<<gpio) {
-                config.pwm_gpio_dmx[gpio] = pwmJson["gpio" + (String)gpio + "_channel"];
-                if (pwmJson["gpio" + (String)gpio + "_invert"])
+/*
+String blah;
+gpioJson.printTo(blah);
+LOG_PORT.print(blah);
+*/
+                config.pwm_gpio_dmx[gpio] = gpioJson["channel"];
+                if (gpioJson["invert"])
                     config.pwm_gpio_invert |= 1<<gpio;
-                if (pwmJson["gpio" + (String)gpio + "_digital"])
+                if (gpioJson["digital"])
                     config.pwm_gpio_digital |= 1<<gpio;
-                if (pwmJson["gpio" + (String)gpio + "_enabled"])
+                if (gpioJson["enabled"])
                     config.pwm_gpio_enabled |= 1<<gpio;
+/*
+LOG_PORT.println("dsDevice: gpioJson[comment]");
+LOG_PORT.println( gpioJson["comment"].as<String>());
+LOG_PORT.println("dsDevice: config.pwm_gpio_comment");
+LOG_PORT.println(config.pwm_gpio_comment[gpio]);
+*/
+
             }
         }
     }
@@ -1050,12 +1065,17 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     pwm["freq"] = config.pwm_freq;
     pwm["gamma"] = config.pwm_gamma;
     
+    JsonObject &gpioJ = pwm.createNestedObject("gpio");
     for (int gpio = 0; gpio < NUM_GPIO; gpio++ ) {
+        JsonObject &thisGpio = gpioJ.createNestedObject((String)gpio);
+        thisGpio["comment"] = config.pwm_gpio_comment[gpio];
         if (pwm_valid_gpio_mask & 1<<gpio) {
-            pwm["gpio" + (String)gpio + "_channel"] = static_cast<uint16_t>(config.pwm_gpio_dmx[gpio]);
-            pwm["gpio" + (String)gpio + "_enabled"] = static_cast<bool>(config.pwm_gpio_enabled & 1<<gpio);
-            pwm["gpio" + (String)gpio + "_invert"] = static_cast<bool>(config.pwm_gpio_invert & 1<<gpio);
-            pwm["gpio" + (String)gpio + "_digital"] = static_cast<bool>(config.pwm_gpio_digital & 1<<gpio);
+            thisGpio["channel"] = static_cast<uint16_t>(config.pwm_gpio_dmx[gpio]);
+            thisGpio["enabled"] = static_cast<bool>(config.pwm_gpio_enabled & 1<<gpio);
+            thisGpio["invert"] = static_cast<bool>(config.pwm_gpio_invert & 1<<gpio);
+            thisGpio["digital"] = static_cast<bool>(config.pwm_gpio_digital & 1<<gpio);
+//LOG_PORT.println("serialize: config.pwm_gpio_comment");
+//LOG_PORT.println(config.pwm_gpio_comment[gpio]);
         }
     }
 #endif
@@ -1213,7 +1233,7 @@ void loop() {
             effects.run();
     }
 
-    toggleWebGpio();
+    handleToggleGpio();
 
 /* Streaming refresh */
 #if defined(ESPS_MODE_PIXEL)

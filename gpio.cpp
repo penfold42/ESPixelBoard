@@ -32,91 +32,96 @@ unsigned long long  extended_mill;
 unsigned long long mill_rollover_count;
 
 extern AsyncWebServer  web; // Web Server
+extern uint32_t        pwm_valid_gpio_mask;
+extern config_t        config;
 
 
-void handleGPIO (AsyncWebServerRequest *request) {
-  AsyncResponseStream *response = request->beginResponseStream("text/html");
-  String substrings[10];
-  splitString('/', request->url(), substrings, sizeof(substrings) / sizeof(substrings[0]));
+void handleWebGPIO (AsyncWebServerRequest *request) {
+    AsyncResponseStream *response = request->beginResponseStream("text/html");
+
+    response->print( handleGPIO(request->url()) );
+    request->send(response);
+}
+
+String handleGPIO ( String request ) {
+    String reply;
+    char tempstr[40];
+
+    String substrings[10];
+    splitString('/', request, substrings, sizeof(substrings) / sizeof(substrings[0]));
 //  /gpio/<n>/set/1  
 //    1    2   3  4
 
-  gpio = substrings[2].toInt();
-  // distinguish between valid gpio 0 and invalid data (which also return 0 *sigh*)
-  if ((gpio == 0) && (substrings[2].charAt(0) != '0')) {
-    gpio = -1;
-  }
-  switch (gpio) {
-    case 0:
-    case 1:
-    case 2:
-    case 4:
-    case 5:
-    case 12:
-    case 13:
-    case 14:
-    case 15:
-    case 16:
-      if (substrings[3] == "get") {
-        response->printf("gpio%d is %d\r\n", gpio, digitalRead(gpio));
+    gpio = substrings[2].toInt();
+    // distinguish between valid gpio 0 and invalid data (which also return 0 *sigh*)
+    if ((gpio == 0) && (substrings[2].charAt(0) != '0')) {
+      gpio = -1;
+    }
 
-      } else if (substrings[3] == "set") {
-        int state = substrings[4].toInt();
-        digitalWrite(gpio, state);
-        response->printf("gpio%d set to %d\r\n", gpio, state);
+    if ( ( gpio >= 0 )
+      && ( pwm_valid_gpio_mask & 1<<gpio )
+      && ( config.pwm_gpio_enabled & 1<<gpio ) ) {
 
-      } else if (substrings[3] == "toggle") {
-        response->printf("gpio%d toggled to %s\r\n", gpio, substrings[4].c_str());
-        toggleGpio = gpio;
-        toggleString = substrings[4];
-        toggleCounter = 0;
-      } else if (substrings[3] == "mode") {
-        if (substrings[4].charAt(0) == 'S') {
-          pinMode(gpio, SPECIAL);
+        if (substrings[3] == "get") {
+            snprintf(tempstr, 40, "gpio%d is %d\r\n", gpio, digitalRead(gpio));
+
+        } else if (substrings[3] == "set") {
+            int state = substrings[4].toInt();
+            digitalWrite(gpio, state);
+            snprintf(tempstr, 40, "gpio%d set to %d\r\n", gpio, state);
+
+        } else if (substrings[3] == "toggle") {
+            snprintf(tempstr, 40, "gpio%d toggled to %s", gpio, substrings[4].c_str());
+            toggleGpio = gpio;
+            toggleString = substrings[4];
+            toggleCounter = 0;
+
+        } else if (substrings[3] == "mode") {
+            if (substrings[4].charAt(0) == 'S') {
+                pinMode(gpio, SPECIAL);
+            }
+            else if (substrings[4].charAt(0) == '?') {
+// add query pin mode when i can work out how!
+            } else {
+              int state = substrings[4].toInt();
+              pinMode(gpio, state);
+              snprintf(tempstr, 40, "gpio%d mode %d\r\n", gpio, state);
+            }
         }
-        else if (substrings[4].charAt(0) == '?') {
-          // add query pin mode when i can work out how!
-        } else {
-          int state = substrings[4].toInt();
-          pinMode(gpio, state);
-          response->printf("gpio%d mode %d\r\n", gpio, state);
-        }
-      } else {
-      }
-      break;
-    default:
-      response->printf("Invalid gpio %d\r\n",gpio);
-      break;
-  }
-  request->send(response);
+    } else {
+        snprintf(tempstr, 40, "Invalid gpio %d\r\n",gpio);
+    }
+
+    return (String) tempstr;
 }
 
 
 int splitString(char separator, String input, String results[], int numStrings) {
-  int idx;
-  int last_idx = 0;
-  int retval = 0;
-  for (int i = 0; i < numStrings; i++) {
-    results[i] = "";     // pre clear this
-    idx = input.indexOf(separator, last_idx);
-    if ((idx == -1) && (last_idx == -1)) {
-      break;
-    } else {
-      results[i] = input.substring(last_idx, idx);
-      retval ++;
+    int idx;
+    int last_idx = 0;
+    int retval = 0;
 
-      if (idx != -1) {
-        last_idx = idx + 1;
-      } else {
-        last_idx = -1;
-      }
+    for (int i = 0; i < numStrings; i++) {
+        results[i] = "";     // pre clear this
+        idx = input.indexOf(separator, last_idx);
+        if ((idx == -1) && (last_idx == -1)) {
+            break;
+        } else {
+            results[i] = input.substring(last_idx, idx);
+            retval ++;
+
+            if (idx != -1) {
+                last_idx = idx + 1;
+            } else {
+                last_idx = -1;
+            }
+        }
     }
-  }
-  return retval;
+    return retval;
 }
 
 
-void toggleWebGpio() {
+void handleToggleGpio() {
 
   this_mill = millis();
   if (last_mill > this_mill) {  // rollover
@@ -148,7 +153,7 @@ void toggleWebGpio() {
 void setupWebGpio() {
     lWaitMillis = millis() + toggleMS;  // initial setup
     // gpio url handler
-    web.on("/gpio", HTTP_GET, handleGPIO).setFilter(ON_STA_FILTER);
+    web.on("/gpio", HTTP_GET, handleWebGPIO).setFilter(ON_STA_FILTER);
 
     // uptime Handler
     web.on("/uptime", HTTP_GET, [](AsyncWebServerRequest *request) {

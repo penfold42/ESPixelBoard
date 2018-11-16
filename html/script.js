@@ -645,24 +645,79 @@ function getConfig(data) {
 
         $('#pwm_freq').val(config.pwm.freq);
         $('#pwm_gamma').prop('checked', config.pwm.gamma);
-        for(var i=0, len=gpio_list.length; i < len; i++){
-            var gpioN = 'gpio' + gpio_list[i];
 
-            if (typeof config['pwm'][gpioN + '_enabled'] === 'undefined') {
+        addPWMTable( '#gpio_start' );
+
+        var after = '#pwmtbody';
+        for(var i=0, len=gpio_list.length; i < len; i++){
+            var gpio_num = gpio_list[i];
+            var gpioN = 'gpio' + gpio_num;
+
+            addPWMTableRow( after, gpio_list[i] )
+            if (typeof config['pwm']['gpio'][gpio_num] === 'undefined') {
                 $('#' + gpioN +'_enabled').attr('disabled', 'true');
                 $('#' + gpioN +'_invert').attr('disabled', 'true');
                 $('#' + gpioN +'_digital').attr('disabled', 'true');
                 $('#' + gpioN +'_channel').val('-');
                 $('#' + gpioN +'_channel').attr('disabled', 'true');
+                $('#' + gpioN +'_comment').val('-');
+                $('#' + gpioN +'_comment').attr('disabled', 'true');
             } else {
-                $('#' + gpioN +'_enabled').prop('checked', config['pwm'][gpioN + '_enabled']);
-                $('#' + gpioN +'_invert').prop('checked', config['pwm'][gpioN + '_invert']);
-                $('#' + gpioN +'_digital').prop('checked', config['pwm'][gpioN + '_digital']);
-                $('#' + gpioN +'_channel').val(config['pwm'][gpioN + '_channel']);
+                if (typeof config['pwm']['gpio'][gpio_num]['enabled'] === 'undefined') {
+                    $('#' + gpioN +'_enabled').prop('checked', false);
+                    $('#' + gpioN +'_enabled').attr('disabled', 'true');
+                } else {
+                    $('#' + gpioN +'_enabled').prop('checked', config['pwm']['gpio'][gpio_num]['enabled']);
+                }
+                $('#' + gpioN +'_invert').prop('checked', config['pwm']['gpio'][gpio_num]['invert']);
+                $('#' + gpioN +'_digital').prop('checked', config['pwm']['gpio'][gpio_num]['digital']);
+                $('#' + gpioN +'_channel').val(config['pwm']['gpio'][gpio_num]['channel']);
+                $('#' + gpioN +'_comment').val(config['pwm']['gpio'][gpio_num]['comment']);
             }
+            after = '#' + gpioN;
         }
     }
 }
+
+function addPWMTable( afterID) {
+    var newitem = "";
+    newitem += '<div class="pwm table-responsive col-sm-offset-2 col-sm-10">'
+    newitem += '<table class="table esps-table" id="pwmtable">'
+    newitem += '<thead>'
+    newitem += '<tr>'
+    newitem += '<th class="text-center" scope="col">GPIO</th>'
+    newitem += '<th class="text-center" scope="col">Enabled</th>'
+    newitem += '<th class="text-center" scope="col">Inverted</th>'
+    newitem += '<th class="text-center" scope="col">Digital</th>'
+    newitem += '<th class="text-center" scope="col">DMX</th>'
+    newitem += '<th class="text-center" scope="col">Description</th>'
+    newitem += '</tr>'
+    newitem += '</thead>'
+
+    newitem += '<tbody id="pwmtbody">'
+    newitem += '</tbody>'
+    newitem += '</table>'
+    newitem += '</div>'
+
+    $( '#pwmtable').remove();
+    $( afterID ).after( newitem );
+}
+
+function addPWMTableRow( afterID, gpio ) {
+var newitem = "";
+newitem += '<tr id="gpio' + gpio + '">'
+newitem += '  <td class="text-center">' + gpio + '</td>'
+newitem += '  <td class="text-center"><input type="checkbox" id="gpio' + gpio + '_enabled" name="gpio' + gpio + '_enabled"></td>'
+newitem += '  <td class="text-center"><input type="checkbox" id="gpio' + gpio + '_invert" name="gpio' + gpio + '_invert"></td>'
+newitem += '  <td class="text-center"><input type="checkbox" id="gpio' + gpio + '_digital" name="gpio' + gpio + '_digital"></td>'
+newitem += '  <td><input type="text" class="form-control" id="gpio' + gpio + '_channel" name="gpio' + gpio + '_channel" placeholder="DMX Channel"></td>'
+newitem += '  <td><input type="text" class="form-control" id="gpio' + gpio + '_comment" name="gpio' + gpio + '_comment" placeholder="Description"></td>'
+newitem += '</tr>'
+
+//$( '#gpio'+gpio ).remove();
+$( afterID ).after( newitem );
+}
+
 
 function getConfigStatus(data) {
     var status = JSON.parse(data);
@@ -851,15 +906,20 @@ function submitConfig() {
                "enabled": $('#pwm_enabled').prop('checked'),
                "freq": parseInt($('#pwm_freq').val()),
                "gamma": $('#pwm_gamma').prop('checked'),
+               "gpio": {}
             }
         };
 
     for(var i = 0, len = gpio_list.length; i < len; i++) {
         var tg = gpio_list[i];
-        json['pwm']['gpio'+tg+'_channel'] = parseInt($('#gpio'+tg+'_channel').val());
-        json['pwm']['gpio'+tg+'_enabled'] = $('#gpio'+tg+'_enabled').prop('checked');
-        json['pwm']['gpio'+tg+'_invert'] = $('#gpio'+tg+'_invert').prop('checked');
-        json['pwm']['gpio'+tg+'_digital'] = $('#gpio'+tg+'_digital').prop('checked');
+
+        json['pwm']['gpio'][tg] = {};
+        json['pwm']['gpio'][tg]['channel'] = parseInt($('#gpio'+tg+'_channel').val());
+        json['pwm']['gpio'][tg]['enabled'] = $('#gpio'+tg+'_enabled').prop('checked');
+        json['pwm']['gpio'][tg]['invert'] = $('#gpio'+tg+'_invert').prop('checked');
+        json['pwm']['gpio'][tg]['digital'] = $('#gpio'+tg+'_digital').prop('checked');
+        json['pwm']['gpio'][tg]['comment'] = $('#gpio'+tg+'_comment').val();
+
     }
 
     wsEnqueue('S2' + JSON.stringify(json));

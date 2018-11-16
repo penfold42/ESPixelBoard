@@ -14,25 +14,25 @@
 <center>
 <button class="button hover-block" id='gb' align=center>Garage Door</button>
 </center>
+
 <style>
 .hover-block {
     -webkit-transition: all 1s linear;
             transition: all 1s linear;      
-
 }
 
-
 html, body {
-  overflow: hidden;
-  background-color: grey;
+    overflow: hidden;
+    background-color: grey;
     max-width:100%;
     max-height:100%;
     overflow:hidden;
-	  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  }
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 .button {
   -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */
@@ -53,137 +53,133 @@ html, body {
     -webkit-transition-duration: 0.4s; /* Safari */
     transition-duration: 0.4s;
     cursor: pointer;  padding: 20px;
-  width: 300px;
-	border: 5px solid #4CAF50;
-      -webkit-touch-callout: none;
+    width: 300px;
+    border: 5px solid #4CAF50;
+    -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
-	height: 500px;
-	border-radius: 30px;
+    height: 500px;
+    border-radius: 30px;
 }
 
 .toggleColour {
-  background-color: #4CAF50;
+    background-color: #4CAF50;
     color: white;
-  }
-
+}
 
 </style>
-<script type='text/javascript' src="esps.js"></script>
+
+<!-- for local development
+<script type="text/javascript" src="js/jquery-3.1.1.js"></script>
+<script type="text/javascript" src="js/bootstrap.js"></script>
+<script type="text/javascript" src="js/jqColorPicker.js"></script>
+<script type="text/javascript" src="script.js"></script>
+-->
+<script type="text/javascript" src="esps.js"></script>
+
 <script type="text/javascript">
 
+wsConnect();
 var responseText='';
 var lockscroll="no";
- function changeClr( id , clr ){
+
+function changeClr( id , clr ){
     document.getElementById( id ).backgroundColor = clr;
 }
 window.onload = loadscroll;
 window.onscroll = fightscroll;
 
-function fightscroll()
-{
-  if (lockscroll=="yes")
-    {
-      if (window.pageYOffset<=1)
-        lockscroll="no";
-      else
-        setTimeout('window.scrollTo(0, 120)' , 1);
+function fightscroll() {
+    if (lockscroll=="yes") {
+        if (window.pageYOffset<=1)
+            lockscroll="no";
+        else
+            setTimeout('window.scrollTo(0, 120)' , 1);
     }
 }
-function loadscroll()
-{
-  setTimeout('window.scrollTo(0, 120)' , 1);
+
+function loadscroll() {
+    setTimeout('window.scrollTo(0, 120)' , 1);
 }
 
-function delayAlert(alert_text)
-{
-	alert(alert_text);
-	document.bgColor = 'white';
+function delayAlert(alert_text) {
+    alert(alert_text);
+    document.bgColor = 'white';
 }
 
 
-function toggleButton()
-{
-sendRemoteButton('4','010');
+function toggleButton() {
+    sendRemoteButton('4','010');
 }
 
-
-function sendRemoteButton(gpio,state)
-{
-var xmlHttp;
-try
-  {
-  // Firefox, Opera 8.0+, Safari
-  xmlHttp=new XMLHttpRequest();
-  }
-catch (e)
-  {
-  // Internet Explorer
-  try
-    {
-    xmlHttp=new ActiveXObject("Msxml2.XMLHTTP");
-    }
-  catch (e)
-    {
-    try
-      {
-      xmlHttp=new ActiveXObject("Microsoft.XMLHTTP");
-      }
-    catch (e)
-      {
-      alert("Your browser does not support AJAX!");
-      return false;
-      }
-    }
-  }
-
-  xmlHttp.onreadystatechange=function()
-    {
-    if(xmlHttp.readyState==4)
-      {
-      responseText=xmlHttp.responseText;
-      rstatus=xmlHttp.status;
-      if(rstatus==200)
-        {
-			document.bgColor = 'white';
-		}
-      else
-		{
-			document.bgColor = 'red';
-			setTimeout('delayAlert(rstatus+": "+responseText)', 1000);
-		}
-      }
+function wsConnect() {
+    if (!'WebSocket' in window) {
+        alert('WebSockets is NOT supported by your Browser!');
+        return;
     }
 
+// accept ?target=10.0.0.123 to make a WS connection to another device
+//  if (target = param('target')) {
+//
+//  } else {
+        target = document.location.host;
+//  }
 
-  if ((gpio != "")&&(state != "")) { 
-	$('button').addClass('toggleColour');
-	var url="/gpio/";
-	url=url+gpio; 
-	url=url+'/toggle/';
-	url=url+state;
-  	xmlHttp.open("GET",url,true);
-  	xmlHttp.send(null);
-	document.bgColor = 'gray';
-	setTimeout(refResh, 300);
+    // Open a new web socket and set the binary type
+    ws = new WebSocket('ws://' + target + '/ws');
+    ws.binaryType = 'arraybuffer';
+
+    ws.onmessage = function (event) {
+        if(typeof event.data === "string") {
+            var cmd = event.data.substr(0, 2);
+            var data = event.data.substr(2);
+
+            switch (cmd) {
+                case 'PP':
+                    if (data.match(/toggled/)) {
+                        document.bgColor = 'white';
+//                      alert(data);
+                    } else {
+                        document.bgColor = 'red';
+                        alert(data);
+                    }
+                    break;
+            }
+        }
     }
-	
+
+    ws.onclose = function () {
+//      alert ('ws onclose')
+    }
 }
+
+function sendRemoteButton(gpio,state) {
+    if ((gpio != "")&&(state != "")) { 
+        $('button').addClass('toggleColour');
+        var url="PP/gpio/";
+        url=url+gpio; 
+        url=url+'/toggle/';
+        url=url+state;
+        ws.send(url);
+        document.bgColor = 'gray';
+        setTimeout(refResh, 300);
+    }
+}
+
 $('#gb').on('touchstart mousedown', function(e) {
     e.preventDefault();
 	toggleButton();
 });
 
 function refResh(){
-	$(':focus').blur()
-	$('button').removeClass('toggleColour');
-	}
+    $(':focus').blur()
+    $('button').removeClass('toggleColour');
+}
+
 </script>
-
-
 
 </body>
 </html>
