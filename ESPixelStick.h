@@ -151,6 +151,7 @@ typedef struct {
     uint32_t    pwm_gpio_enabled;   /* is gpio[n] enabled? */
     uint32_t    pwm_gpio_invert;    /* is gpio[n] active high or active low? */
     uint32_t    pwm_gpio_digital;   /* is gpio[n] digital or "analog"? */
+    String      pwm_gpio_comment[17];   /* Free text description */
 #endif
 } config_t;
 

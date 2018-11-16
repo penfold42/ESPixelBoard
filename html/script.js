@@ -658,11 +658,19 @@ function getConfig(data) {
                 $('#' + gpioN +'_digital').attr('disabled', 'true');
                 $('#' + gpioN +'_channel').val('-');
                 $('#' + gpioN +'_channel').attr('disabled', 'true');
+                $('#' + gpioN +'_comment').val('-');
+                $('#' + gpioN +'_comment').attr('disabled', 'true');
             } else {
-                $('#' + gpioN +'_enabled').prop('checked', config['pwm']['gpio'][gpio_num]['enabled']);
+                if (typeof config['pwm']['gpio'][gpio_num]['enabled'] === 'undefined') {
+                    $('#' + gpioN +'_enabled').prop('checked', false);
+                    $('#' + gpioN +'_enabled').attr('disabled', 'true');
+                } else {
+                    $('#' + gpioN +'_enabled').prop('checked', config['pwm']['gpio'][gpio_num]['enabled']);
+                }
                 $('#' + gpioN +'_invert').prop('checked', config['pwm']['gpio'][gpio_num]['invert']);
                 $('#' + gpioN +'_digital').prop('checked', config['pwm']['gpio'][gpio_num]['digital']);
                 $('#' + gpioN +'_channel').val(config['pwm']['gpio'][gpio_num]['channel']);
+                $('#' + gpioN +'_comment').val(config['pwm']['gpio'][gpio_num]['comment']);
             }
             after = '#' + gpioN;
         }
@@ -678,7 +686,7 @@ newitem += '  <div class="checkbox col-sm-1"><label><input type="checkbox" id="g
 newitem += '  <div class="checkbox col-sm-1"><label><input type="checkbox" id="gpio' + gpio + '_invert" name="gpio' + gpio + '_invert">inverted</label></div>'
 newitem += '  <div class="checkbox col-sm-1"><label><input type="checkbox" id="gpio' + gpio + '_digital" name="gpio' + gpio + '_digital">digital</label></div>'
 newitem += '  <div class="col-sm-1"><input type="text" class="form-control" id="gpio' + gpio + '_channel" name="gpio' + gpio + '_channel" placeholder="DMX Channel"></div>'
-newitem += '  <label class="control-label col-sm-5 text-left" for="gpio' + gpio + '_channel">H801: bjfldsjkl</label>'
+newitem += '  <div class="col-sm-5"><input type="text" class="form-control" id="gpio' + gpio + '_comment" name="gpio' + gpio + '_comment" placeholder="Description"></div>'
 newitem += '</div>'
 
 $( '#gpio'+gpio ).remove();
@@ -879,20 +887,13 @@ function submitConfig() {
 
     for(var i = 0, len = gpio_list.length; i < len; i++) {
         var tg = gpio_list[i];
-/*
-        var blah = {};
-        blah['channel'] = parseInt($('#gpio'+tg+'_channel').val());
-        blah['enabled'] = $('#gpio'+tg+'_enabled').prop('checked');
-        blah['invert'] = $('#gpio'+tg+'_invert').prop('checked');
-        blah['digital'] = $('#gpio'+tg+'_digital').prop('checked');
-        json['pwm']['gpio'][3] = blah;
-*/
 
         json['pwm']['gpio'][tg] = {};
         json['pwm']['gpio'][tg]['channel'] = parseInt($('#gpio'+tg+'_channel').val());
         json['pwm']['gpio'][tg]['enabled'] = $('#gpio'+tg+'_enabled').prop('checked');
         json['pwm']['gpio'][tg]['invert'] = $('#gpio'+tg+'_invert').prop('checked');
         json['pwm']['gpio'][tg]['digital'] = $('#gpio'+tg+'_digital').prop('checked');
+        json['pwm']['gpio'][tg]['comment'] = $('#gpio'+tg+'_comment').val();
 
     }
 
