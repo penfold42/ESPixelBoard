@@ -740,6 +740,7 @@ void validateConfig() {
     }
 
     if (config.effect_idletimeout == 0) {
+        config.effect_idletimeout = 10;
         config.effect_idleenabled = false;
     }
 }
