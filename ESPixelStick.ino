@@ -844,6 +844,9 @@ void dsEffectConfig(JsonObject &json) {
         config.effect_startenabled = effectsJson["startenabled"];
         config.effect_idleenabled = effectsJson["idleenabled"];
         config.effect_idletimeout = effectsJson["idletimeout"];
+        config.effect_sendenabled = effectsJson["sendenabled"];
+        config.effect_sendhost = effectsJson["sendhost"].as<String>();
+        config.effect_sendport = effectsJson["sendport"];
     }
 }
 
@@ -1024,6 +1027,9 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     _effects["startenabled"] = config.effect_startenabled;
     _effects["idleenabled"] = config.effect_idleenabled;
     _effects["idletimeout"] = config.effect_idletimeout;
+    _effects["sendenabled"] = config.effect_sendenabled;
+    _effects["sendhost"] = config.effect_sendhost;
+    _effects["sendport"] = config.effect_sendport;
 
     // MQTT
     JsonObject &_mqtt = json.createNestedObject("mqtt");

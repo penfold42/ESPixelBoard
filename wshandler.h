@@ -253,6 +253,9 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             effect["enabled"] = config.effect_startenabled;
             effect["idleenabled"] = config.effect_idleenabled;
             effect["idletimeout"] = config.effect_idletimeout;
+            effect["sendenabled"] = config.effect_sendenabled;
+            effect["sendhost"] = config.effect_sendhost;
+            effect["sendport"] = config.effect_sendport;
 
 // dump all the known effect and options
             JsonObject &effectList = json.createNestedObject("effectList");

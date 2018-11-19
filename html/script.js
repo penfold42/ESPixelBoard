@@ -764,6 +764,9 @@ function getEffectInfo(data) {
     $('#t_startenabled').prop('checked', running.startenabled);
     $('#t_idleenabled').prop('checked', running.idleenabled);
     $('#t_idletimeout').val(running.idletimeout);
+    $('#t_sendenabled').prop('checked', running.sendenabled);
+    $('#t_sendhost').val(running.sendhost);
+    $('#t_sendport').val(running.sendport);
 }
 
 function getJsonStatus(data) {
@@ -944,7 +947,10 @@ function submitStartupEffect() {
                 'brightness': 255,
                 'startenabled': $('#t_startenabled').prop('checked'),
                 'idleenabled': $('#t_idleenabled').prop('checked'),
-                'idletimeout': parseInt($('#t_idletimeout').val())
+                'idletimeout': parseInt($('#t_idletimeout').val()),
+                'sendenabled': $('#t_sendenabled').prop('checked'),
+                'sendhost': $('#t_sendhost').val(),
+                'sendport': parseInt($('#t_sendport').val())
             }
         };
 

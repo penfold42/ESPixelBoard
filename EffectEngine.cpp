@@ -65,8 +65,8 @@ void EffectEngine::run() {
             _effectTimeout = now + max((int)delay, MIN_EFFECT_DELAY);
             _effectCounter++;
 
-            if (fwdProtocol == 1) {
-                forwarder.beginPacket (fwdTarget.c_str(), fwdPort);
+            if (config.effect_sendenabled) {
+                forwarder.beginPacket (config.effect_sendhost.c_str(), config.effect_sendport);
                 forwarder.write (_ledDriver->getData(), config.channel_count);
                 forwarder.endPacket ();
             }
