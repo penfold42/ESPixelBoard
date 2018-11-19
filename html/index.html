@@ -396,8 +396,13 @@
           <div class="t_relay">
             <legend class="esps-legend">Send Effect LED Data</legend>
             <div class="form-group">
-              <div class="col-sm-offset-2 col-sm-10">
-                <div class="checkbox"><label><input type="checkbox" id="t_sendenabled" name="t_sendenabled"> Enable </label></div>
+              <label class="control-label col-sm-2" for="t_sendprotocol">Protocol</label>
+              <div class="col-sm-10">
+                <select class="form-control" id="t_sendprotocol" name="t_sendprotocol" onchange="sendChanged()">
+                    <option value="0">Disabled</option>
+                    <option value="1">UDP Raw</option>
+                    <option value="2">E.131</option>
+                </select>
               </div>
             </div>
             <div class="form-group sendeffect">

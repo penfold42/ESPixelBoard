@@ -113,7 +113,7 @@ typedef struct {
     bool effect_startenabled;
     bool effect_idleenabled;
     uint16_t effect_idletimeout;
-    bool effect_sendenabled;
+    int effect_sendprotocol;
     String effect_sendhost;
     uint16_t effect_sendport;
 

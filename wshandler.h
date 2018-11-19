@@ -253,7 +253,7 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             effect["enabled"] = config.effect_startenabled;
             effect["idleenabled"] = config.effect_idleenabled;
             effect["idletimeout"] = config.effect_idletimeout;
-            effect["sendenabled"] = config.effect_sendenabled;
+            effect["sendprotocol"] = config.effect_sendprotocol;
             effect["sendhost"] = config.effect_sendhost;
             effect["sendport"] = config.effect_sendport;
 

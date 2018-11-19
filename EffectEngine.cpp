@@ -54,7 +54,7 @@ void EffectEngine::begin(DRIVER* ledDriver, uint16_t ledCount) {
     _ledDriver = ledDriver;
     _ledCount = ledCount;
     _initialized = true;
-    forwarder.begin (9374);
+    forwarder.begin(9374);
 }
 
 void EffectEngine::run() {
@@ -65,10 +65,12 @@ void EffectEngine::run() {
             _effectTimeout = now + max((int)delay, MIN_EFFECT_DELAY);
             _effectCounter++;
 
-            if (config.effect_sendenabled) {
-                forwarder.beginPacket (config.effect_sendhost.c_str(), config.effect_sendport);
-                forwarder.write (_ledDriver->getData(), config.channel_count);
-                forwarder.endPacket ();
+            if (config.effect_sendprotocol == 1) {
+                if ( (config.ds == DataSource::WEB) || (config.ds == DataSource::MQTT) ) {
+                    forwarder.beginPacket(config.effect_sendhost.c_str(), config.effect_sendport);
+                    forwarder.write(_ledDriver->getData(), config.channel_count);
+                    forwarder.endPacket();
+                }
             }
         }
     }
