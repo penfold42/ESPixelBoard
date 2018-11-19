@@ -54,6 +54,7 @@ void EffectEngine::begin(DRIVER* ledDriver, uint16_t ledCount) {
     _ledDriver = ledDriver;
     _ledCount = ledCount;
     _initialized = true;
+    forwarder.begin (9374);
 }
 
 void EffectEngine::run() {
@@ -63,6 +64,12 @@ void EffectEngine::run() {
             uint16_t delay = (this->*_activeEffect->func)();
             _effectTimeout = now + max((int)delay, MIN_EFFECT_DELAY);
             _effectCounter++;
+
+            if (fwdProtocol == 1) {
+                forwarder.beginPacket (fwdTarget.c_str(), fwdPort);
+                forwarder.write (_ledDriver->getData(), config.channel_count);
+                forwarder.endPacket ();
+            }
         }
     }
 }

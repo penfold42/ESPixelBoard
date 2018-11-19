@@ -69,6 +69,11 @@ private:
     DRIVER* _ledDriver              = nullptr;      /* Pointer to the active LED driver */
     uint16_t _ledCount              = 0;            /* Number of RGB leds (not channels) */
 
+    WiFiUDP forwarder;
+    String fwdTarget                = "10.0.0.66";
+    uint16_t fwdPort                = 2801;         /* 0 off, 1 udpraw, 2 e131 */
+    int fwdProtocol                 = 0;            /* 0 off, 1 udpraw, 2 e131 */
+
 public:
     EffectEngine();
 
