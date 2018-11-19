@@ -214,6 +214,15 @@ $(function() {
             $('#s_baud').prop('disabled', false);
     });
 
+    // effects send UDP data toggle
+    $('#t_sendenabled').click(function() {
+        if ($(this).is(':checked')) {
+            $('.sendeffect').removeClass('hidden');
+       } else {
+            $('.sendeffect').addClass('hidden');
+       }
+    });
+
     // Hostname, SSID, and Password validation
     $('#hostname').keyup(function() {
         wifiValidation();
