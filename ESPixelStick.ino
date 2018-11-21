@@ -731,17 +731,19 @@ void validateConfig() {
         config.baudrate = BaudRate::BR_57600;
 #endif
 
+    if (config.effect_idletimeout == 0) {
+        config.effect_idletimeout = 10;
+        config.effect_idleenabled = false;
+    }
+
     effects.setFromConfig();
     if (config.effect_startenabled) {
         if (effects.isValidEffect(config.effect_name)) {
             effects.setEffect(config.effect_name);
             config.ds = DataSource::WEB;
         }
-    }
-
-    if (config.effect_idletimeout == 0) {
-        config.effect_idletimeout = 10;
-        config.effect_idleenabled = false;
+    } else {
+        effects.setEffect("Disabled");
     }
 }
 
@@ -775,10 +777,11 @@ void updateConfig() {
     pixels.begin(config.pixel_type, config.pixel_color, config.channel_count / 3);
     pixels.setGamma(config.gamma);
     updateGammaTable(config.gammaVal, config.briteVal);
-
     effects.begin(&pixels, config.channel_count / 3);
+
 #elif defined(ESPS_MODE_SERIAL)
     serial.begin(&SEROUT_PORT, config.serial_type, config.channel_count, config.baudrate);
+
 #endif
 
     LOG_PORT.print(F("- Listening for "));
