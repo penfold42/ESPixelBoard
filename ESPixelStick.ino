@@ -191,7 +191,7 @@ void setup() {
         effects.run();
     }
     // set the effect idle timer
-   idleTicker.attach(config.effect_idletimeout, idleTimeout);
+    idleTicker.attach(config.effect_idletimeout, idleTimeout);
 
     pixels.show();
 #else
@@ -946,6 +946,8 @@ void loadConfig() {
 
     // default to ap_fallback if config file cant be read
     config.ap_fallback = true;
+
+    effects.setFromDefaults();
 
     // Load CONFIG_FILE json. Create and init with defaults if not found
     File file = SPIFFS.open(CONFIG_FILE, "r");

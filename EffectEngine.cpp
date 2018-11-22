@@ -32,16 +32,20 @@ const EffectDesc EFFECT_LIST[] = {
 
 EffectEngine::EffectEngine() {
     // Initialize with defaults
-    setEffect(DEFAULT_EFFECT_NAME);
-    setColor(DEFAULT_EFFECT_COLOR);
-    setBrightness(DEFAULT_EFFECT_BRIGHTNESS);
-    setReverse(DEFAULT_EFFECT_REVERSE);
-    setMirror(DEFAULT_EFFECT_MIRROR);
-    setAllLeds(DEFAULT_EFFECT_ALLLEDS);
+    setFromDefaults();
+}
+
+void EffectEngine::setFromDefaults() {
+    config.effect_name = DEFAULT_EFFECT_NAME;
+    config.effect_color = DEFAULT_EFFECT_COLOR;
+    config.effect_brightness = DEFAULT_EFFECT_BRIGHTNESS;
+    config.effect_reverse = DEFAULT_EFFECT_REVERSE;
+    config.effect_mirror = DEFAULT_EFFECT_MIRROR;
+    config.effect_allleds = DEFAULT_EFFECT_ALLLEDS;
+    setFromConfig();
 }
 
 void EffectEngine::setFromConfig() {
-    // Initialize with defaults
     setEffect(config.effect_name);
     setColor(config.effect_color);
     setBrightness(config.effect_brightness);
