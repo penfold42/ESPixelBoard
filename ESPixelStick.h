@@ -113,6 +113,11 @@ typedef struct {
     bool effect_startenabled;
     bool effect_idleenabled;
     uint16_t effect_idletimeout;
+    int effect_sendprotocol;
+    String effect_sendhost;
+    IPAddress effect_sendIP;
+    uint16_t effect_sendport;
+    bool effect_sendmulticast;
 
     /* MQTT */
     bool        mqtt;           /* Use MQTT? */

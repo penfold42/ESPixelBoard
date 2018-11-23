@@ -191,7 +191,7 @@ void setup() {
         effects.run();
     }
     // set the effect idle timer
-   idleTicker.attach(config.effect_idletimeout, idleTimeout);
+    idleTicker.attach(config.effect_idletimeout, idleTimeout);
 
     pixels.show();
 #else
@@ -240,6 +240,8 @@ void setup() {
             ESP.restart();
         }
     }
+
+    resolveHosts();
 
     wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWiFiDisconnect);
 
@@ -731,17 +733,19 @@ void validateConfig() {
         config.baudrate = BaudRate::BR_57600;
 #endif
 
+    if (config.effect_idletimeout == 0) {
+        config.effect_idletimeout = 10;
+        config.effect_idleenabled = false;
+    }
+
     effects.setFromConfig();
     if (config.effect_startenabled) {
         if (effects.isValidEffect(config.effect_name)) {
             effects.setEffect(config.effect_name);
             config.ds = DataSource::WEB;
         }
-    }
-
-    if (config.effect_idletimeout == 0) {
-        config.effect_idletimeout = 10;
-        config.effect_idleenabled = false;
+    } else {
+        effects.setEffect("Disabled");
     }
 }
 
@@ -775,10 +779,11 @@ void updateConfig() {
     pixels.begin(config.pixel_type, config.pixel_color, config.channel_count / 3);
     pixels.setGamma(config.gamma);
     updateGammaTable(config.gammaVal, config.briteVal);
-
     effects.begin(&pixels, config.channel_count / 3);
+
 #elif defined(ESPS_MODE_SERIAL)
     serial.begin(&SEROUT_PORT, config.serial_type, config.channel_count, config.baudrate);
+
 #endif
 
     LOG_PORT.print(F("- Listening for "));
@@ -844,6 +849,9 @@ void dsEffectConfig(JsonObject &json) {
         config.effect_startenabled = effectsJson["startenabled"];
         config.effect_idleenabled = effectsJson["idleenabled"];
         config.effect_idletimeout = effectsJson["idletimeout"];
+        config.effect_sendprotocol = effectsJson["sendprotocol"];
+        config.effect_sendhost = effectsJson["sendhost"].as<String>();
+        config.effect_sendport = effectsJson["sendport"];
     }
 }
 
@@ -908,11 +916,6 @@ void dsDeviceConfig(JsonObject &json) {
 
             config.pwm_gpio_comment[gpio] = gpioJson["comment"].as<String>();
             if (pwm_valid_gpio_mask & 1<<gpio) {
-/*
-String blah;
-gpioJson.printTo(blah);
-LOG_PORT.print(blah);
-*/
                 config.pwm_gpio_dmx[gpio] = gpioJson["channel"];
                 if (gpioJson["invert"])
                     config.pwm_gpio_invert |= 1<<gpio;
@@ -920,12 +923,6 @@ LOG_PORT.print(blah);
                     config.pwm_gpio_digital |= 1<<gpio;
                 if (gpioJson["enabled"])
                     config.pwm_gpio_enabled |= 1<<gpio;
-/*
-LOG_PORT.println("dsDevice: gpioJson[comment]");
-LOG_PORT.println( gpioJson["comment"].as<String>());
-LOG_PORT.println("dsDevice: config.pwm_gpio_comment");
-LOG_PORT.println(config.pwm_gpio_comment[gpio]);
-*/
 
             }
         }
@@ -940,6 +937,8 @@ void loadConfig() {
 
     // default to ap_fallback if config file cant be read
     config.ap_fallback = true;
+
+    effects.setFromDefaults();
 
     // Load CONFIG_FILE json. Create and init with defaults if not found
     File file = SPIFFS.open(CONFIG_FILE, "r");
@@ -1024,6 +1023,9 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     _effects["startenabled"] = config.effect_startenabled;
     _effects["idleenabled"] = config.effect_idleenabled;
     _effects["idletimeout"] = config.effect_idletimeout;
+    _effects["sendprotocol"] = config.effect_sendprotocol;
+    _effects["sendhost"] = config.effect_sendhost;
+    _effects["sendport"] = config.effect_sendport;
 
     // MQTT
     JsonObject &_mqtt = json.createNestedObject("mqtt");
@@ -1257,3 +1259,23 @@ void loop() {
 
 }
 
+void resolveHosts() {
+// no point trying if we're an AP
+    if (WiFi.getMode() == WIFI_STA) {
+        IPAddress tempIP;
+
+        if (config.effect_sendprotocol) {
+// dont know why this doesnt work...
+//          WiFi.hostByName(config.effect_sendhost.c_str(), config.effect_sendIP);
+
+            WiFi.hostByName(config.effect_sendhost.c_str(), tempIP);
+
+            if ( ( tempIP[0] & 0b11100000 ) == 224 ) {
+                config.effect_sendmulticast = true;
+            } else {
+                config.effect_sendmulticast = false;
+            }
+            config.effect_sendIP = tempIP;
+        }
+    }
+}

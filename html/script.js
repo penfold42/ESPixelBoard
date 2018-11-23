@@ -764,6 +764,9 @@ function getEffectInfo(data) {
     $('#t_startenabled').prop('checked', running.startenabled);
     $('#t_idleenabled').prop('checked', running.idleenabled);
     $('#t_idletimeout').val(running.idletimeout);
+    $('#t_sendprotocol').val(running.sendprotocol);
+    $('#t_sendhost').val(running.sendhost);
+    $('#t_sendport').val(running.sendport);
 }
 
 function getJsonStatus(data) {
@@ -943,8 +946,11 @@ function submitStartupEffect() {
                 'b': temp[3],
                 'brightness': 255,
                 'startenabled': $('#t_startenabled').prop('checked'),
-                'idleenabled': $('#t_idleenabled'),
-                'idletimeout': parseInt($('#t_idletimeout').val())
+                'idleenabled': $('#t_idleenabled').prop('checked'),
+                'idletimeout': parseInt($('#t_idletimeout').val()),
+                'sendprotocol': $('#t_sendprotocol').val(),
+                'sendhost': $('#t_sendhost').val(),
+                'sendport': parseInt($('#t_sendport').val())
             }
         };
 
@@ -1031,6 +1037,21 @@ function effectChanged() {
     if (typeof effectInfo[tmode].wsTCode !== 'undefined') {
         wsEnqueue( effectInfo[tmode].wsTCode );
     }
+}
+
+// effect send protocol changed
+function sendChanged() {
+//    hideShowTestSections();
+
+    var protocol = $('#t_sendprotocol option:selected').val();
+
+    // effects send UDP data toggle
+    if (protocol > 0) {
+        $('.sendeffect').removeClass('hidden');
+    } else {
+        $('.sendeffect').addClass('hidden');
+    }
+
 }
 
 function showReboot() {

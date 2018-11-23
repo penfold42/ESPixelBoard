@@ -69,6 +69,8 @@ private:
     DRIVER* _ledDriver              = nullptr;      /* Pointer to the active LED driver */
     uint16_t _ledCount              = 0;            /* Number of RGB leds (not channels) */
 
+    WiFiUDP forwarder;
+
 public:
     EffectEngine();
 
@@ -87,6 +89,8 @@ public:
     const EffectDesc* getEffectInfo(unsigned a);
     const EffectDesc* getEffectInfo(String s);
     void setFromConfig();
+    void setFromDefaults();
+
     bool isValidEffect(const String effectName);
     void setEffect(const String effectName);
     void setReverse(bool reverse)           { _effectReverse = reverse; }

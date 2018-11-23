@@ -32,16 +32,20 @@ const EffectDesc EFFECT_LIST[] = {
 
 EffectEngine::EffectEngine() {
     // Initialize with defaults
-    setEffect(DEFAULT_EFFECT_NAME);
-    setColor(DEFAULT_EFFECT_COLOR);
-    setBrightness(DEFAULT_EFFECT_BRIGHTNESS);
-    setReverse(DEFAULT_EFFECT_REVERSE);
-    setMirror(DEFAULT_EFFECT_MIRROR);
-    setAllLeds(DEFAULT_EFFECT_ALLLEDS);
+    setFromDefaults();
+}
+
+void EffectEngine::setFromDefaults() {
+    config.effect_name = DEFAULT_EFFECT_NAME;
+    config.effect_color = DEFAULT_EFFECT_COLOR;
+    config.effect_brightness = DEFAULT_EFFECT_BRIGHTNESS;
+    config.effect_reverse = DEFAULT_EFFECT_REVERSE;
+    config.effect_mirror = DEFAULT_EFFECT_MIRROR;
+    config.effect_allleds = DEFAULT_EFFECT_ALLLEDS;
+    setFromConfig();
 }
 
 void EffectEngine::setFromConfig() {
-    // Initialize with defaults
     setEffect(config.effect_name);
     setColor(config.effect_color);
     setBrightness(config.effect_brightness);
@@ -54,6 +58,7 @@ void EffectEngine::begin(DRIVER* ledDriver, uint16_t ledCount) {
     _ledDriver = ledDriver;
     _ledCount = ledCount;
     _initialized = true;
+    forwarder.begin(9374);
 }
 
 void EffectEngine::run() {
@@ -63,6 +68,17 @@ void EffectEngine::run() {
             uint16_t delay = (this->*_activeEffect->func)();
             _effectTimeout = now + max((int)delay, MIN_EFFECT_DELAY);
             _effectCounter++;
+
+            if ( (config.effect_sendprotocol == 1) && (config.effect_sendIP) ) {
+                if ( (config.ds == DataSource::WEB) || (config.ds == DataSource::MQTT) ) {
+                    if (config.effect_sendmulticast)
+                        forwarder.beginPacketMulticast(config.effect_sendIP, config.effect_sendport, WiFi.localIP());
+                    else
+                        forwarder.beginPacket(config.effect_sendIP, config.effect_sendport);
+                    forwarder.write(_ledDriver->getData(), config.channel_count);
+                    forwarder.endPacket();
+                }
+            }
         }
     }
 }
