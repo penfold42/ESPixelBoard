@@ -241,6 +241,8 @@ void setup() {
         }
     }
 
+    resolveHosts();
+
     wifiDisconnectHandler = WiFi.onStationModeDisconnected(onWiFiDisconnect);
 
     // Configure and start the web server
@@ -914,11 +916,6 @@ void dsDeviceConfig(JsonObject &json) {
 
             config.pwm_gpio_comment[gpio] = gpioJson["comment"].as<String>();
             if (pwm_valid_gpio_mask & 1<<gpio) {
-/*
-String blah;
-gpioJson.printTo(blah);
-LOG_PORT.print(blah);
-*/
                 config.pwm_gpio_dmx[gpio] = gpioJson["channel"];
                 if (gpioJson["invert"])
                     config.pwm_gpio_invert |= 1<<gpio;
@@ -926,12 +923,6 @@ LOG_PORT.print(blah);
                     config.pwm_gpio_digital |= 1<<gpio;
                 if (gpioJson["enabled"])
                     config.pwm_gpio_enabled |= 1<<gpio;
-/*
-LOG_PORT.println("dsDevice: gpioJson[comment]");
-LOG_PORT.println( gpioJson["comment"].as<String>());
-LOG_PORT.println("dsDevice: config.pwm_gpio_comment");
-LOG_PORT.println(config.pwm_gpio_comment[gpio]);
-*/
 
             }
         }
@@ -1268,3 +1259,23 @@ void loop() {
 
 }
 
+void resolveHosts() {
+// no point trying if we're an AP
+    if (WiFi.getMode() == WIFI_STA) {
+        IPAddress tempIP;
+
+        if (config.effect_sendprotocol) {
+// dont know why this doesnt work...
+//          WiFi.hostByName(config.effect_sendhost.c_str(), config.effect_sendIP);
+
+            WiFi.hostByName(config.effect_sendhost.c_str(), tempIP);
+
+            if ( ( tempIP[0] & 0b11100000 ) == 224 ) {
+                config.effect_sendmulticast = true;
+            } else {
+                config.effect_sendmulticast = false;
+            }
+            config.effect_sendIP = tempIP;
+        }
+    }
+}

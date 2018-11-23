@@ -69,22 +69,12 @@ void EffectEngine::run() {
             _effectTimeout = now + max((int)delay, MIN_EFFECT_DELAY);
             _effectCounter++;
 
-            if (config.effect_sendprotocol == 1) {
+            if ( (config.effect_sendprotocol == 1) && (config.effect_sendIP) ) {
                 if ( (config.ds == DataSource::WEB) || (config.ds == DataSource::MQTT) ) {
-/*
-    if (config.effect_sendprotocol) {
-        WiFi.hostByName(config.effect_sendhost.c_str(), config.effect_sendIP);
-LOG_PORT.print("got addr ");
-LOG_PORT.println(config.effect_sendIP);
-        if ( ( config.effect_sendIP[0] && 0b11100000 ) == 224 ) {
-LOG_PORT.println("and its multicast");
-        } else {
-LOG_PORT.println("and its unicast");
-        }
-    }
-*/
-
-                    forwarder.beginPacket(config.effect_sendhost.c_str(), config.effect_sendport);
+                    if (config.effect_sendmulticast)
+                        forwarder.beginPacketMulticast(config.effect_sendIP, config.effect_sendport, WiFi.localIP());
+                    else
+                        forwarder.beginPacket(config.effect_sendIP, config.effect_sendport);
                     forwarder.write(_ledDriver->getData(), config.channel_count);
                     forwarder.endPacket();
                 }
