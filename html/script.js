@@ -767,6 +767,7 @@ function getEffectInfo(data) {
     $('#t_sendprotocol').val(running.sendprotocol);
     $('#t_sendhost').val(running.sendhost);
     $('#t_sendport').val(running.sendport);
+    $('#t_sendspeed').val(running.sendspeed);
 }
 
 function getJsonStatus(data) {
@@ -950,7 +951,8 @@ function submitStartupEffect() {
                 'idletimeout': parseInt($('#t_idletimeout').val()),
                 'sendprotocol': $('#t_sendprotocol').val(),
                 'sendhost': $('#t_sendhost').val(),
-                'sendport': parseInt($('#t_sendport').val())
+                'sendport': parseInt($('#t_sendport').val()),
+                'sendspeed': parseFloat($('#t_sendspeed').val())
             }
         };
 

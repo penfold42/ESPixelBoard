@@ -1,6 +1,8 @@
 #ifndef EFFECTENGINE_H_
 #define EFFECTENGINE_H_
 
+#include <Ticker.h>
+
 #define MIN_EFFECT_DELAY 10
 #define MAX_EFFECT_DELAY 65535
 #define DEFAULT_EFFECT_SPEED 1000
@@ -69,7 +71,7 @@ private:
     DRIVER* _ledDriver              = nullptr;      /* Pointer to the active LED driver */
     uint16_t _ledCount              = 0;            /* Number of RGB leds (not channels) */
 
-    WiFiUDP forwarder;
+    WiFiUDP _forwarder;
 
 public:
     EffectEngine();
@@ -111,6 +113,8 @@ public:
     uint16_t effectBreathe();
     uint16_t effectNull();
     void clearAll();
+
+    void sendUDPData();
 
 private:
 
