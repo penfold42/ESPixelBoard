@@ -58,7 +58,7 @@ void EffectEngine::begin(DRIVER* ledDriver, uint16_t ledCount) {
     _ledDriver = ledDriver;
     _ledCount = ledCount;
     _initialized = true;
-    forwarder.begin(9374);
+    _forwarder.begin(9374);
 }
 
 void EffectEngine::run() {
@@ -68,17 +68,6 @@ void EffectEngine::run() {
             uint16_t delay = (this->*_activeEffect->func)();
             _effectTimeout = now + max((int)delay, MIN_EFFECT_DELAY);
             _effectCounter++;
-
-            if ( (config.effect_sendprotocol == 1) && (config.effect_sendIP) ) {
-                if ( (config.ds == DataSource::WEB) || (config.ds == DataSource::MQTT) ) {
-                    if (config.effect_sendmulticast)
-                        forwarder.beginPacketMulticast(config.effect_sendIP, config.effect_sendport, WiFi.localIP());
-                    else
-                        forwarder.beginPacket(config.effect_sendIP, config.effect_sendport);
-                    forwarder.write(_ledDriver->getData(), config.channel_count);
-                    forwarder.endPacket();
-                }
-            }
         }
     }
 }
@@ -363,6 +352,18 @@ uint16_t EffectEngine::effectBreathe() {
   return _effectSpeed / 40; // update every 25ms
 }
 
+void EffectEngine::sendUDPData() {
+    if ( (config.effect_sendprotocol == 1) && (config.effect_sendIP) ) {
+        if ( (config.ds == DataSource::WEB) || (config.ds == DataSource::MQTT) ) {
+            if (config.effect_sendmulticast)
+                _forwarder.beginPacketMulticast(config.effect_sendIP, config.effect_sendport, WiFi.localIP());
+            else
+                _forwarder.beginPacket(config.effect_sendIP, config.effect_sendport);
+            _forwarder.write(_ledDriver->getData(), config.channel_count);
+            _forwarder.endPacket();
+        }
+    }
+}
 
 // dCHSV hue 0->360 sat 0->1.0 val 0->1.0
 dCHSV EffectEngine::rgb2hsv(CRGB in_int)

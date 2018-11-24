@@ -117,6 +117,7 @@ typedef struct {
     String effect_sendhost;
     IPAddress effect_sendIP;
     uint16_t effect_sendport;
+    float effect_sendspeed;
     bool effect_sendmulticast;
 
     /* MQTT */

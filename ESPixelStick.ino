@@ -114,6 +114,7 @@ Ticker              mqttTicker; // Ticker to handle MQTT
 unsigned long       mqtt_last_seen;         // millis() timestamp of last message
 uint32_t            mqtt_num_packets;       // count of message rcvd
 EffectEngine        effects;    // Effects Engine
+Ticker  sendTimer;
 UdpRaw              udpraw;
 
 // Output Drivers
@@ -192,7 +193,7 @@ void setup() {
     }
     // set the effect idle timer
     idleTicker.attach(config.effect_idletimeout, idleTimeout);
-
+    sendTimer.attach(1.0/config.effect_sendspeed, sendData);
     pixels.show();
 #else
     updateConfig();
@@ -737,6 +738,10 @@ void validateConfig() {
         config.effect_idletimeout = 10;
         config.effect_idleenabled = false;
     }
+    if (config.effect_sendspeed > 100)
+        config.effect_sendspeed = 100;
+    if (config.effect_sendspeed <= 0.001f)
+        config.effect_sendspeed = 0.001;
 
     effects.setFromConfig();
     if (config.effect_startenabled) {
@@ -852,6 +857,7 @@ void dsEffectConfig(JsonObject &json) {
         config.effect_sendprotocol = effectsJson["sendprotocol"];
         config.effect_sendhost = effectsJson["sendhost"].as<String>();
         config.effect_sendport = effectsJson["sendport"];
+        config.effect_sendspeed = effectsJson["sendspeed"] | 25;
     }
 }
 
@@ -1026,6 +1032,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     _effects["sendprotocol"] = config.effect_sendprotocol;
     _effects["sendhost"] = config.effect_sendhost;
     _effects["sendport"] = config.effect_sendport;
+    _effects["sendspeed"] = config.effect_sendspeed;
 
     // MQTT
     JsonObject &_mqtt = json.createNestedObject("mqtt");
@@ -1121,6 +1128,11 @@ void saveConfig() {
         file.println(jsonString);
         LOG_PORT.println(F("* Configuration saved."));
     }
+}
+
+void sendData() {
+    effects.sendUDPData();
+    sendTimer.attach(1.0/config.effect_sendspeed, sendData);
 }
 
 void idleTimeout() {

@@ -256,6 +256,7 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             effect["sendprotocol"] = config.effect_sendprotocol;
             effect["sendhost"] = config.effect_sendhost;
             effect["sendport"] = config.effect_sendport;
+            effect["sendspeed"] = config.effect_sendspeed;
 
 // dump all the known effect and options
             JsonObject &effectList = json.createNestedObject("effectList");
