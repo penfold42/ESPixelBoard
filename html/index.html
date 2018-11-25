@@ -5,11 +5,11 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title id="title"></title>
-<!-- for local development
   <link rel="stylesheet" type="text/css" href="css/bootstrap.css">
   <link rel="stylesheet" type="text/css" href="style.css">
--->
+<!-- for local development
   <link rel="stylesheet" type="text/css" href="esps.css">
+-->
 </head>
 
 <body>
@@ -146,7 +146,7 @@
           </div>
           <div class="form-group" id="fg_udpport">
             <label class="control-label col-sm-2" for="ssid">UDP Raw Port</label>
-            <div class="col-sm-10"><input type="text" class="form-control" id="udp_port" name="udp_port" placeholder="Enter UDP Port"></div>
+            <div class="col-sm-10"><input type="number" class="form-control" id="udp_port" name="udp_port" placeholder="Enter UDP Port"></div>
           </div>
 
           <div class="form-group">
@@ -169,15 +169,15 @@
           </div>
           <div class="form-group">
             <label class="control-label col-sm-2" for="universe">Universe</label>
-            <div class="col-sm-10"><input type="text" class="form-control" id="universe" name="universe" placeholder="Enter Universe Number"></div>
+            <div class="col-sm-10"><input type="number" step="1" class="form-control" id="universe" name="universe" placeholder="Enter Universe Number"></div>
           </div>
           <div class="form-group">
             <label class="control-label col-sm-2" for="channel_start">Start Channel</label>
-            <div class="col-sm-10"><input type="text" class="form-control" id="channel_start" name="channel_start" placeholder="Enter Starting Channel"></div>
+            <div class="col-sm-10"><input type="number" step="1" class="form-control" id="channel_start" name="channel_start" placeholder="Enter Starting Channel"></div>
           </div>
           <div class="form-group">
             <label class="control-label col-sm-2" for="universe_limit">Universe Boundary</label>
-            <div class="col-sm-10"><input type="text" class="form-control" id="universe_limit" name="universe_limit" placeholder="Enter number of channels to handle per universe"></div>
+            <div class="col-sm-10"><input type="number" step="1" class="form-control" id="universe_limit" name="universe_limit" placeholder="Enter number of channels to handle per universe"></div>
           </div>
 
           <div class="form-group">
@@ -191,7 +191,7 @@
             <legend class="esps-legend">Pixel Configuration</legend>
             <div class="form-group">
               <label class="control-label col-sm-2" for="p_count">Pixel Count</label>
-              <div class="col-sm-10"><input type="text" class="form-control" id="p_count" name="p_count" placeholder="Enter number of pixels" onchange="refreshPixel()"></div>
+              <div class="col-sm-10"><input type="number" step="1" class="form-control" id="p_count" name="p_count" placeholder="Enter number of pixels" onchange="refreshPixel()"></div>
             </div>
             <div class="form-group">
               <label class="control-label col-sm-2" for="p_type">Pixel Type</label>
@@ -212,9 +212,9 @@
             </div>
             <div class="form-group">
               <label class="control-label col-sm-2" for="p_gammaVal">Gamma Value</label>
-              <div class="col-sm-3"><input type="text" class="form-control" id="p_gammaVal" name="p_gammaVal" placeholder="Gamma Value" onchange="refreshPixel()"></div>
+              <div class="col-sm-3"><input type="number" step="0.1" class="form-control" id="p_gammaVal" name="p_gammaVal" placeholder="Gamma Value" onchange="refreshPixel()"></div>
               <label class="control-label col-sm-2" for="p_briteVal">Brightness</label>
-              <div class="col-sm-3"><input type="text" class="form-control" id="p_briteVal" name="p_briteVal" placeholder="Brightness" onchange="refreshPixel()"></div>
+              <div class="col-sm-3"><input type="number" step="0.1" class="form-control" id="p_briteVal" name="p_briteVal" placeholder="Brightness" onchange="refreshPixel()"></div>
               <div class="col-sm-offset-2 col-sm-10">
                 <div class="checkbox"><label><input type="checkbox" id="showgamma" name="showgamma"> Show Gamma Curve</label></div>
               </div>
@@ -250,7 +250,7 @@
             <legend class="esps-legend">Serial Configuration</legend>
             <div class="form-group">
               <label class="control-label col-sm-2" for="s_count">Channel Count</label>
-              <div class="col-sm-10"><input type="text" class="form-control" id="s_count" placeholder="Enter number of channels" onchange="refreshSerial()"></div>
+              <div class="col-sm-10"><input type="number" step="1" class="form-control" id="s_count" placeholder="Enter number of channels" onchange="refreshSerial()"></div>
             </div>
             <div class="form-group">
               <label class="control-label col-sm-2" for="s_proto">Protocol</label>
@@ -285,7 +285,7 @@
           </div>
           <div class="form-group mqtt">
             <label class="control-label col-sm-2" for="mqtt_port">Broker Port</label>
-            <div class="col-sm-10"><input type="text" class="form-control" id="mqtt_port" name="mqtt_port" placeholder="Enter MQTT Broker Port"></div>
+            <div class="col-sm-10"><input type="number" step="1" class="form-control" id="mqtt_port" name="mqtt_port" placeholder="Enter MQTT Broker Port"></div>
           </div>
           <div class="form-group mqtt">
             <label class="control-label col-sm-2" for="mqtt_user">User</label>
@@ -316,16 +316,22 @@
 
             <div class="form-group pwm">
               <label class="control-label col-sm-2" for="pwm_freq">PWM Frequency</label>
-              <div class="col-sm-10"><input type="text" class="form-control" id="pwm_freq" name="pwm_freq" placeholder="PWM frequency"></div>
+              <div class="col-sm-10"><input type="number" class="form-control" id="pwm_freq" name="pwm_freq" placeholder="PWM frequency"></div>
             </div>          
 
             <div class="form-group pwm">
-              <div class="col-sm-offset-2 col-sm-10 pwm">
-                <div class="checkbox"><label><input type="checkbox" id="pwm_gamma" name="pwm_gamma"> Gamma Correction</label></div>
+              <label class="control-label col-sm-2" for="pwm_gamma">Gamma Correction</label>
+              <div class="col-sm-10 pwm">
+                <div class="checkbox"><label><input type="checkbox" id="pwm_gamma" name="pwm_gamma"> Enable </label></div>
               </div>
             </div>          
 
-            <div class="form-group pwm" id="gpio_start"></div>
+            <div class="form-group pwm" id="NOTgpio_start">
+              <label class="control-label col-sm-2" for="gpio_start">GPIO Mapping</label>
+              <div class="pwm hidden table-responsive col-sm-10" id="gpio_start">
+<!-- js puts table in here -->
+              </div>
+            </div>
 
           </div>
 
@@ -388,7 +394,7 @@
             </div>
             <div class="form-group">
               <label class="control-label col-sm-2" for="ssid">Idle Timeout</label>
-              <div class="col-sm-10"><input type="text" class="form-control" id="t_idletimeout" name="t_idletimeout" placeholder="Idle Timer (secs)"></div>
+              <div class="col-sm-10"><input type="number" step="0.1" class="form-control" id="t_idletimeout" name="t_idletimeout" placeholder="Idle Timer (secs)"></div>
             </div>
           </div>
 
@@ -411,11 +417,11 @@
             </div>
             <div class="form-group sendeffect">
               <label class="control-label col-sm-2" for="t_sendport">UDP Port</label>
-              <div class="col-sm-10"><input type="text" class="form-control" id="t_sendport" name="t_sendport" placeholder="Target UDP Port"></div>
+              <div class="col-sm-10"><input type="number" class="form-control" id="t_sendport" name="t_sendport" placeholder="Target UDP Port"></div>
             </div>
             <div class="form-group sendeffect">
               <label class="control-label col-sm-2" for="t_sendspeed">Packet/sec</label>
-              <div class="col-sm-10"><input type="text" class="form-control" id="t_sendspeed" name="t_sendspeed" placeholder="Packets per Second"></div>
+              <div class="col-sm-10"><input type="number" class="form-control" id="t_sendspeed" name="t_sendspeed" placeholder="Packets per Second"></div>
             </div>
           </div>
 
@@ -560,13 +566,13 @@
     </div>
   </footer>
 
-  <!-- for local development
   <script type="text/javascript" src="js/jquery-3.1.1.js"></script>
   <script type="text/javascript" src="js/bootstrap.js"></script>
   <script type="text/javascript" src="js/jqColorPicker.js"></script>
   <script type="text/javascript" src="script.js"></script>
-  -->
+  <!-- for local development
   <script type="text/javascript" src="esps.js"></script>
+  -->
 
   <script>
     wsConnect();
