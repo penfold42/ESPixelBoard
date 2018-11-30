@@ -747,7 +747,11 @@ void validateConfig() {
     if (config.effect_startenabled) {
         if (effects.isValidEffect(config.effect_name)) {
             effects.setEffect(config.effect_name);
-            config.ds = DataSource::WEB;
+
+            if ( !config.effect_name.equalsIgnoreCase("disabled")
+              && !config.effect_name.equalsIgnoreCase("view") ) {
+                config.ds = DataSource::WEB;
+            }
         }
     } else {
         effects.setEffect("Disabled");
