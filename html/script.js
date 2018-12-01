@@ -656,8 +656,7 @@ function getConfig(data) {
             addPWMTableRow( after, gpio_list[i] )
             if (typeof config['pwm']['gpio'][gpio_num] === 'undefined') {
                 $('#' + gpioN +'_enabled').attr('disabled', 'true');
-                $('#' + gpioN +'_invert').attr('disabled', 'true');
-                $('#' + gpioN +'_digital').attr('disabled', 'true');
+                $('#' + gpioN +'_outputType').attr('disabled', 'true');
                 $('#' + gpioN +'_channel').val('-');
                 $('#' + gpioN +'_channel').attr('disabled', 'true');
                 $('#' + gpioN +'_comment').val('-');
@@ -669,8 +668,14 @@ function getConfig(data) {
                 } else {
                     $('#' + gpioN +'_enabled').prop('checked', config['pwm']['gpio'][gpio_num]['enabled']);
                 }
-                $('#' + gpioN +'_invert').prop('checked', config['pwm']['gpio'][gpio_num]['invert']);
-                $('#' + gpioN +'_digital').prop('checked', config['pwm']['gpio'][gpio_num]['digital']);
+
+                var outputType = 0;
+                if (config['pwm']['gpio'][gpio_num]['invert'])
+                    outputType += 1;
+                if (config['pwm']['gpio'][gpio_num]['digital'])
+                    outputType += 2;
+                $('#' + gpioN +'_outputType').val(outputType);
+
                 $('#' + gpioN +'_channel').val(config['pwm']['gpio'][gpio_num]['channel']);
                 $('#' + gpioN +'_comment').val(config['pwm']['gpio'][gpio_num]['comment']);
             }
@@ -681,26 +686,30 @@ function getConfig(data) {
 
 function addPWMTable( afterID) {
     var newitem = "";
-    newitem += '<div class="pwm table-responsive col-sm-offset-2 col-sm-10">'
-    newitem += '<table class="table esps-table" id="pwmtable">'
+    newitem += '<table border="1" class="table esps-table" id="pwmtable">'
+    newitem += '    <colgroup>'
+    newitem += '        <col class="col-sm-offset-2 col-sm-1">'
+    newitem += '        <col class="col-sm-1">'
+    newitem += '        <col class="col-sm-1">'
+    newitem += '        <col class="col-sm-1">'
+    newitem += '        <col class="col-sm-5">'
+    newitem += '    </colgroup>'
     newitem += '<thead>'
     newitem += '<tr>'
-    newitem += '<th class="text-center" scope="col">GPIO</th>'
-    newitem += '<th class="text-center" scope="col">Enabled</th>'
-    newitem += '<th class="text-center" scope="col">Inverted</th>'
-    newitem += '<th class="text-center" scope="col">Digital</th>'
-    newitem += '<th class="text-center" scope="col">DMX</th>'
-    newitem += '<th class="text-center" scope="col">Description</th>'
+    newitem += '<th class="text-center" sope="col">GPIO</th>'
+    newitem += '<th class="text-center" sope="col">Enabled</th>'
+    newitem += '<th class="text-center" sope="col">Output Type</th>'
+    newitem += '<th class="text-center" sope="col">DMX</th>'
+    newitem += '<th class="text-center" sope="col">Description</th>'
     newitem += '</tr>'
     newitem += '</thead>'
 
     newitem += '<tbody id="pwmtbody">'
     newitem += '</tbody>'
     newitem += '</table>'
-    newitem += '</div>'
 
     $( '#pwmtable').remove();
-    $( afterID ).after( newitem );
+    $( afterID ).append( newitem );
 }
 
 function addPWMTableRow( afterID, gpio ) {
@@ -708,8 +717,15 @@ var newitem = "";
 newitem += '<tr id="gpio' + gpio + '">'
 newitem += '  <td class="text-center">' + gpio + '</td>'
 newitem += '  <td class="text-center"><input type="checkbox" id="gpio' + gpio + '_enabled" name="gpio' + gpio + '_enabled"></td>'
-newitem += '  <td class="text-center"><input type="checkbox" id="gpio' + gpio + '_invert" name="gpio' + gpio + '_invert"></td>'
-newitem += '  <td class="text-center"><input type="checkbox" id="gpio' + gpio + '_digital" name="gpio' + gpio + '_digital"></td>'
+
+// Output Type
+newitem += '  <td class="text-center"><select id="gpio' + gpio + '_outputType" name="gpio' + gpio + '_outputType">'
+newitem += '  <option value="0">Normal</option>'
+newitem += '  <option value="1">Inverted</option>'
+newitem += '  <option value="2">Digital</option>'
+newitem += '  <option value="3">Dig+Inv</option>'
+newitem += '  </select></td>'
+
 newitem += '  <td><input type="text" class="form-control" id="gpio' + gpio + '_channel" name="gpio' + gpio + '_channel" placeholder="DMX Channel"></td>'
 newitem += '  <td><input type="text" class="form-control" id="gpio' + gpio + '_comment" name="gpio' + gpio + '_comment" placeholder="Description"></td>'
 newitem += '</tr>'
@@ -826,8 +842,6 @@ function refreshGamma(data) {
     for (X=0; X<256; X++) {
 	var Y = 255-gammaData.gamma[X];
 	points += X + ", "+ Y +" ";
-//	console.log ( X + ", "+ Y +" ") ;
-
     }
 
     polyline.setAttribute('points', points);
@@ -920,8 +934,10 @@ function submitConfig() {
         json['pwm']['gpio'][tg] = {};
         json['pwm']['gpio'][tg]['channel'] = parseInt($('#gpio'+tg+'_channel').val());
         json['pwm']['gpio'][tg]['enabled'] = $('#gpio'+tg+'_enabled').prop('checked');
-        json['pwm']['gpio'][tg]['invert'] = $('#gpio'+tg+'_invert').prop('checked');
-        json['pwm']['gpio'][tg]['digital'] = $('#gpio'+tg+'_digital').prop('checked');
+
+        json['pwm']['gpio'][tg]['invert'] = ($('#gpio'+tg+'_outputType option:selected').val() & 1)>0;
+        json['pwm']['gpio'][tg]['digital'] = ($('#gpio'+tg+'_outputType option:selected').val() & 2)>0;
+
         json['pwm']['gpio'][tg]['comment'] = $('#gpio'+tg+'_comment').val();
 
     }
@@ -934,7 +950,6 @@ function submitStartupEffect() {
     var temp = $('.color').val().split(/\D+/);
 
     var currentEffectName = effectInfo[ $('#tmode option:selected').val() ].name;
-//console.log (currentEffectName);
 
     var json = {
             'effects': {
