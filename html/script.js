@@ -686,14 +686,21 @@ function getConfig(data) {
 
 function addPWMTable( afterID) {
     var newitem = "";
-    newitem += '<table class="table esps-table" id="pwmtable">'
+    newitem += '<table border="1" class="table esps-table" id="pwmtable">'
+    newitem += '    <colgroup>'
+    newitem += '        <col class="col-sm-offset-2 col-sm-1">'
+    newitem += '        <col class="col-sm-1">'
+    newitem += '        <col class="col-sm-1">'
+    newitem += '        <col class="col-sm-1">'
+    newitem += '        <col class="col-sm-5">'
+    newitem += '    </colgroup>'
     newitem += '<thead>'
     newitem += '<tr>'
-    newitem += '<th class="text-center" scope="col">GPIO</th>'
-    newitem += '<th class="text-center" scope="col">Enabled</th>'
-    newitem += '<th class="text-center" scope="col">Output Type</th>'
-    newitem += '<th class="text-center" scope="col">DMX</th>'
-    newitem += '<th class="text-center" scope="col">Description</th>'
+    newitem += '<th class="text-center" sope="col">GPIO</th>'
+    newitem += '<th class="text-center" sope="col">Enabled</th>'
+    newitem += '<th class="text-center" sope="col">Output Type</th>'
+    newitem += '<th class="text-center" sope="col">DMX</th>'
+    newitem += '<th class="text-center" sope="col">Description</th>'
     newitem += '</tr>'
     newitem += '</thead>'
 
