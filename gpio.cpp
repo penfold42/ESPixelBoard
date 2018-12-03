@@ -25,10 +25,12 @@ int toggleCounter = -1;
 String toggleString;
 int toggleGpio = -1;
 
-static unsigned long lWaitMillis;
-long unsigned int this_mill;
-long unsigned int last_mill;
-unsigned long long  extended_mill;
+using timeType = decltype(millis());
+
+timeType this_mill;
+timeType last_gpio_mill;
+timeType last_mill;
+unsigned long long extended_mill;
 unsigned long long mill_rollover_count;
 
 extern AsyncWebServer  web; // Web Server
@@ -127,13 +129,11 @@ void handleToggleGpio() {
   if (last_mill > this_mill) {  // rollover
       mill_rollover_count ++;
   }
-  extended_mill = (mill_rollover_count << (8*sizeof(this_mill))) + this_mill;
   last_mill = this_mill;
+  extended_mill = (mill_rollover_count << (8*sizeof(this_mill))) + this_mill;
 
-  if ( (long)( millis() - lWaitMillis ) >= 0)
-  {
-    // millis is now later than my 'next' time
-    lWaitMillis += toggleMS;  // do it again 1 second later
+  if (( this_mill - last_gpio_mill ) >= toggleMS) {
+    last_gpio_mill = this_mill;
     
     if (toggleCounter >= 0) {
       if (toggleString.charAt(toggleCounter) == '1') {
@@ -151,7 +151,7 @@ void handleToggleGpio() {
 }
 
 void setupWebGpio() {
-    lWaitMillis = millis() + toggleMS;  // initial setup
+    last_gpio_mill = millis();  // initial setup
     // gpio url handler
     web.on("/gpio", HTTP_GET, handleWebGPIO).setFilter(ON_STA_FILTER);
 
