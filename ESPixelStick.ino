@@ -1114,6 +1114,43 @@ void dsGammaConfig(JsonObject &json) {
     }
 }
 
+void dsPixelCount(JsonObject &json) {
+    if (json.containsKey("pixelcount")) {
+        JsonObject& pcjson = json["pixelcount"];
+        uint16_t ptcount = pcjson["count"];
+        int cmdtype = pcjson["commandtype"].as<int>();
+        switch (cmdtype)
+        {
+            case 0: {/* init pixel count by setting pixelc count to max */ 
+                config.prevds = config.ds;
+                config.ds = DataSource::CP;
+                pixels.begin(config.pixel_type, config.pixel_color, 680); // set pixels to max
+                // break;
+            }
+            case 1: {/* render pixels per UI */ 
+                int channelLength = (ptcount * 3);
+
+                // effects.clearAll(); does not work for max length, manually clear all
+                for (int i = channelLength; i < 2040; i++) {
+                    pixels.setValue(i, 0);
+                }
+                for (int i = 0; i < channelLength; i++) {
+                    pixels.setValue(i, 255);
+                }
+                break;
+            }
+            case 2: {/* closed the pixel count UI hence reset pixel config.
+                /* code */
+                for (int i = channelLength; i < 2040; i++) {
+                    pixels.setValue(i, 0);
+                }
+                config.ds = config.prevds;
+                pixels.begin(config.pixel_type, config.pixel_color, config.channel_count / 3); // reset pixels count per current config
+                break;
+            }
+        }       
+    }
+}
 // Save configuration JSON file
 void saveConfig() {
     // Update Config

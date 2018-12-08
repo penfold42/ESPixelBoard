@@ -1043,7 +1043,59 @@ function hideShowTestSections() {
         }
     }
 }
-
+function showCountPixels(){
+    currentCount = $('#p_count').val();
+    setCountPixelValue(currentCount, 0);
+    $('#countpxl').modal();
+    $('#pix_count').val(currentCount);
+    if (currentCount === 1){
+        $('#btn_pcminus1').disable = true;
+    }
+}
+function changeCountPixel(value) {
+    targetValue = Number($('#pix_count').val()) + value;
+    targetValue = targetValue < 1? 1: targetValue;
+    targetValue = targetValue > 680? 680: targetValue;
+    $('#pix_count').val(targetValue);
+    if (targetValue <= 5){
+        $('#btn_pcminus5').attr('disabled', 'disabled')
+    } else {
+        $('#btn_pcminus5').removeAttr('disabled')
+    }
+    if (targetValue <= 1){
+        $('#btn_pcminus1').attr('disabled', 'disabled')
+    } else {
+        $('#btn_pcminus1').removeAttr('disabled')
+    }
+    if (targetValue >= 680){
+        $('#btn_pcplus1').attr('disabled', 'disabled')
+    } else {
+        $('#btn_pcplus1').removeAttr('disabled')
+    }
+    if (targetValue >= 676){
+        $('#btn_pcplus5').attr('disabled', 'disabled')
+    } else {
+        $('#btn_pcplus5').removeAttr('disabled')
+    }
+    setCountPixelValue(targetValue, 1);
+}
+function setCountPixelValue(value, cmdtype) {
+    var json = {
+        'pixelcount': {
+            'count': value,
+            'commandtype': cmdtype
+        }
+    };
+    wsEnqueue('S5' + JSON.stringify(json));
+}
+function setpixelcount() {
+    $('#p_count').val($('#pix_count').val());
+    closepixelcount();
+}
+function closepixelcount(){
+    $('#countpxl').modal('hide');
+    setCountPixelValue(0,2);
+}
 // effect selector changed
 function effectChanged() {
     hideShowTestSections();

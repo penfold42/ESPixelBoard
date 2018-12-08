@@ -338,6 +338,10 @@ void procS(uint8_t *data, AsyncWebSocketClient *client) {
             dsGammaConfig(json);
             client->text("S4");
             break;
+        case '5':
+            dsPixelCount(json);
+            client->text("S5");
+            break;
     }
 }
 

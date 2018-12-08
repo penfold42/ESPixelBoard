@@ -169,3 +169,11 @@ However, delay the fade out process for 2.5 seconds */
 .btn {
     margin: 4px auto;
 }
+
+.pxl-count-container {
+  text-align: center;
+}
+.pxl-count-content{
+  width: auto;
+  display: inline;
+}
