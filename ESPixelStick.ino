@@ -1119,6 +1119,7 @@ void dsPixelCount(JsonObject &json) {
         JsonObject& pcjson = json["pixelcount"];
         uint16_t ptcount = pcjson["count"];
         int cmdtype = pcjson["commandtype"].as<int>();
+        int channelLength = (ptcount * 3);
         switch (cmdtype)
         {
             case 0: {/* init pixel count by setting pixelc count to max */ 
@@ -1128,7 +1129,6 @@ void dsPixelCount(JsonObject &json) {
                 // break;
             }
             case 1: {/* render pixels per UI */ 
-                int channelLength = (ptcount * 3);
 
                 // effects.clearAll(); does not work for max length, manually clear all
                 for (int i = channelLength; i < 2040; i++) {
