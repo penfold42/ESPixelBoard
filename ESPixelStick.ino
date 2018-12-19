@@ -339,8 +339,23 @@ void onWifiConnect(const WiFiEventStationModeGotIP &event) {
     //TODO: Reboot or restart mdns when config.id is changed?
      char chipId[7] = { 0 };
     snprintf(chipId, sizeof(chipId), "%06x", ESP.getChipId());
+
+//  MDNS setInstanceName changes in 2.5.0-dev:
+//  - setInstanceName also changes hostname
+//  - setInstanceName only takes c_str
+//  - MDNS.update() is required
+//  - use short name of hostname for now
+
 //    MDNS.setInstanceName(config.id + " (" + String(chipId) + ")");
-    if (MDNS.begin(config.hostname.c_str())) {
+
+    char mdnsName[64] = {0};
+    strncpy (mdnsName, config.hostname.c_str(), 63);
+    char* firstDot = strchr (mdnsName, '.');
+    if (firstDot) {
+        *firstDot = '\0';
+    }
+
+    if (MDNS.begin(mdnsName)) {
         MDNS.addService("http", "tcp", HTTP_PORT);
         MDNS.addService("e131", "udp", E131_DEFAULT_PORT);
         MDNS.addServiceTxt("e131", "udp", "TxtVers", String(RDMNET_DNSSD_TXTVERS));
@@ -1273,6 +1288,7 @@ void loop() {
         while (LOG_PORT.read() >= 0);
     }
 
+    MDNS.update();
 }
 
 void resolveHosts() {
