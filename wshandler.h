@@ -472,8 +472,9 @@ void handle_config_upload(AsyncWebServerRequest *request, String filename,
     }
 }
 
-void wsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
+void wsEvent( __attribute__ ((unused)) AsyncWebSocket *server, AsyncWebSocketClient *client,
         AwsEventType type, void * arg, uint8_t *data, size_t len) {
+
     switch (type) {
         case WS_EVT_DATA: {
             AwsFrameInfo *info = static_cast<AwsFrameInfo*>(arg);

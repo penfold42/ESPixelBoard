@@ -326,7 +326,7 @@ void connectWifi() {
     }
 }
 
-void onWifiConnect(const WiFiEventStationModeGotIP &event) {
+void onWifiConnect(__attribute__ ((unused)) const WiFiEventStationModeGotIP &event) {
     LOG_PORT.println("");
     LOG_PORT.print(F("Connected with IP: "));
     LOG_PORT.println(WiFi.localIP());
@@ -369,7 +369,7 @@ void onWifiConnect(const WiFiEventStationModeGotIP &event) {
     }
 }
 
-void onWiFiDisconnect(const WiFiEventStationModeDisconnected &event) {
+void onWiFiDisconnect(__attribute__ ((unused)) const WiFiEventStationModeDisconnected &event) {
     LOG_PORT.println(F("*** WiFi Disconnected ***"));
 
     // Pause MQTT reconnect while WiFi is reconnecting
@@ -405,7 +405,7 @@ void connectToMqtt() {
     mqtt.connect();
 }
 
-void onMqttConnect(bool sessionPresent) {
+void onMqttConnect(__attribute__ ((unused)) bool sessionPresent) {
     LOG_PORT.println(F("- MQTT Connected"));
 
     // Get retained MQTT state
@@ -429,7 +429,7 @@ void onMqttConnect(bool sessionPresent) {
     publishState();
 }
 
-void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
+void onMqttDisconnect(__attribute__ ((unused)) AsyncMqttClientDisconnectReason reason) {
     LOG_PORT.println(F("- MQTT Disconnected"));
     if (WiFi.isConnected()) {
         mqttTicker.once(2, connectToMqtt);
@@ -437,7 +437,9 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
 }
 
 void onMqttMessage(char* topic, char* payload,
-        AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
+        AsyncMqttClientMessageProperties properties, size_t len,
+        __attribute__ ((unused)) size_t index,
+        __attribute__ ((unused)) size_t total) {
 
     mqtt_last_seen = millis();
     mqtt_num_packets++;
@@ -631,7 +633,7 @@ void initWeb() {
     });
 
     // Firmware upload handler
-    web.on("/updatefw", HTTP_POST, [](AsyncWebServerRequest *request) {
+    web.on("/updatefw", HTTP_POST, [](__attribute__ ((unused)) AsyncWebServerRequest *request) {
         ws.textAll("X6");
     }, handle_fw_upload);
 
@@ -653,7 +655,7 @@ void initWeb() {
     DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), "*");
 
     // Config file upload handler
-    web.on("/config", HTTP_POST, [](AsyncWebServerRequest *request) {
+    web.on("/config", HTTP_POST, [](__attribute__ ((unused)) AsyncWebServerRequest *request) {
         ws.textAll("X6");
     }, handle_config_upload);
 
