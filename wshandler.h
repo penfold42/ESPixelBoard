@@ -387,6 +387,9 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
                     effects.setAllLeds(json["allleds"]);
                 }
             }
+            if (json.containsKey("speed")) {
+                effects.setSpeed(json["speed"]);
+            }
             client->text("OK");
         }
     }
