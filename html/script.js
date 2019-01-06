@@ -184,18 +184,19 @@ $(function() {
     $('#showgamma').click(function() {
         if ($(this).is(':checked')) {
             $('.gammagraph').removeClass('hidden');
-       } else {
+        } else {
             $('.gammagraph').addClass('hidden');
-       }
+        }
     });
 
     // PWM field toggles
     $('#pwm_enabled').click(function() {
         if ($(this).is(':checked')) {
             $('.pwm').removeClass('hidden');
-       } else {
+        } else {
             $('.pwm').addClass('hidden');
-       }
+        }
+    });
 
     // Group type toggles
     $('#p_groupMode').change(function() {
