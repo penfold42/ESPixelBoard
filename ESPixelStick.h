@@ -103,6 +103,7 @@ typedef struct {
     uint32_t    sta_timeout;    /* Timeout when connection as client (station) */
     uint32_t    ap_timeout;     /* How long to wait in AP mode with no connection before rebooting */
 
+    /* UDP raw protocol */
     bool        udp_enabled;
     uint16_t    udp_port;
 
@@ -117,6 +118,8 @@ typedef struct {
     bool effect_startenabled;
     bool effect_idleenabled;
     uint16_t effect_idletimeout;
+
+    /* Effect engine send over network */
     int effect_sendprotocol;
     String effect_sendhost;
     IPAddress effect_sendIP;
@@ -126,12 +129,14 @@ typedef struct {
 
     /* MQTT */
     bool        mqtt;           /* Use MQTT? */
-    String      mqtt_ip;
+    String      mqtt_ip = " ";
     uint16_t    mqtt_port;
-    String      mqtt_user;
-    String      mqtt_password;
+    String      mqtt_user = " ";
+    String      mqtt_password = " ";
     String      mqtt_topic;
     bool        mqtt_clean;
+    bool        mqtt_hadisco;
+    String      mqtt_haprefix;
 
     /* E131 */
     uint16_t    universe;       /* Universe to listen for */

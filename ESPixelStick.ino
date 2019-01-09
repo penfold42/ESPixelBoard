@@ -29,15 +29,7 @@ const char passphrase[] = "ENTER_PASSPHRASE_HERE";
 /*         END - Configuration           */
 /*****************************************/
 
-#include <ESP8266WiFi.h>
-#include <Ticker.h>
-#include <AsyncMqttClient.h>
-#include <ESP8266mDNS.h>
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncUDP.h>
-#include <ESPAsyncWebServer.h>
 #include <ESPAsyncE131.h>
-#include <ArduinoJson.h>
 #include <Hash.h>
 #include <SPI.h>
 #include "ESPixelStick.h"
@@ -107,14 +99,14 @@ uint8_t             *seqTracker;    // Current sequence numbers for each Univers
 uint32_t            lastUpdate;     // Update timeout tracker
 WiFiEventHandler    wifiConnectHandler;     // WiFi connect handler
 WiFiEventHandler    wifiDisconnectHandler;  // WiFi disconnect handler
-Ticker              wifiTicker; // Ticker to handle WiFi
-Ticker              idleTicker; // Ticker for effect on idle
-AsyncMqttClient     mqtt;       // MQTT object
-Ticker              mqttTicker; // Ticker to handle MQTT
+Ticker              wifiTicker;     // Ticker to handle WiFi
+Ticker              idleTicker;     // Ticker for effect on idle
+AsyncMqttClient     mqtt;           // MQTT object
+Ticker              mqttTicker;     // Ticker to handle MQTT
 unsigned long       mqtt_last_seen;         // millis() timestamp of last message
 uint32_t            mqtt_num_packets;       // count of message rcvd
-EffectEngine        effects;    // Effects Engine
-Ticker  sendTimer;
+EffectEngine        effects;        // Effects Engine
+Ticker              sendTimer;
 UdpRaw              udpraw;
 
 // Output Drivers
@@ -571,6 +563,35 @@ void onMqttMessage(char* topic, char* payload,
     }
 }
 
+void publishHA(bool join) {
+    // Setup HA discovery
+    char chipId[7] = { 0 };
+    snprintf(chipId, sizeof(chipId), "%06x", ESP.getChipId());
+    String ha_config = config.mqtt_haprefix + "/light/" + String(chipId) + "/config";
+
+    if (join) {
+        DynamicJsonBuffer jsonBuffer;
+        JsonObject& root = jsonBuffer.createObject();
+        root["name"] = config.id;
+        root["schema"] = "json";
+        root["state_topic"] = config.mqtt_topic;
+        root["command_topic"] = config.mqtt_topic + "/set";
+        root["rgb"] = "true";
+        root["brightness"] = "true";
+        root["effect"] = "true";
+        JsonArray& effect_list = root.createNestedArray("effect_list");
+        for (uint8_t i = 0; i < effects.getEffectCount(); i++) {
+            effect_list.add(effects.getEffectInfo(i)->name);
+        }
+
+        char buffer[root.measureLength() + 1];
+        root.printTo(buffer, sizeof(buffer));
+        mqtt.publish(ha_config.c_str(), 0, true, buffer);
+    } else {
+        mqtt.publish(ha_config.c_str(), 0, true, "");
+    }
+}
+
 void publishState() {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
@@ -605,7 +626,7 @@ void publishRGBState() {
 
 // Called to publish the brightness of the led (0-100)
 void publishRGBBrightness() {
-    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d", (effects.getBrightness()*100));
+    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d", (uint8_t)(effects.getBrightness()*100));
     mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_BRIGHTNESS_STATE_TOPIC).c_str(), 0, true, m_msg_buffer);
 }
 
@@ -661,7 +682,7 @@ void initWeb() {
             AsyncWebServerResponse *response = request->beginResponse(200);
             request->send(response);
         } else {
-            request->send(404, "text/plain", "Page not found");          
+            request->send(404, "text/plain", "Page not found");
         }
     });
 
@@ -702,11 +723,16 @@ void validateConfig() {
     if (config.mqtt_port == 0)
         config.mqtt_port = MQTT_PORT;
 
-    // Generate default MQTT topic if needed
+    // Generate default MQTT topic if blank
     if (!config.mqtt_topic.length()) {
         char chipId[7] = { 0 };
         snprintf(chipId, sizeof(chipId), "%06x", ESP.getChipId());
         config.mqtt_topic = "diy/esps/" + String(chipId);
+    }
+
+    // Set default Home Assistant Discovery prefix if blank
+    if (!config.mqtt_haprefix.length()) {
+        config.mqtt_haprefix = "homeassistant";
     }
 
 #if defined(ESPS_SUPPORT_PWM)
@@ -851,6 +877,10 @@ void updateConfig() {
     // Setup IGMP subscriptions if multicast is enabled
     if (config.multicast)
         multiSub();
+
+    // Update Home Assistant Discovery if enabled
+    if (config.mqtt)
+        publishHA(config.mqtt_hadisco);
 }
 
 // De-Serialize Network config
@@ -948,6 +978,8 @@ void dsDeviceConfig(JsonObject &json) {
         config.mqtt_password = mqttJson["password"].as<String>();
         config.mqtt_topic = mqttJson["topic"].as<String>();
         config.mqtt_clean = mqttJson["clean"] | false;
+        config.mqtt_hadisco = mqttJson["hadisco"] | false;
+        config.mqtt_haprefix = mqttJson["haprefix"].as<String>();
     }
 
 #if defined(ESPS_MODE_PIXEL)
@@ -1113,6 +1145,8 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     _mqtt["password"] = config.mqtt_password.c_str();
     _mqtt["topic"] = config.mqtt_topic.c_str();
     _mqtt["clean"] = config.mqtt_clean;
+    _mqtt["hadisco"] = config.mqtt_hadisco;
+    _mqtt["haprefix"] = config.mqtt_haprefix.c_str();
 
     // E131
     JsonObject &e131 = json.createNestedObject("e131");
@@ -1145,7 +1179,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     pwm["enabled"] = config.pwm_global_enabled;
     pwm["freq"] = config.pwm_freq;
     pwm["gamma"] = config.pwm_gamma;
-    
+
     JsonObject &gpioJ = pwm.createNestedObject("gpio");
     for (int gpio = 0; gpio < NUM_GPIO; gpio++ ) {
         JsonObject &thisGpio = gpioJ.createNestedObject((String)gpio);
@@ -1167,9 +1201,9 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
         json.printTo(jsonString);
 }
 
+#if defined(ESPS_MODE_PIXEL)
 void dsGammaConfig(JsonObject &json) {
     if (json.containsKey("pixel")) {
-        config.gamma = json["pixel"]["gamma"];
         config.gammaVal = json["pixel"]["gammaVal"];
         config.briteVal = json["pixel"]["briteVal"];
 
@@ -1179,6 +1213,7 @@ void dsGammaConfig(JsonObject &json) {
         updateGammaTable(config.gammaVal, config.briteVal);
     }
 }
+#endif
 
 // Save configuration JSON file
 void saveConfig() {
