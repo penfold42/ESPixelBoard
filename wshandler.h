@@ -68,7 +68,8 @@ extern const char CONFIG_FILE[];
     T6 - Fire flicker
     T7 - Lightning
     T8 - Breathe
-    T9 - View Stream
+
+    V1 - View Stream
 
     S1 - Set Network Config
     S2 - Set Device Config
@@ -392,7 +393,14 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
             client->text("OK");
         }
     }
-    else if (data[1] == '9') {
+
+    if (config.mqtt)
+        publishState();
+}
+
+void procV(uint8_t *data, AsyncWebSocketClient *client) {
+    switch (data[1]) {
+        case '1': {  // View stream
 #if defined(ESPS_MODE_PIXEL)
             client->binary(pixels.getData(), config.channel_count);
 #elif defined(ESPS_MODE_SERIAL)
@@ -401,8 +409,9 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
             else
                 client->binary(&serial.getData()[2], config.channel_count);
 #endif
+            break;
+        }
     }
-
 }
 
 void handle_fw_upload(AsyncWebServerRequest *request, String filename,
@@ -507,6 +516,9 @@ void wsEvent( __attribute__ ((unused)) AsyncWebSocket *server, AsyncWebSocketCli
                           break;
                       case 'T':
                           procT(data, client);
+                          break;
+                      case 'V':
+                          procV(data, client);
                           break;
                   }
               } else {
