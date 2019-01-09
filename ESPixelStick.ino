@@ -832,7 +832,6 @@ void updateConfig() {
 #if defined(ESPS_MODE_PIXEL)
     pixels.begin(config.pixel_type, config.pixel_color, config.channel_count / 3);
     pixels.setGroup(config.groupSize, config.zigSize);
-    pixels.setGamma(config.gamma);
     updateGammaTable(config.gammaVal, config.briteVal);
     effects.begin(&pixels, config.channel_count / 3 / config.groupSize);
 
@@ -958,7 +957,6 @@ void dsDeviceConfig(JsonObject &json) {
         config.pixel_color = PixelColor(static_cast<uint8_t>(json["pixel"]["color"]));
         config.groupSize = json["pixel"]["groupSize"];
         config.zigSize = json["pixel"]["zigSize"];
-        config.gamma = json["pixel"]["gamma"];
         config.gammaVal = json["pixel"]["gammaVal"];
         config.briteVal = json["pixel"]["briteVal"];
     }
@@ -1131,7 +1129,6 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     pixel["color"] = static_cast<uint8_t>(config.pixel_color);
     pixel["groupSize"] = config.groupSize;
     pixel["zigSize"] = config.zigSize;
-    pixel["gamma"] = config.gamma;
     pixel["gammaVal"] = config.gammaVal;
     pixel["briteVal"] = config.briteVal;
 
@@ -1179,7 +1176,6 @@ void dsGammaConfig(JsonObject &json) {
         if (config.gammaVal <= 0) { config.gammaVal = 2.2; }
         if (config.briteVal <= 0) { config.briteVal = 1.0; }
 
-        pixels.setGamma(config.gamma);
         updateGammaTable(config.gammaVal, config.briteVal);
     }
 }
