@@ -23,7 +23,7 @@ Along with the Arduino IDE, you'll need the following software to build this pro
 The following libraries are required:
 
 - [ArduinoJson](https://github.com/bblanchon/ArduinoJson) - Arduino JSON Library
-- [ESPAsyncE131](https://github.com/penfold42/ESPAsyncE131) - Asynchronous E1.31 (sACN) library
+- [ESPAsyncE131](https://github.com/forkineye/ESPAsyncE131) - Asynchronous E1.31 (sACN) library
 - [RotaryEnoder](https://github.com/mathertel/RotaryEncoder) - Rotary Encoder Library
 - [ESPAsyncTCP](https://github.com/me-no-dev/ESPAsyncTCP) - Asynchronous TCP Library
 - [ESPAsyncUDP](https://github.com/me-no-dev/ESPAsyncUDP) - Asynchronous UDP Library
