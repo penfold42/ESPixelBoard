@@ -640,8 +640,8 @@ void initWeb() {
     // Static Handler
     web.serveStatic("/", SPIFFS, "/www/").setDefaultFile("index.html");
 
-    // Raw config file Handler
-    web.serveStatic("/config.json", SPIFFS, "/config.json");
+    // Raw config file Handler - but only on station
+    //web.serveStatic("/config.json", SPIFFS, "/config.json").setFilter(ON_STA_FILTER);
 
     web.onNotFound([](AsyncWebServerRequest *request) {
         if (request->method() == HTTP_OPTIONS) {
@@ -758,6 +758,11 @@ void validateConfig() {
 
     if (config.effect_speed < 100)
         config.effect_speed = 100;
+
+    if (config.effect_brightness > 1.0)
+        config.effect_brightness = 1.0;
+    if (config.effect_brightness < 0.0)
+        config.effect_brightness = 0.0;
 
     if (config.effect_idletimeout == 0) {
         config.effect_idletimeout = 10;
@@ -1018,6 +1023,9 @@ void loadConfig() {
 
     // Validate it
     validateConfig();
+
+    effects.setFromConfig();
+
 }
 
 // Serialize the current config into a JSON string
