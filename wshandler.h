@@ -249,7 +249,7 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             JsonObject &effect = json.createNestedObject("currentEffect");
             effect["name"] = (String)effects.getEffect() ? effects.getEffect() : "";
             effect["brightness"] = effects.getBrightness();
-            effect["speed"] = effects.getSpeed();
+            effect["delay"] = effects.getDelay();
             effect["r"] = effects.getColor().r;
             effect["g"] = effects.getColor().g;
             effect["b"] = effects.getColor().b;
@@ -277,8 +277,6 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
                 effect["hasReverse"] = effects.getEffectInfo(i)->hasReverse;
                 effect["hasAllLeds"] = effects.getEffectInfo(i)->hasAllLeds;
                 effect["wsTCode"] = effects.getEffectInfo(i)->wsTCode;
-//              effect["brightness"] = effects.getBrightness();
-//              effect["speed"] = effects.getSpeed();
               }
             }
 
@@ -387,8 +385,8 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
                     effects.setAllLeds(json["allleds"]);
                 }
             }
-            if (json.containsKey("speed")) {
-                effects.setSpeed(json["speed"]);
+            if (json.containsKey("delay")) {
+                effects.setDelay(json["delay"]);
             }
             if (json.containsKey("brightness")) {
                 effects.setBrightness(json["brightness"]);

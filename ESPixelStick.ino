@@ -473,7 +473,7 @@ void onMqttMessage(char* topic, char* payload,
             uint8_t brightness = Spayload.toInt();
             if (brightness > 100) brightness = 100;
             stateOn = true;
-            effects.setBrightness((brightness*255)/100);
+            effects.setBrightness(brightness/100);
         }
         else if (String(config.mqtt_topic + MQTT_LIGHT_RGB_COMMAND_TOPIC).equals(topic)) {
             // Get the position of the first and second commas
@@ -519,7 +519,7 @@ void onMqttMessage(char* topic, char* payload,
         }
 
         if (root.containsKey("brightness")) {
-            effects.setBrightness(root["brightness"]);
+            effects.setBrightness((float)root["brightness"] / 255.0);
         }
 
         if (root.containsKey("color")) {
@@ -567,8 +567,8 @@ void publishState() {
     color["r"] = effects.getColor().r;
     color["g"] = effects.getColor().g;
     color["b"] = effects.getColor().b;
-    root["brightness"] = effects.getBrightness();
-    if (effects.getEffect() != "") {
+    root["brightness"] = effects.getBrightness()*255;
+    if (!effects.getEffect().equalsIgnoreCase("Disabled")) {
         root["effect"] = effects.getEffect();
     }
     root["reverse"] = effects.getReverse();
@@ -592,7 +592,7 @@ void publishRGBState() {
 
 // Called to publish the brightness of the led (0-100)
 void publishRGBBrightness() {
-    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d", (effects.getBrightness()*100)/255);
+    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d", (effects.getBrightness()*100));
     mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_BRIGHTNESS_STATE_TOPIC).c_str(), 0, true, m_msg_buffer);
 }
 
@@ -641,7 +641,7 @@ void initWeb() {
     web.serveStatic("/", SPIFFS, "/www/").setDefaultFile("index.html");
 
     // Raw config file Handler - but only on station
-    //web.serveStatic("/config.json", SPIFFS, "/config.json").setFilter(ON_STA_FILTER);
+    web.serveStatic("/config.json", SPIFFS, "/config.json").setFilter(ON_STA_FILTER);
 
     web.onNotFound([](AsyncWebServerRequest *request) {
         if (request->method() == HTTP_OPTIONS) {
@@ -756,8 +756,8 @@ void validateConfig() {
         config.baudrate = BaudRate::BR_57600;
 #endif
 
-    if (config.effect_speed < 100)
-        config.effect_speed = 100;
+    if (config.effect_delay < 100)
+        config.effect_delay = 100;
 
     if (config.effect_brightness > 1.0)
         config.effect_brightness = 1.0;
@@ -887,8 +887,8 @@ void dsEffectConfig(JsonObject &json) {
         config.effect_mirror = effectsJson["mirror"];
         config.effect_allleds = effectsJson["allleds"];
         config.effect_reverse = effectsJson["reverse"];
-        if (effectsJson.containsKey("speed"))
-            config.effect_speed = effectsJson["speed"];
+        if (effectsJson.containsKey("delay"))
+            config.effect_delay = effectsJson["delay"];
         config.effect_color = { effectsJson["r"], effectsJson["g"], effectsJson["b"] };
         if (effectsJson.containsKey("brightness"))
             config.effect_brightness = effectsJson["brightness"];
@@ -1066,7 +1066,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     _effects["mirror"] = config.effect_mirror;
     _effects["allleds"] = config.effect_allleds;
     _effects["reverse"] = config.effect_reverse;
-    _effects["speed"] = config.effect_speed;
+    _effects["delay"] = config.effect_delay;
     _effects["brightness"] = config.effect_brightness;
 
     _effects["r"] = config.effect_color.r;
