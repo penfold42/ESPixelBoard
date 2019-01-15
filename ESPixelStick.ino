@@ -522,8 +522,8 @@ void onMqttMessage(char* topic, char* payload,
             effects.setBrightness((float)root["brightness"] / 255.0);
         }
 
-        if (root.containsKey("delay")) {
-            effects.setDelay(root["delay"]);
+        if (root.containsKey("speed")) {
+            effects.setSpeed(root["speed"]);
         }
 
         if (root.containsKey("color")) {
@@ -572,7 +572,7 @@ void publishState() {
     color["g"] = effects.getColor().g;
     color["b"] = effects.getColor().b;
     root["brightness"] = effects.getBrightness()*255;
-    root["delay"] = effects.getDelay();
+    root["speed"] = effects.getSpeed();
     if (!effects.getEffect().equalsIgnoreCase("Disabled")) {
         root["effect"] = effects.getEffect();
     }
@@ -761,8 +761,10 @@ void validateConfig() {
         config.baudrate = BaudRate::BR_57600;
 #endif
 
-    if (config.effect_delay < 100)
-        config.effect_delay = 100;
+    if (config.effect_speed < 1)
+        config.effect_speed = 1;
+    if (config.effect_speed > 10)
+        config.effect_speed = 10;
 
     if (config.effect_brightness > 1.0)
         config.effect_brightness = 1.0;
@@ -901,8 +903,8 @@ void dsEffectConfig(JsonObject &json) {
         config.effect_mirror = effectsJson["mirror"];
         config.effect_allleds = effectsJson["allleds"];
         config.effect_reverse = effectsJson["reverse"];
-        if (effectsJson.containsKey("delay"))
-            config.effect_delay = effectsJson["delay"];
+        if (effectsJson.containsKey("speed"))
+            config.effect_speed = effectsJson["speed"];
         config.effect_color = { effectsJson["r"], effectsJson["g"], effectsJson["b"] };
         if (effectsJson.containsKey("brightness"))
             config.effect_brightness = effectsJson["brightness"];
@@ -1083,7 +1085,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     _effects["mirror"] = config.effect_mirror;
     _effects["allleds"] = config.effect_allleds;
     _effects["reverse"] = config.effect_reverse;
-    _effects["delay"] = config.effect_delay;
+    _effects["speed"] = config.effect_speed;
     _effects["brightness"] = config.effect_brightness;
 
     _effects["r"] = config.effect_color.r;
