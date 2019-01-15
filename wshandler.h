@@ -38,6 +38,7 @@ extern UdpRaw       udpraw;
 #endif
 
 extern EffectEngine effects;    // EffectEngine for test modes
+extern OLEDEngine oleddisp; // Display Elements for OLED
 
 extern ESPAsyncE131 e131;       // ESPAsyncE131 with X buffers
 extern config_t     config;     // Current configuration
@@ -58,6 +59,7 @@ extern const char CONFIG_FILE[];
     G2 - Get Config Status
     G3 - Get Current Effect and Effect Config Options
     G4 - Get Gamma table values
+    G5 - Get Display Elements
 
     T0 - Disable Testing
     T1 - Static Testing
@@ -293,6 +295,14 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             client->text("G4" + response);
             break;
         }
+        case '5': {
+            String de = oleddisp.getDisplayElements();
+            String dc = oleddisp.getDisplayConfig();
+            String dv = oleddisp.getDisplayEvents();
+            String response = "G5{" + de + "," + dv + "," + dc + "}";
+             client->text(response);
+            break;
+        }
     }
 }
 
@@ -338,10 +348,11 @@ void procS(uint8_t *data, AsyncWebSocketClient *client) {
             dsGammaConfig(json);
             client->text("S4");
             break;
-        case '5':
-            dsPixelCount(json);
+        case '5': // Set Display config
+            oleddisp.saveDisplayConfig(json);
             client->text("S5");
             break;
+
     }
 }
 
@@ -397,8 +408,12 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
             else
                 client->binary(&serial.getData()[2], config.channel_count);
 #endif
+    } else if (data[1] == 'C') {
+        DynamicJsonBuffer jsonBuffer; // I other ifs start using json, this declaration to be moved to top of proc.
+        JsonObject &json = jsonBuffer.parseObject(reinterpret_cast<char*>(data + 2));
+        dsPixelCount(json);
+        client->text("TC");
     }
-
 }
 
 void handle_fw_upload(AsyncWebServerRequest *request, String filename,

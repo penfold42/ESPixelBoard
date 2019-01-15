@@ -114,8 +114,10 @@ Ticker              mqttTicker; // Ticker to handle MQTT
 unsigned long       mqtt_last_seen;         // millis() timestamp of last message
 uint32_t            mqtt_num_packets;       // count of message rcvd
 EffectEngine        effects;    // Effects Engine
+OLEDEngine          oleddisp;     // Display Engine.
 Ticker  sendTimer;
 UdpRaw              udpraw;
+
 
 // Output Drivers
 #if defined(ESPS_MODE_PIXEL)
@@ -276,7 +278,7 @@ void setup() {
 #if defined(ESPS_ENABLE_BUTTONS)
     setupButtons();
 #endif
-
+    oleddisp.readDisplayConfigJson();
 }
 
 /////////////////////////////////////////////////////////
@@ -625,6 +627,7 @@ void initWeb() {
 
     // Raw config file Handler
     web.serveStatic("/config.json", SPIFFS, "/config.json");
+    web.serveStatic("/display.json", SPIFFS, "/display.json");
 
     web.onNotFound([](AsyncWebServerRequest *request) {
         if (request->method() == HTTP_OPTIONS) {
