@@ -197,6 +197,14 @@ void setup() {
     pixels.show();
 #else
     updateConfig();
+    // Do one effects cycle as early as possible
+    if (config.ds == DataSource::WEB) {
+        effects.run();
+    }
+    // set the effect idle timer
+    idleTicker.attach(config.effect_idletimeout, idleTimeout);
+
+    serial.show();
 #endif
 
     // Configure the pwm outputs
@@ -834,6 +842,7 @@ void updateConfig() {
 
 #elif defined(ESPS_MODE_SERIAL)
     serial.begin(&SEROUT_PORT, config.serial_type, config.channel_count, config.baudrate);
+    effects.begin(&serial, config.channel_count / 3 );
 
 #endif
 
