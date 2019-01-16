@@ -247,7 +247,11 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
 
 // dump the current running effect options
             JsonObject &effect = json.createNestedObject("currentEffect");
-            effect["name"] = (String)effects.getEffect() ? effects.getEffect() : "";
+            if (config.ds == DataSource::E131) {
+                effect["name"] = "Disabled";
+            } else {
+                effect["name"] = (String)effects.getEffect() ? effects.getEffect() : "";
+            }
             effect["brightness"] = effects.getBrightness();
             effect["speed"] = effects.getSpeed();
             effect["r"] = effects.getColor().r;
