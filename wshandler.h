@@ -241,7 +241,11 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
 
 // dump the current running effect options
             JsonObject &effect = json.createNestedObject("currentEffect");
-            effect["name"] = (String)effects.getEffect() ? effects.getEffect() : "";
+            if (config.ds == DataSource::E131) {
+                effect["name"] = "Disabled";
+            } else {
+                effect["name"] = (String)effects.getEffect() ? effects.getEffect() : "";
+            }
             effect["brightness"] = effects.getBrightness();
             effect["speed"] = effects.getSpeed();
             effect["r"] = effects.getColor().r;
@@ -271,8 +275,6 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
                 effect["hasReverse"] = effects.getEffectInfo(i)->hasReverse;
                 effect["hasAllLeds"] = effects.getEffectInfo(i)->hasAllLeds;
                 effect["wsTCode"] = effects.getEffectInfo(i)->wsTCode;
-//              effect["brightness"] = effects.getBrightness();
-//              effect["speed"] = effects.getSpeed();
               }
             }
 
@@ -383,6 +385,9 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
             }
             if (json.containsKey("speed")) {
                 effects.setSpeed(json["speed"]);
+            }
+            if (json.containsKey("brightness")) {
+                effects.setBrightness(json["brightness"]);
             }
             client->text("OK");
         }
