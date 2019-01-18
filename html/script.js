@@ -185,6 +185,10 @@ $(function() {
     });
 
     // MQTT field toggles
+    $('#mqtt_topic').keyup(function() {
+        updateMQTTSet();
+    });
+
     $('#mqtt').click(function() {
         if ($(this).is(':checked')) {
             $('.mqtt').removeClass('hidden');
@@ -292,6 +296,14 @@ $(function() {
     hash && $('ul.navbar-nav li a[href="' + hash + '"]').click();
 
 });
+
+function updateMQTTSet() {
+    if ( $('#mqtt_topic').val() ) {
+        $('#mqtt_topicset').val( $('#mqtt_topic').val() + '/set');
+    } else {
+        $('#mqtt_topicset').val( '' );
+    }
+}
 
 function wifiValidation() {
     var WifiSaveDisabled = false;
@@ -620,6 +632,7 @@ function getConfig(data) {
     $('#mqtt_user').val(config.mqtt.user);
     $('#mqtt_password').val(config.mqtt.password);
     $('#mqtt_topic').val(config.mqtt.topic);
+    updateMQTTSet();
     $('#mqtt_haprefix').val(config.mqtt.haprefix);
     $('#mqtt_clean').prop('checked', config.mqtt.clean);
     $('#mqtt_hadisco').prop('checked', config.mqtt.hadisco);
