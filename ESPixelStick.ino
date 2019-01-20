@@ -176,7 +176,6 @@ void setup() {
         WiFi.hostname(config.hostname);
 
 #if defined (ESPS_MODE_PIXEL)
-    pixels.setPin(DATA_PIN);
     updateConfig();
 
     // Do one effects cycle as early as possible

@@ -98,11 +98,6 @@ int PixelDriver::begin(PixelType type, PixelColor color, uint16_t length) {
     return retval;
 }
 
-void PixelDriver::setPin(uint8_t pin) {
-    if (this->pin >= 0)
-        this->pin = pin;
-}
-
 void PixelDriver::ws2811_init() {
     /* Serial rate is 4x 800KHz for WS2811 */
     Serial1.begin(3200000, SERIAL_6N1, SERIAL_TX_ONLY);

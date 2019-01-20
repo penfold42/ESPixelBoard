@@ -91,7 +91,6 @@ class PixelDriver {
     int begin();
     int begin(PixelType type);
     int begin(PixelType type, PixelColor color, uint16_t length);
-    void setPin(uint8_t pin);
     void updateOrder(PixelColor color);
     void ICACHE_RAM_ATTR show();
     uint8_t* getData();
@@ -122,7 +121,6 @@ class PixelDriver {
     PixelColor  color;          // Color Order
     uint16_t    cntGroup;       // Output modifying interval (in LEDs, not channels)
     uint16_t    cntZigzag;      // Zigzag every cntZigzag physical pixels
-    uint8_t     pin;            // Pin for bit-banging
     uint8_t     *pixdata;       // Pixel buffer
     uint8_t     *asyncdata;     // Async buffer
     uint8_t     *pbuff;         // GECE Packet Buffer
