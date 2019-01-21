@@ -106,8 +106,9 @@ class PixelDriver {
     }
 
     /* Set group / zigzag counts */
-    inline void setGroup(uint16_t _group, uint16_t _zigzag) {
+    inline void setGroup(uint16_t _group, bool _groupSpace, uint16_t _zigzag) {
         this->cntGroup = _group;
+        this->cntGroupSpace = _groupSpace;
         this->cntZigzag = _zigzag;
     }
 
@@ -119,7 +120,8 @@ class PixelDriver {
  private:
     PixelType   type;           // Pixel type
     PixelColor  color;          // Color Order
-    uint16_t    cntGroup;       // Output modifying interval (in LEDs, not channels)
+    int16_t     cntGroup;       // Output modifying interval (in LEDs, not channels)
+    bool        cntGroupSpace;  // Grouping sets only 1st led in gruop
     uint16_t    cntZigzag;      // Zigzag every cntZigzag physical pixels
     uint8_t     *pixdata;       // Pixel buffer
     uint8_t     *asyncdata;     // Async buffer

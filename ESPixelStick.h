@@ -150,7 +150,8 @@ typedef struct {
     PixelType   pixel_type;     /* Pixel type */
     PixelColor  pixel_color;    /* Pixel color order */
     uint16_t    zigSize;	    /* Zigsize count - 0 = no zigzag */
-    uint16_t    groupSize;      /* Group size - 1 = no grouping */
+    int16_t     groupSize;      /* Group size - 1 = no grouping */
+    bool        groupSpace;     /* Groups become spaced out if true*/
     float       gammaVal;       /* gamma value to use */
     float       briteVal;       /* brightness lto use */
 #elif defined(ESPS_MODE_SERIAL)

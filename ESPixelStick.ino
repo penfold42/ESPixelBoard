@@ -754,7 +754,7 @@ void validateConfig() {
 
     if (config.groupSize > config.channel_count / 3)
         config.groupSize = config.channel_count / 3;
-    else if (config.groupSize < 1)
+    else if (config.groupSize == 0)
         config.groupSize = 1;
 
     // GECE Limits
@@ -856,7 +856,7 @@ void updateConfig() {
     // Initialize for our pixel type
 #if defined(ESPS_MODE_PIXEL)
     pixels.begin(config.pixel_type, config.pixel_color, config.channel_count / 3);
-    pixels.setGroup(config.groupSize, config.zigSize);
+    pixels.setGroup(config.groupSize, config.groupSpace, config.zigSize);
     updateGammaTable(config.gammaVal, config.briteVal);
     effects.begin(&pixels, config.channel_count / 3 / config.groupSize);
 
@@ -987,6 +987,12 @@ void dsDeviceConfig(JsonObject &json) {
         config.pixel_type = PixelType(static_cast<uint8_t>(json["pixel"]["type"]));
         config.pixel_color = PixelColor(static_cast<uint8_t>(json["pixel"]["color"]));
         config.groupSize = json["pixel"]["groupSize"];
+        if (config.groupSize < 0) {
+            config.groupSize = abs(config.groupSize);
+            config.groupSpace = true;
+        } else {
+            config.groupSpace = false;
+        }
         config.zigSize = json["pixel"]["zigSize"];
         config.gammaVal = json["pixel"]["gammaVal"];
         config.briteVal = json["pixel"]["briteVal"];
@@ -1160,7 +1166,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     JsonObject &pixel = json.createNestedObject("pixel");
     pixel["type"] = static_cast<uint8_t>(config.pixel_type);
     pixel["color"] = static_cast<uint8_t>(config.pixel_color);
-    pixel["groupSize"] = config.groupSize;
+    pixel["groupSize"] = config.groupSize * (config.groupSpace ? -1 : 1);
     pixel["zigSize"] = config.zigSize;
     pixel["gammaVal"] = config.gammaVal;
     pixel["briteVal"] = config.briteVal;

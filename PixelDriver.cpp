@@ -227,9 +227,25 @@ void ICACHE_RAM_ATTR PixelDriver::show() {
         if (!cntZigzag) {  // Normal / group copy
             for (size_t led = 0; led < szBuffer / 3; led++) {
                 uint16 modifier = led / cntGroup;
-                asyncdata[3 * led + 0] = pixdata[3 * modifier + 0];
-                asyncdata[3 * led + 1] = pixdata[3 * modifier + 1];
-                asyncdata[3 * led + 2] = pixdata[3 * modifier + 2];
+
+                // all leds in group on
+                if (!cntGroupSpace) {
+                    asyncdata[3 * led + 0] = pixdata[3 * modifier + 0];
+                    asyncdata[3 * led + 1] = pixdata[3 * modifier + 1];
+                    asyncdata[3 * led + 2] = pixdata[3 * modifier + 2];
+
+                // only first led in group on
+                } else {
+                    if (led % cntGroup == 0) {
+                        asyncdata[3 * led + 0] = pixdata[3 * modifier + 0];
+                        asyncdata[3 * led + 1] = pixdata[3 * modifier + 1];
+                        asyncdata[3 * led + 2] = pixdata[3 * modifier + 2];
+                    } else {
+                        asyncdata[3 * led + 0] = 0;
+                        asyncdata[3 * led + 1] = 0;
+                        asyncdata[3 * led + 2] = 0;
+                    }
+                }
             }
         } else {  // Zigzag copy
             for (size_t led = 0; led < szBuffer / 3; led++) {
