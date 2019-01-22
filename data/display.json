@@ -1,80 +1,120 @@
-{ "displayconfig":[
-    { "eventid": "dee_boot",
-        "elements":[
-            {
-                "enabled" : 1,
-                "elementid": "de_gnstr",
-                "px": 1,
-                "py":1,
-                "format": 0,
-                "text": "Initializing..."
-            },
-            {
-                "enabled" : 1,
-                "elementid": "de_gnsrl",
-                "px": 1,
-                "py":1,
-                "format": 0
-            }
+{  
+  "displayconfig":[  
+     {  
+        "eventid":"dee_boot",
+        "elements":[  
+           {  
+              "enabled":1,
+              "elementid":"de_gnstr",
+              "px":1,
+              "py":1,
+              "format":0,
+              "text":"Initializing..."
+           },
+           {  
+              "enabled":1,
+              "elementid":"de_gnsrl",
+              "px":1,
+              "py":32,
+              "format":0
+           }
         ]
-    },
-    { "eventid": "dee_e131",
-        "elements":[
-            {
-                "enabled" : 1,
-                "elementid": "de_e1srcip",
-                "px": 1,
-                "py":1,
-                "format": 0
-            },
-            {
-                "enabled" : 1,
-                "elementid": "de_e1univs",
-                "px": 1,
-                "py":1,
-                "format": 0
-            },
-            {
-                "enabled" : 1,
-                "elementid": "de_e1chcount",
-                "px": 1,
-                "py":1,
-                "format": 0
-            }
+     },
+     {  
+        "eventid":"dee_e131",
+        "elements":[  
+           {  
+              "enabled":1,
+              "elementid":"de_nsssid",
+              "px":1,
+              "py":1,
+              "format":0
+           },
+           {  
+              "enabled":1,
+              "elementid":"de_nsrssi",
+              "px":112,
+              "py":1,
+              "format":1
+           },
+           {  
+              "enabled":1,
+              "elementid":"de_gnstr",
+              "px":1,
+              "py":16,
+              "format":0,
+              "text":"IP:"
+          },
+          {  
+              "enabled":1,
+              "elementid":"de_nsip",
+              "px":20,
+              "py":16,
+              "format":0
+           },
+           {  
+              "enabled":1,
+              "elementid":"de_gnstr",
+              "px":1,
+              "py":32,
+              "format":0,
+              "text":"Src:"
+           },
+           {  
+              "enabled":1,
+              "elementid":"de_e1srcip",
+              "px":26,
+              "py":32,
+              "format":0
+           },
+           {  
+              "enabled":1,
+              "elementid":"de_gnstr",
+              "px":1,
+              "py":48,
+              "format":0,
+              "text":"U:"
+           },
+           {  
+              "enabled":1,
+              "elementid":"de_e1univs",
+              "px":16,
+              "py":48,
+              "format":0
+           },
+           {  
+              "enabled":1,
+              "elementid":"de_e1chcount",
+              "px":64,
+              "py":48,
+              "format":0
+           }
         ]
-    },
-    { "eventid": "dee_idle",
-        "elements":[
-            {
-                "enabled" : 1,
-                "elementid": "de_e1lastseen",
-                "px": 1,
-                "py":1,
-                "format": 1
-            },
-            {
-                "enabled" : 1,
-                "elementid": "de_nseffect",
-                "px": 1,
-                "py":1,
-                "format": 0
-            }
+     },
+     {  
+        "eventid":"dee_idle",
+        "elements":[  
+           {  
+              "enabled":1,
+              "elementid":"de_e1lastseen",
+              "px":1,
+              "py":1,
+              "format":1
+           },
+           {  
+              "enabled":1,
+              "elementid":"de_nseffect",
+              "px":1,
+              "py":1,
+              "format":0
+           }
         ]
-    },
-    { "eventid": "dee_udp",
-        "elements":[
-            {
-                "enabled" : 1,
-                "elementid": "de_udpsrc",
-                "px": 1,
-                "py":1,
-                "format": 0
-            }
+     },
+     {  
+        "eventid":"dee_mqtt",
+        "elements":[  
+
         ]
-    },
-    { "eventid": "dee_mqtt",
-        "elements":[
-        ]
-    }
-]
+     }
+  ]
 }

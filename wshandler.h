@@ -36,9 +36,10 @@ extern SerialDriver serial;     // Serial object
 #include "udpraw.h"
 extern UdpRaw       udpraw;
 #endif
+#include "OLEDDisplay.h"
 
 extern EffectEngine effects;    // EffectEngine for test modes
-extern OLEDEngine oleddisp; // Display Elements for OLED
+// extern OLEDEngine oleddisp; // Display Elements for OLED
 
 extern ESPAsyncE131 e131;       // ESPAsyncE131 with X buffers
 extern config_t     config;     // Current configuration
@@ -295,14 +296,17 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             client->text("G4" + response);
             break;
         }
+#if defined(ESPS_SUPPORT_OLED)
         case '5': {
-            String de = oleddisp.getDisplayElements();
-            String dc = oleddisp.getDisplayConfig();
-            String dv = oleddisp.getDisplayEvents();
+            String de = getDisplayElements();
+            String dc = getDisplayConfig();
+            String dv = getDisplayEvents();
+
             String response = "G5{" + de + "," + dv + "," + dc + "}";
              client->text(response);
             break;
         }
+#endif //ESPS_SUPPORT_OLED
     }
 }
 
@@ -348,11 +352,12 @@ void procS(uint8_t *data, AsyncWebSocketClient *client) {
             dsGammaConfig(json);
             client->text("S4");
             break;
+#if defined(ESPS_SUPPORT_OLED)
         case '5': // Set Display config
-            oleddisp.saveDisplayConfig(json);
+            saveDisplayConfig(json);
             client->text("S5");
             break;
-
+#endif //ESPS_SUPPORT_OLED
     }
 }
 

@@ -876,11 +876,11 @@ function saveOledConfig() {
     $('#oledbody tr').each(function(row) {
         var px = parseInt($('[id^="de_px"]', this).val()), py = parseInt($('[id^="de_py"]', this).val());
         // Validations
-        if (isNaN(px) || px < 0 || px > 125) {
-            errorstr += "Row " + (row + 1) + ": PosX should 0-125.\n";
+        if (isNaN(px) || px < 0 || px > 128) {
+            errorstr += "Row " + (row + 1) + ": PosX should 0-128.\n";
         }
-        if (isNaN(py) || py < 0 || py > 125) {
-            errorstr += "Row " + (row + 1) + ": PosY should 0-63.\n";
+        if (isNaN(py) || py < 0 || py > 64) {
+            errorstr += "Row " + (row + 1) + ": PosY should 0-64.\n";
         }
         if ($('[id^="de_el"]', this).val() == 'de_gnstr' && $('[id^="de_frt"]', this).val() == ''){
             errorstr += "Row " + (row + 1) + ": Should have value in static string.\n";
@@ -890,7 +890,7 @@ function saveOledConfig() {
             "elementid": $('[id^="de_el"]', this).val(),
             "px": px,
             "py": py,
-            "format": $('[id^="de_el"]', this).val(),
+            "format": $('[id^="de_frs"]', this).val(),
             "text": $('[id^="de_frt"]',this).val()
         };
         json.elements.push(element);
