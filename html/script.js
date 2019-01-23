@@ -7,6 +7,9 @@ var wsTimerId;
 // json with effect definitions
 var effectInfo;
 
+// json with display elements
+var dispJson;
+
 // Default modal properties
 $.fn.modal.Constructor.DEFAULTS.backdrop = 'static';
 $.fn.modal.Constructor.DEFAULTS.keyboard = false;
@@ -25,9 +28,9 @@ $(function() {
         $($(this).attr('href')).removeClass('hidden');
 
         // kick start the live stream
-	if ($(this).attr('href') == "#stream") {
-            wsEnqueue('T9');
-	}
+        if ($(this).attr('href') == "#stream") {
+                wsEnqueue('T9');
+        }
 
         // Collapse the menu on smaller screens
         $('#navbar').removeClass('in').attr('aria-expanded', 'false');
@@ -365,7 +368,7 @@ function wsConnect() {
             wsEnqueue('G2'); // Get Net Status
             wsEnqueue('G3'); // Get Effect Info
             wsEnqueue('G4'); // Get Gamma Table
-
+            wsEnqueue('G5'); // Get Display
             feed();
         };
 
@@ -389,6 +392,9 @@ function wsConnect() {
                 case 'G4':
                     refreshGamma(data);
                     break;
+                case 'G5':
+                    refreshDisplayPage(data);
+                    break;
                 case 'S1':
                     setConfig(data);
                     reboot();
@@ -400,6 +406,9 @@ function wsConnect() {
                     snackSave();
                     break;
                 case 'S4':
+                    break;
+                case 'S5':
+                    snackSave();
                     break;
                 case 'XJ':
                     getJsonStatus(data);
@@ -460,7 +469,7 @@ function wsProcessQueue() {
         //get next message from queue.
         message=wsQueue.shift();
         //set timeout to clear flag and try next message if response isn't recieved. Short timeout for message types that don't generate a response.
-        if(['T0','T1','T2','T3','T4','T5','T6','T7','X6'].indexOf(message.substr(0,2))) {
+        if(['T0','T1','T2','T3','T4','T5','T6','T7','TC','X6'].indexOf(message.substr(0,2))) {
             timeout=40;
         } else {
             timeout=2000;
@@ -734,7 +743,6 @@ newitem += '</tr>'
 $( afterID ).after( newitem );
 }
 
-
 function getConfigStatus(data) {
     var status = JSON.parse(data);
 
@@ -749,6 +757,176 @@ function getConfigStatus(data) {
     $('#x_realflashsize').text(status.realflashsize);
     $('#x_freeheap').text(status.freeheap);
 }
+// OLED functions
+function refreshDisplayPage(data) {
+    $('#oledli').removeClass('hidden');
+    dispJson = JSON.parse(data);
+    populateTemplates();
+    onDTmpltChanged();
+    onDZoomChanged();
+    refreshCanvas();
+}
+
+function populateTemplates() {
+    if (dispJson && dispJson.displayevents) {
+        dispJson.displayevents.forEach(function(event, index) {
+            $('#dtmplt').append('<option value="' + event.id + '">' + event.name + '</option>');
+        });
+    }
+}
+
+function onDZoomChanged(){
+    var zmode = parseInt($('#dzoom option:selected').val()); 
+    var baseh = 64, basew = 128;
+
+    $('#oledCanvas')[0].height = (baseh * zmode);
+    $('#oledCanvas')[0].width = (basew * zmode);
+    refreshCanvas();
+} 
+
+function onDTmpltChanged() {
+    var tmpltid = $('#dtmplt option:selected').val(); 
+    var tmplt;
+
+    $('#oledbody').empty();
+    if (dispJson.displayconfig) {
+        tmplt = dispJson.displayconfig.find(function(tmplt) {
+            return tmplt.eventid == tmpltid });
+    }
+    var count=0;
+    if (tmplt && tmplt.elements.length > 0){
+        tmplt.elements.forEach(function(element, index) {
+            count++;
+            addnewOledRow(count);
+            //populate saved values
+            $('#de_en' + count).prop('checked', element.enabled == 1? true: false);
+            $('#de_el' + count + ' option[value="' + element.elementid + '"]').prop('selected', true);
+            onElementChange(count);
+            $('#de_px' + count).val(element.px);
+            $('#de_py' + count).val(element.py);
+            if (element.elementid == 'de_gnstr') {
+                $('#de_frt' + count).val(element.text);
+            } else {
+                $('#de_frs' + count + ' option[value="' + element.format + '"]').prop('selected', true);
+            }
+        });
+    } else {
+        addnewOledRow(1); // add a defailt row
+    }
+    refreshCanvas();
+}
+function addnewOledRow(count){
+    var newitem = "";
+    newitem += '<tr id="derow' + count + '">'
+    newitem += '  <td class="text-center"><input type="checkbox" id="de_en' + count + '" name="de_en' + count + '"></td>'
+    newitem += '  <td class="text-center"><select id="de_el' + count + '" name="de_el' + count + '" onchange="onElementChange(' + count + ')">'
+    //Fill elements
+    newitem += '  </select></td>>'
+    newitem += '  <td class="text-center"><input type="tel" class="form-control" id="de_px' + count + '" name="de_px' + count + '" placeholder="Pos X" oninput="refreshCanvas()"></td>'
+    newitem += '  <td class="text-center"><input type="tel" class="form-control" id="de_py' + count + '" name="de_py' + count + '" placeholder="Pos Y" oninput="refreshCanvas()"></td>'
+    newitem += '  <td class="text-center"><input type="tel" class="form-control" id="de_frt' + count + '" name="de_frt' + count + '" placeholder="Static String" oninput="refreshCanvas()">'
+    newitem += '     <select id="de_frs' + count + '" name="de_frs' + count + '">'
+    //Fill formats
+    newitem += '  </select></td>'
+    newitem += '  <td class="text-center"><button class="btn btn-secondary" onclick="onDelOledRow(\'derow' + count +'\')">X</button></td>'
+    newitem += '</tr>'
+    $( '#oledbody' ).append( newitem );
+    
+    $('#de_el' + count).empty();
+    dispJson.displayelements.forEach(function(element, index) {
+        $('#de_el' + count).append('<option value="' + element.id +'">' + element.name +'</option>');
+    });
+    onElementChange(count);
+}
+function onAddOledrow() {
+    var count = parseInt($('#oledbody tr:last').attr('id').replace('derow',''));
+    addnewOledRow(count + 1);
+}
+
+function onElementChange(row) {
+    elementID = $('#de_el' + row + ' option:selected').val();
+    element = dispJson.displayelements.find(function(item) {
+        return item.id == elementID;
+    });
+
+    if (element.id == 'de_gnstr' ) {
+        $('#de_frs' + row).hide();
+        $('#de_frt' + row).show();
+    } else {
+        $('#de_frs' + row).show();
+        $('#de_frt' + row).hide();
+        $('#de_frs' + row).empty();
+        element.formats.forEach(function(item, index) {
+            $('#de_frs' + row).append('<option value="' + index +'">' + item +'</option>');
+        });
+    } 
+    refreshCanvas();
+}
+function onDelOledRow(rowid) {
+    $('#' + rowid).remove();
+    //renumber rows
+}
+function saveOledConfig() {
+
+    var tmpltid = $('#dtmplt option:selected').val();
+    var json = {"eventid": tmpltid,
+                "elements":[]};
+    var errorstr = '';
+
+    $('#oledbody tr').each(function(row) {
+        var px = parseInt($('[id^="de_px"]', this).val()), py = parseInt($('[id^="de_py"]', this).val());
+        // Validations
+        if (isNaN(px) || px < 0 || px > 128) {
+            errorstr += "Row " + (row + 1) + ": PosX should 0-128.\n";
+        }
+        if (isNaN(py) || py < 0 || py > 64) {
+            errorstr += "Row " + (row + 1) + ": PosY should 0-64.\n";
+        }
+        if ($('[id^="de_el"]', this).val() == 'de_gnstr' && $('[id^="de_frt"]', this).val() == ''){
+            errorstr += "Row " + (row + 1) + ": Should have value in static string.\n";
+        }
+        var element = {
+            "enabled" : +$('[id^="de_en"]', this).is(':checked'),
+            "elementid": $('[id^="de_el"]', this).val(),
+            "px": px,
+            "py": py,
+            "format": $('[id^="de_frs"]', this).val(),
+            "text": $('[id^="de_frt"]',this).val()
+        };
+        json.elements.push(element);
+      });
+      if (errorstr !== '') {
+        window.alert(errorstr);
+      } else {
+        console.log(json); 
+        var evtindex = $('#dtmplt')[0].selectedIndex
+        dispJson.displayconfig[evtindex] = json;
+        wsEnqueue('S5' + JSON.stringify(json));
+      }
+}
+function refreshCanvas() {
+    var canvas = $('#oledCanvas')[0];
+    var context = canvas.getContext('2d');
+    var zfactor = parseInt($('#dzoom option:selected').val()); 
+
+    canvas.width = canvas.width; //Clear canvas
+    context.font = (12*zfactor) + 'pt serif';
+    context.textAlign = 'left';
+    context.fillStyle = '#ffffff';
+
+    $('#oledbody tr').each(function(row) {
+        if (+$('[id^="de_en"]', this).is(':checked') == 1 ){
+            var px = parseInt($('[id^="de_px"]', this).val()), 
+            py = parseInt($('[id^="de_py"]', this).val()),
+            elemindex = $('[id^="de_el"]', this)[0].selectedIndex, 
+            frmtindex = parseInt($('[id^="de_frs"]', this).val());
+
+            var txt = elemindex == 0 ? $('[id^="de_frt"]', this).val() : dispJson.displayelements[elemindex].sample[frmtindex];
+            context.fillText(txt, (px * zfactor), ((py+10.5) * zfactor));
+        }
+      });
+}
+// OLED functions end
 
 function getEffectInfo(data) {
     parsed = JSON.parse(data);
@@ -1043,6 +1221,7 @@ function hideShowTestSections() {
         }
     }
 }
+// Pixel Count functions
 function showCountPixels(){
     currentCount = $('#p_count').val();
     setCountPixelValue(currentCount, 0);
@@ -1086,7 +1265,7 @@ function setCountPixelValue(value, cmdtype) {
             'commandtype': cmdtype
         }
     };
-    wsEnqueue('S5' + JSON.stringify(json));
+    wsEnqueue('TC' + JSON.stringify(json));
 }
 function setpixelcount() {
     $('#p_count').val($('#pix_count').val());
@@ -1096,6 +1275,7 @@ function closepixelcount(){
     $('#countpxl').modal('hide');
     setCountPixelValue(0,2);
 }
+// Pixel Count functions end
 // effect selector changed
 function effectChanged() {
     hideShowTestSections();

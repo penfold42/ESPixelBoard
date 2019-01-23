@@ -41,6 +41,7 @@ const char BUILD_DATE[] = __DATE__;
 #endif
 
 #include "EffectEngine.h"
+#include "OLEDEngine.h"
 
 #define HTTP_PORT       80      /* Default web server port */
 #define MQTT_PORT       1883    /* Default MQTT port */
