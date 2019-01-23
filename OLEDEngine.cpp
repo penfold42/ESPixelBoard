@@ -101,6 +101,7 @@ String getDisplayElements() {
     return "\"displayelements\": [ "
         "{\"name\": \"Label\", \"id\": \"de_gnstr\", \"type\": 0, \"formats\": [\"string\"], \"sample\": [\"AP\"]}, "
         "{\"name\": \"CustomString\", \"id\": \"de_gnsrl\", \"type\": 1, \"formats\": [\"string\"], \"sample\": [\"String\"]}, "
+        "{\"name\": \"BootLogo\", \"id\": \"de_gnbotico\", \"type\": 1, \"formats\": [\"icon\"], \"sample\": [\"^\"]}, "
         "{\"name\": \"FW_Version\", \"id\": \"de_ver\", \"type\": 1, \"formats\": [\"string\"], \"sample\": [\"String\"]}, "
         "{\"name\": \"NetWorkMode\", \"id\": \"de_nsmode\", \"type\": 1, \"formats\": [\"string\"], \"sample\": [\"AP\"]}, "
         "{\"name\": \"SSID\", \"id\": \"de_nsssid\", \"type\": 1, \"formats\": [\"string\"], \"sample\": [\"WifiSSID\"]}, "
@@ -212,6 +213,8 @@ void showElementValue(const element_t elem, const String custData) {
     if(elem.elementid == "de_gnsrl"){
         display.setFont(ArialMT_Plain_10);
         display.drawStringMaxWidth(elem.px, elem.py, 128, custData);
+    } else if (elem.elementid == "de_gnbotico") {
+        display.drawXbm(elem.px, elem.py, ico_logo_w, ico_logo_h, ico_logo);
     } else if (elem.elementid == "de_gnstr"){
         disptext = elem.text;
     } else if (elem.elementid == "de_ver"){
@@ -253,16 +256,16 @@ void showElementValue(const element_t elem, const String custData) {
             int32_t quality = 2 * (rssi + 100);
             if (quality > 80) {
                 //Wifi_1 bitmap 
-                display.drawXbm(elem.px, elem.py, 16, 16, wifi1);
+                display.drawXbm(elem.px, elem.py, ico_wifi_w, ico_wifi_h, ico_wifi1);
             } else if (quality > 60) {
                 //Wifi_2 bitmap
-                display.drawXbm(elem.px, elem.py, 16, 16, wifi2);
+                display.drawXbm(elem.px, elem.py, ico_wifi_w, ico_wifi_h, ico_wifi2);
             } else if (quality > 40) {
                 //Wifi_3 bitmap
-                display.drawXbm(elem.px, elem.py, 16, 16, wifi3);
+                display.drawXbm(elem.px, elem.py, ico_wifi_w, ico_wifi_h, ico_wifi3);
             } else if (quality > 20) {
                 //Wifi_4 itmap
-                display.drawXbm(elem.px, elem.py, 16, 16, wifi4);
+                display.drawXbm(elem.px, elem.py, ico_wifi_w, ico_wifi_h, ico_wifi4);
             } else {
                 //Do not render anything
             }

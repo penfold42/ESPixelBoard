@@ -207,6 +207,7 @@ void procE(uint8_t *data, AsyncWebSocketClient *client) {
 }
 
 void procG(uint8_t *data, AsyncWebSocketClient *client) {
+    LOG_PORT.println("Got Request for:G");
     switch (data[1]) {
         case '1': {
             String response;
@@ -298,12 +299,21 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
         }
 #if defined(ESPS_SUPPORT_OLED)
         case '5': {
+            LOG_PORT.println("Responding G5");
             String de = getDisplayElements();
-            String dc = getDisplayConfig();
+            LOG_PORT.println("DE");
+            LOG_PORT.println(de);
+           String dc = getDisplayConfig();
+           LOG_PORT.println("DC");
+           LOG_PORT.println(dc);
             String dv = getDisplayEvents();
-
-            String response = "G5{" + de + "," + dv + "," + dc + "}";
-             client->text(response);
+            LOG_PORT.println("DV");
+            LOG_PORT.println(dv);
+           String response = "G5{" + de + "," + dv + "," + dc + "}";
+            // String response = "G5{" + de + "," + dv + "}";
+            LOG_PORT.println(response);
+            client->text(response);
+            LOG_PORT.println("Sent response");
             break;
         }
 #endif //ESPS_SUPPORT_OLED

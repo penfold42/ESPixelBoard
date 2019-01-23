@@ -759,7 +759,7 @@ function getConfigStatus(data) {
 }
 // OLED functions
 function refreshDisplayPage(data) {
-
+    $('#oledli').removeClass('hidden');
     dispJson = JSON.parse(data);
     populateTemplates();
     onDTmpltChanged();
