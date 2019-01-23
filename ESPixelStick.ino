@@ -29,15 +29,7 @@ const char passphrase[] = "ENTER_PASSPHRASE_HERE";
 /*         END - Configuration           */
 /*****************************************/
 
-#include <ESP8266WiFi.h>
-#include <Ticker.h>
-#include <AsyncMqttClient.h>
-#include <ESP8266mDNS.h>
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncUDP.h>
-#include <ESPAsyncWebServer.h>
 #include <ESPAsyncE131.h>
-#include <ArduinoJson.h>
 #include <Hash.h>
 #include <SPI.h>
 #include "ESPixelStick.h"
@@ -107,14 +99,14 @@ uint8_t             *seqTracker;    // Current sequence numbers for each Univers
 uint32_t            lastUpdate;     // Update timeout tracker
 WiFiEventHandler    wifiConnectHandler;     // WiFi connect handler
 WiFiEventHandler    wifiDisconnectHandler;  // WiFi disconnect handler
-Ticker              wifiTicker; // Ticker to handle WiFi
-Ticker              idleTicker; // Ticker for effect on idle
-AsyncMqttClient     mqtt;       // MQTT object
-Ticker              mqttTicker; // Ticker to handle MQTT
+Ticker              wifiTicker;     // Ticker to handle WiFi
+Ticker              idleTicker;     // Ticker for effect on idle
+AsyncMqttClient     mqtt;           // MQTT object
+Ticker              mqttTicker;     // Ticker to handle MQTT
 unsigned long       mqtt_last_seen;         // millis() timestamp of last message
 uint32_t            mqtt_num_packets;       // count of message rcvd
-EffectEngine        effects;    // Effects Engine
-Ticker  sendTimer;
+EffectEngine        effects;        // Effects Engine
+Ticker              sendTimer;
 UdpRaw              udpraw;
 
 // Output Drivers
@@ -197,6 +189,14 @@ void setup() {
     pixels.show();
 #else
     updateConfig();
+    // Do one effects cycle as early as possible
+    if (config.ds == DataSource::WEB) {
+        effects.run();
+    }
+    // set the effect idle timer
+    idleTicker.attach(config.effect_idletimeout, idleTimeout);
+
+    serial.show();
 #endif
 
     // Configure the pwm outputs
@@ -295,7 +295,7 @@ void initWifi() {
     while (WiFi.status() != WL_CONNECTED) {
         LOG_PORT.print(".");
         delay(500);
-        if (millis() - timeout > CONNECT_TIMEOUT) {
+        if (millis() - timeout > (1000 * config.sta_timeout) ){
             LOG_PORT.println("");
             LOG_PORT.println(F("*** Failed to connect ***"));
             break;
@@ -326,7 +326,7 @@ void connectWifi() {
     }
 }
 
-void onWifiConnect(const WiFiEventStationModeGotIP &event) {
+void onWifiConnect(__attribute__ ((unused)) const WiFiEventStationModeGotIP &event) {
     LOG_PORT.println("");
     LOG_PORT.print(F("Connected with IP: "));
     LOG_PORT.println(WiFi.localIP());
@@ -339,8 +339,23 @@ void onWifiConnect(const WiFiEventStationModeGotIP &event) {
     //TODO: Reboot or restart mdns when config.id is changed?
      char chipId[7] = { 0 };
     snprintf(chipId, sizeof(chipId), "%06x", ESP.getChipId());
-    MDNS.setInstanceName(config.id + " (" + String(chipId) + ")");
-    if (MDNS.begin(config.hostname.c_str())) {
+
+//  MDNS setInstanceName changes in 2.5.0-dev:
+//  - setInstanceName also changes hostname
+//  - setInstanceName only takes c_str
+//  - MDNS.update() is required
+//  - use short name of hostname for now
+
+//    MDNS.setInstanceName(config.id + " (" + String(chipId) + ")");
+
+    char mdnsName[64] = {0};
+    strncpy (mdnsName, config.hostname.c_str(), 63);
+    char* firstDot = strchr (mdnsName, '.');
+    if (firstDot) {
+        *firstDot = '\0';
+    }
+
+    if (MDNS.begin(mdnsName)) {
         MDNS.addService("http", "tcp", HTTP_PORT);
         MDNS.addService("e131", "udp", E131_DEFAULT_PORT);
         MDNS.addServiceTxt("e131", "udp", "TxtVers", String(RDMNET_DNSSD_TXTVERS));
@@ -354,7 +369,7 @@ void onWifiConnect(const WiFiEventStationModeGotIP &event) {
     }
 }
 
-void onWiFiDisconnect(const WiFiEventStationModeDisconnected &event) {
+void onWiFiDisconnect(__attribute__ ((unused)) const WiFiEventStationModeDisconnected &event) {
     LOG_PORT.println(F("*** WiFi Disconnected ***"));
 
     // Pause MQTT reconnect while WiFi is reconnecting
@@ -390,7 +405,7 @@ void connectToMqtt() {
     mqtt.connect();
 }
 
-void onMqttConnect(bool sessionPresent) {
+void onMqttConnect(__attribute__ ((unused)) bool sessionPresent) {
     LOG_PORT.println(F("- MQTT Connected"));
 
     // Get retained MQTT state
@@ -414,7 +429,7 @@ void onMqttConnect(bool sessionPresent) {
     publishState();
 }
 
-void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
+void onMqttDisconnect(__attribute__ ((unused)) AsyncMqttClientDisconnectReason reason) {
     LOG_PORT.println(F("- MQTT Disconnected"));
     if (WiFi.isConnected()) {
         mqttTicker.once(2, connectToMqtt);
@@ -422,7 +437,9 @@ void onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
 }
 
 void onMqttMessage(char* topic, char* payload,
-        AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
+        AsyncMqttClientMessageProperties properties, size_t len,
+        __attribute__ ((unused)) size_t index,
+        __attribute__ ((unused)) size_t total) {
 
     mqtt_last_seen = millis();
     mqtt_num_packets++;
@@ -456,7 +473,7 @@ void onMqttMessage(char* topic, char* payload,
             uint8_t brightness = Spayload.toInt();
             if (brightness > 100) brightness = 100;
             stateOn = true;
-            effects.setBrightness((brightness*255)/100);
+            effects.setBrightness(brightness/100);
         }
         else if (String(config.mqtt_topic + MQTT_LIGHT_RGB_COMMAND_TOPIC).equals(topic)) {
             // Get the position of the first and second commas
@@ -502,7 +519,11 @@ void onMqttMessage(char* topic, char* payload,
         }
 
         if (root.containsKey("brightness")) {
-            effects.setBrightness(root["brightness"]);
+            effects.setBrightness((float)root["brightness"] / 255.0);
+        }
+
+        if (root.containsKey("speed")) {
+            effects.setSpeed(root["speed"]);
         }
 
         if (root.containsKey("color")) {
@@ -542,6 +563,35 @@ void onMqttMessage(char* topic, char* payload,
     }
 }
 
+void publishHA(bool join) {
+    // Setup HA discovery
+    char chipId[7] = { 0 };
+    snprintf(chipId, sizeof(chipId), "%06x", ESP.getChipId());
+    String ha_config = config.mqtt_haprefix + "/light/" + String(chipId) + "/config";
+
+    if (join) {
+        DynamicJsonBuffer jsonBuffer;
+        JsonObject& root = jsonBuffer.createObject();
+        root["name"] = config.id;
+        root["schema"] = "json";
+        root["state_topic"] = config.mqtt_topic;
+        root["command_topic"] = config.mqtt_topic + "/set";
+        root["rgb"] = "true";
+        root["brightness"] = "true";
+        root["effect"] = "true";
+        JsonArray& effect_list = root.createNestedArray("effect_list");
+        for (uint8_t i = 0; i < effects.getEffectCount(); i++) {
+            effect_list.add(effects.getEffectInfo(i)->name);
+        }
+
+        char buffer[root.measureLength() + 1];
+        root.printTo(buffer, sizeof(buffer));
+        mqtt.publish(ha_config.c_str(), 0, true, buffer);
+    } else {
+        mqtt.publish(ha_config.c_str(), 0, true, "");
+    }
+}
+
 void publishState() {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
@@ -550,8 +600,9 @@ void publishState() {
     color["r"] = effects.getColor().r;
     color["g"] = effects.getColor().g;
     color["b"] = effects.getColor().b;
-    root["brightness"] = effects.getBrightness();
-    if (effects.getEffect() != "") {
+    root["brightness"] = effects.getBrightness()*255;
+    root["speed"] = effects.getSpeed();
+    if (!effects.getEffect().equalsIgnoreCase("Disabled")) {
         root["effect"] = effects.getEffect();
     }
     root["reverse"] = effects.getReverse();
@@ -575,7 +626,7 @@ void publishRGBState() {
 
 // Called to publish the brightness of the led (0-100)
 void publishRGBBrightness() {
-    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d", (effects.getBrightness()*100)/255);
+    snprintf(m_msg_buffer, MSG_BUFFER_SIZE, "%d", (uint8_t)(effects.getBrightness()*100));
     mqtt.publish(String(config.mqtt_topic + MQTT_LIGHT_BRIGHTNESS_STATE_TOPIC).c_str(), 0, true, m_msg_buffer);
 }
 
@@ -615,32 +666,32 @@ void initWeb() {
         request->send(200, "text/json", jsonString);
     });
 
-    // Firmware upload handler
-    web.on("/updatefw", HTTP_POST, [](AsyncWebServerRequest *request) {
+    // Firmware upload handler - only in station mode
+    web.on("/updatefw", HTTP_POST, [](__attribute__ ((unused)) AsyncWebServerRequest *request) {
         ws.textAll("X6");
-    }, handle_fw_upload);
+    }, handle_fw_upload).setFilter(ON_STA_FILTER);
 
     // Static Handler
     web.serveStatic("/", SPIFFS, "/www/").setDefaultFile("index.html");
 
-    // Raw config file Handler
-    web.serveStatic("/config.json", SPIFFS, "/config.json");
+    // Raw config file Handler - but only on station
+//  web.serveStatic("/config.json", SPIFFS, "/config.json").setFilter(ON_STA_FILTER);
 
     web.onNotFound([](AsyncWebServerRequest *request) {
         if (request->method() == HTTP_OPTIONS) {
             AsyncWebServerResponse *response = request->beginResponse(200);
             request->send(response);
         } else {
-            request->send(404, "text/plain", "Page not found");          
+            request->send(404, "text/plain", "Page not found");
         }
     });
 
     DefaultHeaders::Instance().addHeader(F("Access-Control-Allow-Origin"), "*");
 
-    // Config file upload handler
-    web.on("/config", HTTP_POST, [](AsyncWebServerRequest *request) {
+    // Config file upload handler - only in station mode
+    web.on("/config", HTTP_POST, [](__attribute__ ((unused)) AsyncWebServerRequest *request) {
         ws.textAll("X6");
-    }, handle_config_upload);
+    }, handle_config_upload).setFilter(ON_STA_FILTER);
 
     web.begin();
 
@@ -672,11 +723,16 @@ void validateConfig() {
     if (config.mqtt_port == 0)
         config.mqtt_port = MQTT_PORT;
 
-    // Generate default MQTT topic if needed
+    // Generate default MQTT topic if blank
     if (!config.mqtt_topic.length()) {
         char chipId[7] = { 0 };
         snprintf(chipId, sizeof(chipId), "%06x", ESP.getChipId());
         config.mqtt_topic = "diy/esps/" + String(chipId);
+    }
+
+    // Set default Home Assistant Discovery prefix if blank
+    if (!config.mqtt_haprefix.length()) {
+        config.mqtt_haprefix = "homeassistant";
     }
 
 #if defined(ESPS_SUPPORT_PWM)
@@ -696,6 +752,11 @@ void validateConfig() {
         config.channel_count = PIXEL_LIMIT * 3;
     else if (config.channel_count < 1)
         config.channel_count = 1;
+
+    if (config.groupSize > config.channel_count / 3)
+        config.groupSize = config.channel_count / 3;
+    else if (config.groupSize < 1)
+        config.groupSize = 1;
 
     // GECE Limits
     if (config.pixel_type == PixelType::GECE) {
@@ -733,6 +794,16 @@ void validateConfig() {
     else if (config.baudrate < BaudRate::BR_38400)
         config.baudrate = BaudRate::BR_57600;
 #endif
+
+    if (config.effect_speed < 1)
+        config.effect_speed = 1;
+    if (config.effect_speed > 10)
+        config.effect_speed = 10;
+
+    if (config.effect_brightness > 1.0)
+        config.effect_brightness = 1.0;
+    if (config.effect_brightness < 0.0)
+        config.effect_brightness = 0.0;
 
     if (config.effect_idletimeout == 0) {
         config.effect_idletimeout = 10;
@@ -786,12 +857,13 @@ void updateConfig() {
     // Initialize for our pixel type
 #if defined(ESPS_MODE_PIXEL)
     pixels.begin(config.pixel_type, config.pixel_color, config.channel_count / 3);
-    pixels.setGamma(config.gamma);
+    pixels.setGroup(config.groupSize, config.zigSize);
     updateGammaTable(config.gammaVal, config.briteVal);
-    effects.begin(&pixels, config.channel_count / 3);
+    effects.begin(&pixels, config.channel_count / 3 / config.groupSize);
 
 #elif defined(ESPS_MODE_SERIAL)
     serial.begin(&SEROUT_PORT, config.serial_type, config.channel_count, config.baudrate);
+    effects.begin(&serial, config.channel_count / 3 );
 
 #endif
 
@@ -805,6 +877,10 @@ void updateConfig() {
     // Setup IGMP subscriptions if multicast is enabled
     if (config.multicast)
         multiSub();
+
+    // Update Home Assistant Discovery if enabled
+    if (config.mqtt)
+        publishHA(config.mqtt_hadisco);
 }
 
 // De-Serialize Network config
@@ -828,7 +904,16 @@ void dsNetworkConfig(JsonObject &json) {
             config.gateway[i] = networkJson["gateway"][i];
         }
         config.dhcp = networkJson["dhcp"];
+        config.sta_timeout = networkJson["sta_timeout"] | CLIENT_TIMEOUT;
+        if (config.sta_timeout < 5) {
+            config.sta_timeout = 5;
+        }
+
         config.ap_fallback = networkJson["ap_fallback"];
+        config.ap_timeout = networkJson["ap_timeout"] | AP_TIMEOUT;
+        if (config.ap_timeout < 15) {
+            config.ap_timeout = 15;
+        }
 
         config.udp_enabled = networkJson["udp_enabled"];
         config.udp_port = networkJson["udp_port"] | ESPS_UDP_RAW_DEFAULT_PORT;
@@ -852,6 +937,8 @@ void dsEffectConfig(JsonObject &json) {
         config.effect_mirror = effectsJson["mirror"];
         config.effect_allleds = effectsJson["allleds"];
         config.effect_reverse = effectsJson["reverse"];
+        if (effectsJson.containsKey("speed"))
+            config.effect_speed = effectsJson["speed"];
         config.effect_color = { effectsJson["r"], effectsJson["g"], effectsJson["b"] };
         if (effectsJson.containsKey("brightness"))
             config.effect_brightness = effectsJson["brightness"];
@@ -891,6 +978,8 @@ void dsDeviceConfig(JsonObject &json) {
         config.mqtt_password = mqttJson["password"].as<String>();
         config.mqtt_topic = mqttJson["topic"].as<String>();
         config.mqtt_clean = mqttJson["clean"] | false;
+        config.mqtt_hadisco = mqttJson["hadisco"] | false;
+        config.mqtt_haprefix = mqttJson["haprefix"].as<String>();
     }
 
 #if defined(ESPS_MODE_PIXEL)
@@ -898,7 +987,8 @@ void dsDeviceConfig(JsonObject &json) {
     if (json.containsKey("pixel")) {
         config.pixel_type = PixelType(static_cast<uint8_t>(json["pixel"]["type"]));
         config.pixel_color = PixelColor(static_cast<uint8_t>(json["pixel"]["color"]));
-        config.gamma = json["pixel"]["gamma"];
+        config.groupSize = json["pixel"]["groupSize"];
+        config.zigSize = json["pixel"]["zigSize"];
         config.gammaVal = json["pixel"]["gammaVal"];
         config.briteVal = json["pixel"]["briteVal"];
     }
@@ -984,6 +1074,9 @@ void loadConfig() {
 
     // Validate it
     validateConfig();
+
+    effects.setFromConfig();
+
 }
 
 // Serialize the current config into a JSON string
@@ -1012,7 +1105,10 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
         gateway.add(config.gateway[i]);
     }
     network["dhcp"] = config.dhcp;
+    network["sta_timeout"] = config.sta_timeout;
+
     network["ap_fallback"] = config.ap_fallback;
+    network["ap_timeout"] = config.ap_timeout;
 
     network["udp_enabled"] = config.udp_enabled;
     network["udp_port"] = config.udp_port;
@@ -1024,6 +1120,8 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     _effects["mirror"] = config.effect_mirror;
     _effects["allleds"] = config.effect_allleds;
     _effects["reverse"] = config.effect_reverse;
+    _effects["speed"] = config.effect_speed;
+    _effects["brightness"] = config.effect_brightness;
 
     _effects["r"] = config.effect_color.r;
     _effects["g"] = config.effect_color.g;
@@ -1047,6 +1145,8 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     _mqtt["password"] = config.mqtt_password.c_str();
     _mqtt["topic"] = config.mqtt_topic.c_str();
     _mqtt["clean"] = config.mqtt_clean;
+    _mqtt["hadisco"] = config.mqtt_hadisco;
+    _mqtt["haprefix"] = config.mqtt_haprefix.c_str();
 
     // E131
     JsonObject &e131 = json.createNestedObject("e131");
@@ -1061,7 +1161,8 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     JsonObject &pixel = json.createNestedObject("pixel");
     pixel["type"] = static_cast<uint8_t>(config.pixel_type);
     pixel["color"] = static_cast<uint8_t>(config.pixel_color);
-    pixel["gamma"] = config.gamma;
+    pixel["groupSize"] = config.groupSize;
+    pixel["zigSize"] = config.zigSize;
     pixel["gammaVal"] = config.gammaVal;
     pixel["briteVal"] = config.briteVal;
 
@@ -1078,7 +1179,7 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
     pwm["enabled"] = config.pwm_global_enabled;
     pwm["freq"] = config.pwm_freq;
     pwm["gamma"] = config.pwm_gamma;
-    
+
     JsonObject &gpioJ = pwm.createNestedObject("gpio");
     for (int gpio = 0; gpio < NUM_GPIO; gpio++ ) {
         JsonObject &thisGpio = gpioJ.createNestedObject((String)gpio);
@@ -1100,19 +1201,19 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
         json.printTo(jsonString);
 }
 
+#if defined(ESPS_MODE_PIXEL)
 void dsGammaConfig(JsonObject &json) {
     if (json.containsKey("pixel")) {
-        config.gamma = json["pixel"]["gamma"];
         config.gammaVal = json["pixel"]["gammaVal"];
         config.briteVal = json["pixel"]["briteVal"];
 
         if (config.gammaVal <= 0) { config.gammaVal = 2.2; }
         if (config.briteVal <= 0) { config.briteVal = 1.0; }
 
-        pixels.setGamma(config.gamma);
         updateGammaTable(config.gammaVal, config.briteVal);
     }
 }
+#endif
 
 void dsPixelCount(JsonObject &json) {
     if (json.containsKey("pixelcount")) {
@@ -1310,6 +1411,7 @@ void loop() {
         while (LOG_PORT.read() >= 0);
     }
 
+    MDNS.update();
 }
 
 void resolveHosts() {

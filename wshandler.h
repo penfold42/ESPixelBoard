@@ -68,7 +68,8 @@ extern const char CONFIG_FILE[];
     T6 - Fire flicker
     T7 - Lightning
     T8 - Breathe
-    T9 - View Stream
+
+    V1 - View Stream
 
     S1 - Set Network Config
     S2 - Set Device Config
@@ -241,7 +242,11 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
 
 // dump the current running effect options
             JsonObject &effect = json.createNestedObject("currentEffect");
-            effect["name"] = (String)effects.getEffect() ? effects.getEffect() : "";
+            if (config.ds == DataSource::E131) {
+                effect["name"] = "Disabled";
+            } else {
+                effect["name"] = (String)effects.getEffect() ? effects.getEffect() : "";
+            }
             effect["brightness"] = effects.getBrightness();
             effect["speed"] = effects.getSpeed();
             effect["r"] = effects.getColor().r;
@@ -271,8 +276,6 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
                 effect["hasReverse"] = effects.getEffectInfo(i)->hasReverse;
                 effect["hasAllLeds"] = effects.getEffectInfo(i)->hasAllLeds;
                 effect["wsTCode"] = effects.getEffectInfo(i)->wsTCode;
-//              effect["brightness"] = effects.getBrightness();
-//              effect["speed"] = effects.getSpeed();
               }
             }
 
@@ -385,10 +388,23 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
                     effects.setAllLeds(json["allleds"]);
                 }
             }
+            if (json.containsKey("speed")) {
+                effects.setSpeed(json["speed"]);
+            }
+            if (json.containsKey("brightness")) {
+                effects.setBrightness(json["brightness"]);
+            }
             client->text("OK");
         }
     }
-    else if (data[1] == '9') {
+
+    if (config.mqtt)
+        publishState();
+}
+
+void procV(uint8_t *data, AsyncWebSocketClient *client) {
+    switch (data[1]) {
+        case '1': {  // View stream
 #if defined(ESPS_MODE_PIXEL)
             client->binary(pixels.getData(), config.channel_count);
 #elif defined(ESPS_MODE_SERIAL)
@@ -397,8 +413,9 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
             else
                 client->binary(&serial.getData()[2], config.channel_count);
 #endif
+            break;
+        }
     }
-
 }
 
 void handle_fw_upload(AsyncWebServerRequest *request, String filename,
@@ -476,8 +493,9 @@ void handle_config_upload(AsyncWebServerRequest *request, String filename,
     }
 }
 
-void wsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
+void wsEvent( __attribute__ ((unused)) AsyncWebSocket *server, AsyncWebSocketClient *client,
         AwsEventType type, void * arg, uint8_t *data, size_t len) {
+
     switch (type) {
         case WS_EVT_DATA: {
             AwsFrameInfo *info = static_cast<AwsFrameInfo*>(arg);
@@ -502,6 +520,9 @@ void wsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
                           break;
                       case 'T':
                           procT(data, client);
+                          break;
+                      case 'V':
+                          procV(data, client);
                           break;
                   }
               } else {

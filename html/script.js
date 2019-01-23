@@ -25,9 +25,9 @@ $(function() {
         $($(this).attr('href')).removeClass('hidden');
 
         // kick start the live stream
-	if ($(this).attr('href') == "#stream") {
-            wsEnqueue('T9');
-	}
+        if ($(this).attr('href') == "#diag") {
+            wsEnqueue('V1');
+        }
 
         // Collapse the menu on smaller screens
         $('#navbar').removeClass('in').attr('aria-expanded', 'false');
@@ -152,6 +152,26 @@ $(function() {
       }
     });
 
+    // Effect speed field
+    $('#t_speed').change(function() {
+      var json = { 'speed': $(this).val() };
+      var tmode = $('#tmode option:selected').val();
+
+      if (typeof effectInfo[tmode].wsTCode !== 'undefined') {
+          wsEnqueue( effectInfo[tmode].wsTCode + JSON.stringify(json) );
+      }
+    });
+
+    // Effect brightness field
+    $('#t_brightness').change(function() {
+      var json = { 'brightness': $(this).val() };
+      var tmode = $('#tmode option:selected').val();
+
+      if (typeof effectInfo[tmode].wsTCode !== 'undefined') {
+          wsEnqueue( effectInfo[tmode].wsTCode + JSON.stringify(json) );
+      }
+    });
+
     // Test mode toggles
     $('#tmode').change(hideShowTestSections());
 
@@ -165,6 +185,10 @@ $(function() {
     });
 
     // MQTT field toggles
+    $('#mqtt_topic').keyup(function() {
+        updateMQTTSet();
+    });
+
     $('#mqtt').click(function() {
         if ($(this).is(':checked')) {
             $('.mqtt').removeClass('hidden');
@@ -172,6 +196,14 @@ $(function() {
             $('.mqtt').addClass('hidden');
        }
     });
+    $('#mqtt_hadisco').click(function() {
+        if ($(this).is(':checked')) {
+            $('#mqtt_haprefix').prop('disabled', false);
+       } else {
+            $('#mqtt_haprefix').prop('disabled', true);
+       }
+    });
+
 
     $('#p_gammaVal').change(function() {
             sendGamma();
@@ -184,38 +216,46 @@ $(function() {
     $('#showgamma').click(function() {
         if ($(this).is(':checked')) {
             $('.gammagraph').removeClass('hidden');
-       } else {
+        } else {
             $('.gammagraph').addClass('hidden');
-       }
+        }
     });
 
     // PWM field toggles
     $('#pwm_enabled').click(function() {
         if ($(this).is(':checked')) {
             $('.pwm').removeClass('hidden');
-       } else {
+        } else {
             $('.pwm').addClass('hidden');
-       }
+        }
     });
 
     // Pixel type toggles
     $('#p_type').change(function() {
-        if ($('select[name_type]').val() == '1')
+        if ($('select[name=p_type]').val() == '1') {
             $('#p_color').prop('disabled', true);
-        else
+            $('#o_gamma').addClass('hidden');
+        } else {
             $('#p_color').prop('disabled', false);
+            $('#o_gamma').removeClass('hidden');
+        }
     });
 
     // Serial protocol toggles
     $('#s_proto').change(function() {
-        if ($('select[name=s_proto]').val() == '0')
+        var proto = $('#s_proto option:selected').text();
+        if (!proto.localeCompare('DMX512')) {
             $('#s_baud').prop('disabled', true);
-        else
+        } else if (!proto.localeCompare('Renard')) {
             $('#s_baud').prop('disabled', false);
+        }
     });
 
     // Hostname, SSID, and Password validation
     $('#hostname').keyup(function() {
+        wifiValidation();
+    });
+    $('#staTimeout').keyup(function() {
         wifiValidation();
     });
     $('#ssid').keyup(function() {
@@ -257,6 +297,14 @@ $(function() {
 
 });
 
+function updateMQTTSet() {
+    if ( $('#mqtt_topic').val() ) {
+        $('#mqtt_topicset').val( $('#mqtt_topic').val() + '/set');
+    } else {
+        $('#mqtt_topicset').val( '' );
+    }
+}
+
 function wifiValidation() {
     var WifiSaveDisabled = false;
     var re = /^([a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9\-.]*[a-zA-Z0-9.])$/;
@@ -266,6 +314,14 @@ function wifiValidation() {
     } else {
         $('#fg_hostname').removeClass('has-success');
         $('#fg_hostname').addClass('has-error');
+        WifiSaveDisabled = true;
+    }
+    if ($('#staTimeout').val() >= 5) {
+        $('#fg_staTimeout').removeClass('has-error');
+        $('#fg_staTimeout').addClass('has-success');
+    } else {
+        $('#fg_staTimeout').removeClass('has-success');
+        $('#fg_staTimeout').addClass('has-error');
         WifiSaveDisabled = true;
     }
     if ($('#ssid').val().length <= 32) {
@@ -416,8 +472,7 @@ function wsConnect() {
             } else {
                 streamData= new Uint8Array(event.data);
                 drawStream(streamData);
-                if ($('#stream').is(':visible')) wsEnqueue('T9');
-//                if (!$('#tmode option:selected').val().localeCompare('t_view')) wsEnqueue('T9');
+                if ($('#diag').is(':visible')) wsEnqueue('V1');
             }
             wsReadyToSend();
         };
@@ -541,6 +596,7 @@ function getConfig(data) {
     $('#ssid').val(config.network.ssid);
     $('#password').val(config.network.passphrase);
     $('#hostname').val(config.network.hostname);
+    $('#staTimeout').val(config.network.sta_timeout);
     $('#dhcp').prop('checked', config.network.dhcp);
     if (config.network.dhcp) {
         $('.dhcp').addClass('hidden');
@@ -576,7 +632,15 @@ function getConfig(data) {
     $('#mqtt_user').val(config.mqtt.user);
     $('#mqtt_password').val(config.mqtt.password);
     $('#mqtt_topic').val(config.mqtt.topic);
+    updateMQTTSet();
+    $('#mqtt_haprefix').val(config.mqtt.haprefix);
     $('#mqtt_clean').prop('checked', config.mqtt.clean);
+    $('#mqtt_hadisco').prop('checked', config.mqtt.hadisco);
+    if (config.mqtt.hadisco) {
+        $('#mqtt_haprefix').prop('disabled', false);
+    } else {
+        $('#mqtt_haprefix').prop('disabled', true);
+    }
 
     // E1.31 Config
     $('#universe').val(config.e131.universe);
@@ -592,7 +656,8 @@ function getConfig(data) {
         $('#p_count').val(config.e131.channel_count / 3);
         $('#p_type').val(config.pixel.type);
         $('#p_color').val(config.pixel.color);
-        $('#p_gamma').prop('checked', config.pixel.gamma);
+        $('#p_groupSize').val(config.pixel.groupSize);
+        $('#p_zigSize').val(config.pixel.zigSize);
         $('#p_gammaVal').val(config.pixel.gammaVal);
         $('#p_briteVal').val(config.pixel.briteVal);
 
@@ -777,6 +842,8 @@ function getEffectInfo(data) {
     $('#t_reverse').prop('checked', running.reverse);
     $('#t_mirror').prop('checked', running.mirror);
     $('#t_allleds').prop('checked', running.allleds);
+    $('#t_speed').val(running.speed);
+    $('#t_brightness').val(running.brightness);
     $('#t_startenabled').prop('checked', running.startenabled);
     $('#t_idleenabled').prop('checked', running.idleenabled);
     $('#t_idletimeout').val(running.idletimeout);
@@ -872,6 +939,7 @@ function submitWiFi() {
                 'ssid': $('#ssid').val(),
                 'passphrase': $('#password').val(),
                 'hostname': $('#hostname').val(),
+                'sta_timeout': $('#staTimeout').val(),
                 'ip': [parseInt(ip[0]), parseInt(ip[1]), parseInt(ip[2]), parseInt(ip[3])],
                 'netmask': [parseInt(netmask[0]), parseInt(netmask[1]), parseInt(netmask[2]), parseInt(netmask[3])],
                 'gateway': [parseInt(gateway[0]), parseInt(gateway[1]), parseInt(gateway[2]), parseInt(gateway[3])],
@@ -900,7 +968,9 @@ function submitConfig() {
                 'user': $('#mqtt_user').val(),
                 'password': $('#mqtt_password').val(),
                 'topic': $('#mqtt_topic').val(),
-                'clean': $('#mqtt_clean').prop('checked')
+                'haprefix': $('#mqtt_haprefix').val(),
+                'clean': $('#mqtt_clean').prop('checked'),
+                'hadisco': $('#mqtt_hadisco').prop('checked')
             },
             'e131': {
                 'universe': parseInt($('#universe').val()),
@@ -912,7 +982,8 @@ function submitConfig() {
             'pixel': {
                 'type': parseInt($('#p_type').val()),
                 'color': parseInt($('#p_color').val()),
-                'gamma': $('#p_gamma').prop('checked'),
+                'groupSize': parseInt($('#p_groupSize').val()),
+                'zigSize': parseInt($('#p_zigSize').val()),
                 'gammaVal': parseFloat($('#p_gammaVal').val()),
                 'briteVal': parseFloat($('#p_briteVal').val())
             },
@@ -957,10 +1028,11 @@ function submitStartupEffect() {
                 'mirror': $('#t_mirror').prop('checked'),
                 'allleds': $('#t_allleds').prop('checked'),
                 'reverse': $('#t_reverse').prop('checked'),
+                'speed': parseInt($('#t_speed').val()),
                 'r': temp[1],
                 'g': temp[2],
                 'b': temp[3],
-                'brightness': 255,
+                'brightness': parseFloat($('#t_brightness').val()),
                 'startenabled': $('#t_startenabled').prop('checked'),
                 'idleenabled': $('#t_idleenabled').prop('checked'),
                 'idletimeout': parseInt($('#t_idletimeout').val()),
@@ -1001,10 +1073,12 @@ function refreshSerial() {
     if (!proto.localeCompare('Renard')) {
         symbol = 10;
         size = size + 2;
+        $('#s_baud').prop('disabled', false);
     } else if (!proto.localeCompare('DMX512')) {
         symbol = 11;
         baud = 250000;
         $('#s_baud').val(baud);
+        $('#s_baud').prop('disabled', true);
     }
     var rate = symbol * 1000 / baud * size;
     var hz = 1000 / rate;
@@ -1144,7 +1218,6 @@ function reboot() {
 function sendGamma() {
     var json = {
         'pixel': {
-            'gamma': $('#p_gamma').prop('checked'),
             'gammaVal': parseFloat($('#p_gammaVal').val()),
             'briteVal': parseFloat($('#p_briteVal').val())
         }

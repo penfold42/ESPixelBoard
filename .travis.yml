@@ -1,7 +1,7 @@
-sudo: false
-language: bash
+language: generic
 env:
   global:
+  - IDE_VERSION=1.8.1
   - ESP_HOME=$HOME/ide/hardware/esp8266com
   - LIB_HOME=$HOME/Arduino/libraries
   - ESPS_HOME=$HOME/Arduino/ESPixelStick
@@ -10,18 +10,14 @@ env:
   - STAMP=$(date +'%Y%m%d%H%M%S')
   - DIST_FILE=ESPixelStick_TRAVIS-$STAMP.zip
 before_install:
-- "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile
-  --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16"
-- sleep 3
-- export DISPLAY=:1.0
-- wget http://downloads.arduino.cc/arduino-1.8.1-linux64.tar.xz
-- tar xf arduino-1.8.1-linux64.tar.xz
-- mv arduino-1.8.1 $HOME/ide
+- wget http://downloads.arduino.cc/arduino-$IDE_VERSION-linux64.tar.xz
+- tar xf arduino-$IDE_VERSION-linux64.tar.xz
+- mv arduino-$IDE_VERSION $HOME/ide
 - export PATH="$HOME/ide:$PATH"
 - mkdir -p $LIB_HOME
 - mkdir -p $ESP_HOME
 - mkdir -p $BUILD
-- git clone https://github.com/esp8266/Arduino.git $ESP_HOME/esp8266
+- git clone --recurse-submodules -j8 https://github.com/esp8266/Arduino.git $ESP_HOME/esp8266
 - cd $ESP_HOME/esp8266/tools
 - python get.py
 - git clone https://github.com/bblanchon/ArduinoJson $LIB_HOME/ArduinoJson
@@ -32,7 +28,7 @@ before_install:
 - git clone https://github.com/marvinroger/async-mqtt-client $LIB_HOME/async-mqtt-client
 install:
 - cp -r $TRAVIS_BUILD_DIR $ESPS_HOME
-- arduino --board esp8266com:esp8266:generic:FlashFreq=40,FlashMode=dio,xtal=160,eesz=1M128
+- arduino --board esp8266com:esp8266:generic:xtal=160,vt=flash,exception=disabled,ResetMethod=nodemcu,CrystalFreq=26,FlashFreq=40,FlashMode=dio,eesz=1M128,led=2,ip=lm2f,dbg=Disabled,lvl=None____,wipe=none,baud=115200
   --pref build.path=$BUILD --save-prefs
 before_script:
 - cd $ESPS_HOME

@@ -49,7 +49,8 @@ const char BUILD_DATE[] = __DATE__;
 #define PIXEL_LIMIT     1360    /* Total pixel limit - 40.85ms for 8 universes */
 #define RENARD_LIMIT    2048    /* Channel limit for serial outputs */
 #define E131_TIMEOUT    1000    /* Force refresh every second an E1.31 packet is not seen */
-#define CONNECT_TIMEOUT 15000   /* 15 seconds */
+#define CLIENT_TIMEOUT  15      /* In station/client mode try to connection for 15 seconds */
+#define AP_TIMEOUT      60      /* In AP mode, wait 60 seconds for a connection or reboot */
 #define REBOOT_DELAY    100     /* Delay for rebooting once reboot flag is set */
 #define LOG_PORT        Serial  /* Serial port for console logging */
 
@@ -101,20 +102,26 @@ typedef struct {
     uint8_t     gateway[4];
     bool        dhcp;           /* Use DHCP? */
     bool        ap_fallback;    /* Fallback to AP if fail to associate? */
+    uint32_t    sta_timeout;    /* Timeout when connection as client (station) */
+    uint32_t    ap_timeout;     /* How long to wait in AP mode with no connection before rebooting */
 
+    /* UDP raw protocol */
     bool        udp_enabled;
     uint16_t    udp_port;
 
     /* Effects */
     String effect_name;
     CRGB effect_color;
-    uint8_t effect_brightness;
+    float effect_brightness;
+    uint16_t effect_speed;	/* 1..10 for web UI and MQTT */
     bool effect_reverse;
     bool effect_mirror;
     bool effect_allleds;
     bool effect_startenabled;
     bool effect_idleenabled;
     uint16_t effect_idletimeout;
+
+    /* Effect engine send over network */
     int effect_sendprotocol;
     String effect_sendhost;
     IPAddress effect_sendIP;
@@ -124,12 +131,14 @@ typedef struct {
 
     /* MQTT */
     bool        mqtt;           /* Use MQTT? */
-    String      mqtt_ip;
+    String      mqtt_ip = " ";
     uint16_t    mqtt_port;
-    String      mqtt_user;
-    String      mqtt_password;
+    String      mqtt_user = " ";
+    String      mqtt_password = " ";
     String      mqtt_topic;
     bool        mqtt_clean;
+    bool        mqtt_hadisco;
+    String      mqtt_haprefix;
 
     /* E131 */
     uint16_t    universe;       /* Universe to listen for */
@@ -142,7 +151,8 @@ typedef struct {
     /* Pixels */
     PixelType   pixel_type;     /* Pixel type */
     PixelColor  pixel_color;    /* Pixel color order */
-    bool        gamma;          /* Use gamma map? */
+    uint16_t    zigSize;	    /* Zigsize count - 0 = no zigzag */
+    uint16_t    groupSize;      /* Group size - 1 = no grouping */
     float       gammaVal;       /* gamma value to use */
     float       briteVal;       /* brightness lto use */
 #elif defined(ESPS_MODE_SERIAL)
@@ -180,6 +190,7 @@ void onMqttConnect(bool sessionPresent);
 void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
 void onMqttMessage(char* topic, char* p_payload,
         AsyncMqttClientMessageProperties properties, size_t len,size_t index, size_t total);
+void publishState();
 void publishRGBState();
 void publishRGBBrightness();
 void publishRGBColor();
