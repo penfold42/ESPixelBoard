@@ -36,8 +36,10 @@ extern SerialDriver serial;     // Serial object
 #include "udpraw.h"
 extern UdpRaw       udpraw;
 #endif
+#include "OLEDDisplay.h"
 
 extern EffectEngine effects;    // EffectEngine for test modes
+// extern OLEDEngine oleddisp; // Display Elements for OLED
 
 extern ESPAsyncE131 e131;       // ESPAsyncE131 with X buffers
 extern config_t     config;     // Current configuration
@@ -58,6 +60,7 @@ extern const char CONFIG_FILE[];
     G2 - Get Config Status
     G3 - Get Current Effect and Effect Config Options
     G4 - Get Gamma table values
+    G5 - Get Display Elements
 
     T0 - Disable Testing
     T1 - Static Testing
@@ -205,6 +208,7 @@ void procE(uint8_t *data, AsyncWebSocketClient *client) {
 }
 
 void procG(uint8_t *data, AsyncWebSocketClient *client) {
+    LOG_PORT.println("Got Request for:G");
     switch (data[1]) {
         case '1': {
             String response;
@@ -296,6 +300,26 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             client->text("G4" + response);
             break;
         }
+#if defined(ESPS_SUPPORT_OLED)
+        case '5': {
+            LOG_PORT.println("Responding G5");
+            String de = getDisplayElements();
+            LOG_PORT.println("DE");
+            LOG_PORT.println(de);
+           String dc = getDisplayConfig();
+           LOG_PORT.println("DC");
+           LOG_PORT.println(dc);
+            String dv = getDisplayEvents();
+            LOG_PORT.println("DV");
+            LOG_PORT.println(dv);
+           String response = "G5{" + de + "," + dv + "," + dc + "}";
+            // String response = "G5{" + de + "," + dv + "}";
+            LOG_PORT.println(response);
+            client->text(response);
+            LOG_PORT.println("Sent response");
+            break;
+        }
+#endif //ESPS_SUPPORT_OLED
     }
 }
 
@@ -341,6 +365,12 @@ void procS(uint8_t *data, AsyncWebSocketClient *client) {
             dsGammaConfig(json);
             client->text("S4");
             break;
+#if defined(ESPS_SUPPORT_OLED)
+        case '5': // Set Display config
+            saveDisplayConfig(json);
+            client->text("S5");
+            break;
+#endif //ESPS_SUPPORT_OLED
     }
 }
 
@@ -411,6 +441,11 @@ void procV(uint8_t *data, AsyncWebSocketClient *client) {
 #endif
             break;
         }
+    } else if (data[1] == 'C') {
+        DynamicJsonBuffer jsonBuffer; // I other ifs start using json, this declaration to be moved to top of proc.
+        JsonObject &json = jsonBuffer.parseObject(reinterpret_cast<char*>(data + 2));
+        dsPixelCount(json);
+        client->text("TC");
     }
 }
 

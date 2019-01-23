@@ -1,0 +1,124 @@
+{
+  "displayelements": [
+    {
+      "name": "NetS_Mode",
+      "id": "de_nsmode",
+      "formats": ["string"],
+      "sample": ["AP"]
+    },
+    {
+      "name": "NetS_SSID",
+      "id": "de_nsssid",
+      "formats": ["string"],
+      "sample": ["WifiSSID"]
+    },
+    {
+      "name": "NetS_Hostname",
+      "id": "de_nshost",
+      "formats": ["string"],
+      "sample": ["esps-12a345"]
+    },
+    {
+      "name": "NetS_Gateway",
+      "id": "de_nsgatewy",
+      "formats": ["IP"],
+      "sample": ["192.168.4.1"]
+    },
+    {
+      "name": "NetS_IP",
+      "id": "de_nsip",
+      "formats": ["IP"],
+      "sample": ["192.168.4.101"]
+    },
+    {
+      "name": "NetS_MAC",
+      "id": "de_nsmac",
+      "formats": ["string"],
+      "sample": ["12:34:56:78:A9:01"]
+    },
+    {
+      "name": "NetS_RSSI",
+      "id": "de_nsrssi",
+      "formats": ["rssis", "percent", "icon"],
+      "sample": ["-40dBm", "60%", "^"]
+    },
+    {
+      "name": "NetS_FreeHeap",
+      "id": "de_nsheap",
+      "formats": ["number"],
+      "sample": ["24760"]
+    },
+    {
+      "name": "NetS_UpTime",
+      "id": "de_nsuptime",
+      "formats": ["d hh:mm:ss"],
+      "sample": ["13d, 22:03:42"]
+    },
+    {
+      "name": "NetS_DataSource",
+      "id": "de_nsds",
+      "formats": ["string"],
+      "sample": ["E1.31"]
+    },
+    {
+      "name": "NetS_EffectName",
+      "id": "de_nseffect",
+      "formats": ["string"],
+      "sample": ["Rainbow"]
+    },
+    {
+      "name": "E131_UniverseRange",
+      "id": "de_e1univs",
+      "formats": ["UFrom - UTo"],
+      "sample": ["1-1"]
+    },
+    {
+      "name": "E131_TotalPackets",
+      "id": "de_e1totpkt",
+      "formats": ["number"],
+      "sample": ["0"]
+    },
+    {
+      "name": "E131_SequenceErrors",
+      "id": "de_e1seqerr",
+      "formats": ["number"],
+      "sample": ["0"]
+    },
+    {
+      "name": "E131_PacketErrors",
+      "id": "de_e1pkterr",
+      "formats": ["number"],
+      "sample": ["0"]
+    },
+    {
+      "name": "E131_SourceIP",
+      "id": "de_e1srcip",
+      "formats": ["IP"],
+      "sample": ["192.168.4.100"]
+    },
+    {
+      "name": "E131_LastSeen",
+      "id": "de_e1lastseen",
+      "formats": ["hours", "d hh:mm:ss"],
+      "sample": ["3hours", "13d, 22:03:42"]
+    },
+    {
+      "name": "E131_#Channels",
+      "id": "de_e1chcount",
+      "formats": ["number"],
+      "sample": ["510"]
+    },
+    {
+      "name": "E131_#Pixels",
+      "id": "de_e1pxcount",
+      "formats": ["number"],
+      "sample": ["170"]
+    },
+    {
+      "name": "UDPS_",
+      "id": "de_e1srcip",
+      "formats": ["string"],
+      "sample": ["192.168.4.100"]
+    }
+  ]
+}

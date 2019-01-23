@@ -41,6 +41,7 @@ const char BUILD_DATE[] = __DATE__;
 #endif
 
 #include "EffectEngine.h"
+#include "OLEDEngine.h"
 
 #define HTTP_PORT       80      /* Default web server port */
 #define MQTT_PORT       1883    /* Default MQTT port */
@@ -80,7 +81,8 @@ enum class DataSource : uint8_t {
     E131,
     MQTT,
     WEB,
-    IDLEWEB
+    IDLEWEB,
+    CP
 };
 
 // Configuration structure
@@ -89,6 +91,7 @@ typedef struct {
     String      id;             /* Device ID */
     DevCap      devmode;        /* Used for reporting device mode, not stored */
     DataSource  ds;             /* Used to track current data source, not stored */
+    DataSource  prevds;         /* Previous ds in case of Pixel Count */
 
 
     /* Network */
@@ -178,6 +181,7 @@ void dsDeviceConfig(JsonObject &json);
 void dsEffectConfig(JsonObject &json);
 void saveConfig();
 void dsGammaConfig(JsonObject &json);
+void dsPixelCount(JsonObject &json);
 
 void connectWifi();
 void onWifiConnect(const WiFiEventStationModeGotIP &event);

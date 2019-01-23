@@ -41,7 +41,7 @@ struct dCHSV {
 */
 typedef uint16_t (EffectEngine::*EffectFunc)(void);
 struct EffectDesc {
-    String      name;
+    String      name; 
     EffectFunc  func;
     const char* htmlid;
     bool        hasColor;

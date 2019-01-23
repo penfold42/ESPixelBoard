@@ -5,10 +5,10 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title id="title"></title>
-<!-- for local development
-  <link rel="stylesheet" type="text/css" href="css/bootstrap.css">
-  <link rel="stylesheet" type="text/css" href="style.css">
--->
+<!-- for local development -->
+  <!-- <link rel="stylesheet" type="text/css" href="css/bootstrap.css">
+  <link rel="stylesheet" type="text/css" href="style.css"> -->
+
   <link rel="stylesheet" type="text/css" href="esps.css">
 </head>
 
@@ -32,6 +32,9 @@
           <li><a href="#config">Device Setup</a></li>
           <li><a href="#effects">Effects</a></li>
           <li><a href="#diag">Diagnostics</a></li>
+          <li><a href="#effect">Effects</a></li>
+          <li id="oledli" class="hidden"><a href="#oleddisplay">OLED Display</a></li>
+          <li><a href="#stream">Live View</a></li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li><a href="#admin">Admin</a></li>
@@ -196,6 +199,10 @@
 
             <div class="form-group">
               <label class="control-label col-sm-2" for="p_count">Pixel Count</label>
+              <div class="col-sm-10">
+                <input type="number" step="1" class="form-control" id="p_count" name="p_count" placeholder="Enter number of pixels" onchange="refreshPixel()">
+                <button type="button" onclick="showCountPixels()" class="btn btn-primary">Count</button>
+              </div>
               <div class="col-sm-3"><input type="number" step="1" class="form-control" id="p_count" name="p_count" title="Number of physical pixels" onchange="refreshPixel()"></div>
               <label class="control-label col-sm-2" for="p_groupSize">Group Size</label>
               <div class="col-sm-3"><input type="number" step="1" class="form-control" id="p_groupSize" name="p_groupSize" title="Group every X number of physical pixels together.  Default of 1 is no grouping." onchange="refreshPixel()"></div>
@@ -476,6 +483,72 @@
             </div>
     </div>
 
+    <!-- OLED Display-->
+    <div id="oleddisplay" class="mdiv hidden anchor">
+      <fieldset>
+        <form class="form-horizontal" onsubmit="return false">
+        <legend class="esps-legend">Preview</legend>
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="d_zoom">Preview Scale</label>
+          <div class="col-sm-10">
+            <select class="form-control" id="dzoom" name="d_zoom" onchange="onDZoomChanged()">
+              <option value=1>Actual Size</option>
+              <option value=2>2x</option>
+              <option value=4>4x</option>
+            </select>
+            <br>
+            <canvas id="oledCanvas" width="128" height="64" style="background-color:black"></canvas>
+          </div>
+        </div>
+        <legend class="esps-legend">Display Configuration</legend>
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="d_tmplt">Display Event</label>
+          <div class="col-sm-10">
+            <select class="form-control" id="dtmplt" name="d_tmplt" onchange="onDTmpltChanged()">
+            </select>
+          </div>
+        </div>
+        <br>
+        <table border="1" class="table esps-table" id="disptable">
+          <colgroup>
+              <col class="col-sm-1">
+              <col class="col-sm-1">
+              <col class="col-sm-1">
+              <col class="col-sm-1">
+              <col class="col-sm-1">
+              <col class="col-sm-1">
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="text-center" sope="col">Enabled</th>
+              <th class="text-center" sope="col">Element</th>
+              <th class="text-center" sope="col">Pos-X</th>
+              <th class="text-center" sope="col">Pos-Y</th>
+              <th class="text-center" sope="col">Format</th>
+              <th class="text-center" sope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody id="oledbody">
+            <tr>
+              <td class="text-center">1</td>
+              <td class="text-center"><input type="checkbox" id="de_en1" name="de_en1"></td>
+              <td class="text-center"><select id="de_el1"></select></td>
+              <td class="text-center"><input type="tel" class="form-control" id="dec_px1" name="dec_px1" placeholder="Pos X"></td>
+              <td class="text-center"><input type="tel" class="form-control" id="dec_py1" name="dec_py1" placeholder="Pos Y"></td>
+              <td class="text-center"><select></select></td>
+              <td class="text-center"><button class="btn btn-secondary" onclick="deleteOledRow()">X</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="col-sm-offset-2 col-sm-10">
+          <button class="btn btn-secondary" style="float:right" onclick="onAddOledrow()">Add</button>
+        </div>
+        <div class="col-sm-10">
+          <button class="btn btn-primary" onclick="saveOledConfig()">Save Changes</button>
+        </div>
+        </form>
+      </fieldset>
+    </div>
     <!-- Administration -->
     <div id="admin" class="mdiv hidden anchor">
 
@@ -567,6 +640,31 @@
       </div>
     </div>
   </div>
+  <!-- Count Pixel modal-->
+  <div id="countpxl" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Count Pixels</h4>
+            </div>
+            <div class="modal-body">
+                <div class="modal-body">
+                <div class="pxl-count-container">
+                  <button id="btn_pcminus5" type="button" onclick="changeCountPixel(-5)" class="btn btn-primary pxl-count-content">-5</button>
+                  <button id="btn_pcminus1" type="button" onclick="changeCountPixel(-1)" class="btn btn-primary pxl-count-content">-1</button>
+                  <input type="text" onchange="changeCountPixel(0)" class="form-control pxl-count-content" style="width:40%" id="pix_count" name="pix_count">
+                  <button id="btn_pcplus1" type="button" onclick="changeCountPixel(1)" class="btn btn-primary pxl-count-content">+1</button>
+                  <button id="btn_pcplus5" type="button" onclick="changeCountPixel(5)" class="btn btn-primary pxl-count-content">+5</button>
+                </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="setpixelcount()">Set</button>
+                <button type="button" class="btn btn-secondary" onclick="closepixelcount()">Cancel</button>
+              </div>
+          </div>
+        </div>
+  </div>
 
   <!-- Footer -->
   <footer class="footer">
@@ -575,12 +673,12 @@
     </div>
   </footer>
 
-  <!-- for local development
-  <script type="text/javascript" src="js/jquery-3.1.1.js"></script>
+  <!-- for local development -->
+  <!-- <script type="text/javascript" src="js/jquery-3.1.1.js"></script>
   <script type="text/javascript" src="js/bootstrap.js"></script>
   <script type="text/javascript" src="js/jqColorPicker.js"></script>
-  <script type="text/javascript" src="script.js"></script>
-  -->
+  <script type="text/javascript" src="script.js"></script> -->
+ 
   <script type="text/javascript" src="esps.js"></script>
 
   <script>
