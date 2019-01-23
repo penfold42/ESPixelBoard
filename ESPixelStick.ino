@@ -34,6 +34,7 @@ const char passphrase[] = "ENTER_PASSPHRASE_HERE";
 #include <SPI.h>
 #include "ESPixelStick.h"
 #include "EFUpdate.h"
+#include "OLEDDisplay.h"
 #include "wshandler.h"
 #include "gamma.h"
 #include "udpraw.h"
@@ -109,6 +110,7 @@ EffectEngine        effects;        // Effects Engine
 Ticker              sendTimer;
 UdpRaw              udpraw;
 
+
 // Output Drivers
 #if defined(ESPS_MODE_PIXEL)
 PixelDriver     pixels;         // Pixel object
@@ -138,6 +140,13 @@ RF_PRE_INIT() {
 }
 
 void setup() {
+      // Enable SPIFFS
+    SPIFFS.begin();
+#if defined(ESPS_SUPPORT_OLED)
+    initDisplay();
+    showDisplay("dee_boot","Starting up...");
+#endif //ESPS_SUPPORT_OLED
+
     // Configure SDK params
     wifi_set_sleep_type(NONE_SLEEP_T);
     setupWebGpio();
@@ -153,9 +162,9 @@ void setup() {
     ets_install_putc1((void *) &_u0_putc);
     system_set_os_print(1);
 #endif
-
-    // Enable SPIFFS
-    SPIFFS.begin();
+#if defined(ESPS_SUPPORT_OLED)
+    showDisplay("dee_boot","Loading configuration...");
+#endif //ESPS_SUPPORT_OLED
 
     // Set default data source to E131
     config.ds = DataSource::E131;
@@ -232,6 +241,9 @@ void setup() {
     // If we fail again, go SoftAP or reboot
     if (WiFi.status() != WL_CONNECTED) {
         if (config.ap_fallback) {
+#if defined(ESPS_SUPPORT_OLED)
+            showDisplay("dee_boot","Starting SoftAP...");
+#endif //ESPS_SUPPORT_OLED
             LOG_PORT.println(F("*** FAILED TO ASSOCIATE WITH AP, GOING SOFTAP ***"));
             WiFi.mode(WIFI_AP);
             String ssid = "ESPixelBoard " + String(config.hostname);
@@ -276,7 +288,6 @@ void setup() {
 #if defined(ESPS_ENABLE_BUTTONS)
     setupButtons();
 #endif
-
 }
 
 /////////////////////////////////////////////////////////
@@ -315,7 +326,13 @@ void connectWifi() {
     WiFi.begin(config.ssid.c_str(), config.passphrase.c_str());
     if (config.dhcp) {
         LOG_PORT.print(F("Connecting with DHCP"));
+#if defined(ESPS_SUPPORT_OLED)
+        showDisplay("dee_boot","Connecting to " + config.ssid + " with DHCP");
+#endif //ESPS_SUPPORT_OLED
     } else {
+#if defined(ESPS_SUPPORT_OLED)
+        showDisplay("dee_boot","Connecting to " + config.ssid + " with Static IP");
+#endif //ESPS_SUPPORT_OLED
         // We don't use DNS, so just set it to our gateway
         WiFi.config(IPAddress(config.ip[0], config.ip[1], config.ip[2], config.ip[3]),
                     IPAddress(config.gateway[0], config.gateway[1], config.gateway[2], config.gateway[3]),
@@ -330,7 +347,7 @@ void onWifiConnect(__attribute__ ((unused)) const WiFiEventStationModeGotIP &eve
     LOG_PORT.println("");
     LOG_PORT.print(F("Connected with IP: "));
     LOG_PORT.println(WiFi.localIP());
-
+//    showDisplay("dee_boot","Connected to " + config.ssid + " with IP" + WiFi.localIP());
     // Setup MQTT connection if enabled
     if (config.mqtt)
         connectToMqtt();
@@ -676,6 +693,9 @@ void initWeb() {
 
     // Raw config file Handler - but only on station
 //  web.serveStatic("/config.json", SPIFFS, "/config.json").setFilter(ON_STA_FILTER);
+    // Raw config file Handler
+    web.serveStatic("/config.json", SPIFFS, "/config.json");
+    web.serveStatic("/display.json", SPIFFS, "/display.json");
 
     web.onNotFound([](AsyncWebServerRequest *request) {
         if (request->method() == HTTP_OPTIONS) {
@@ -1291,7 +1311,6 @@ void idleTimeout() {
 //
 /////////////////////////////////////////////////////////
 void loop() {
-
     /* check for rotary encoder and buttons */
 #if defined(ESPS_ENABLE_BUTTONS)
     handleButtons();
@@ -1412,6 +1431,16 @@ void loop() {
     }
 
     MDNS.update();
+    //Show Display
+#if defined(ESPS_SUPPORT_OLED)
+    if (config.ds == DataSource::WEB || config.ds == DataSource::IDLEWEB){
+        showDisplay("dee_idle","");
+    } else if (config.ds == DataSource::MQTT) {
+        showDisplay("dee_mqtt","");
+    } else if (config.ds == DataSource::E131) {
+        showDisplay("dee_e131","");
+    }
+#endif //ESPS_SUPPORT_OLED
 }
 
 void resolveHosts() {

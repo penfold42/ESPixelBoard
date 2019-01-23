@@ -33,4 +33,7 @@
 /* Enable support for udpraw packets on port 2801 */
 #define ESPS_ENABLE_UDPRAW
 
+/* Enable OLED Display */
+#define ESPS_SUPPORT_OLED
+
 #endif  // MODE_H_
