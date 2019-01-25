@@ -7,6 +7,9 @@ var wsTimerId;
 // json with effect definitions
 var effectInfo;
 
+// my ws "unique" client id as sent from the server
+var browserIPPort;
+
 // Default modal properties
 $.fn.modal.Constructor.DEFAULTS.backdrop = 'static';
 $.fn.modal.Constructor.DEFAULTS.keyboard = false;
@@ -818,39 +821,53 @@ function getConfigStatus(data) {
 function getEffectInfo(data) {
     parsed = JSON.parse(data);
 
-    effectInfo = parsed.effectList;	// global effectInfo
-    var running = parsed.currentEffect;
-
-//  console.log (effectInfo);
-//  console.log (effectInfo.t_chase);
-
-    // process the effect configuration options
-    $('#tmode').empty(); // clear the dropdown first
-    for (var i in effectInfo) {
-        var htmlid = effectInfo[i].htmlid;
-        var name =   effectInfo[i].name;
-        $('#tmode').append('<option value="' + htmlid + '">' + name + '</option>');
-        if ( ! name.localeCompare(running.name) ) {
-            $('#tmode').val(htmlid);
-            hideShowTestSections();
+// update my client ID as the server told me
+    if (parsed.hasOwnProperty('browserIPPort')) {
+        browserIPPort = parsed.browserIPPort;
+    }
+    if (parsed.hasOwnProperty('updateSource')) {
+        if (parsed.updateSource == browserIPPort) {
+            return;
+        }
+    }
+    if (parsed.hasOwnProperty('effectList')) {
+        effectInfo = parsed.effectList;	// global effectInfo
+        // process the effect configuration options
+        $('#tmode').empty(); // clear the dropdown first
+        for (var i in effectInfo) {
+            var htmlid = effectInfo[i].htmlid;
+            var name =   effectInfo[i].name;
+            $('#tmode').append('<option value="' + htmlid + '">' + name + '</option>');
         }
     }
 
-    // set html based on current running effect
-    $('.color').val('rgb(' + running.r + ',' + running.g + ',' + running.b + ')');
-    $('.color').css('background-color', 'rgb(' + running.r + ',' + running.g + ',' + running.b + ')');
-    $('#t_reverse').prop('checked', running.reverse);
-    $('#t_mirror').prop('checked', running.mirror);
-    $('#t_allleds').prop('checked', running.allleds);
-    $('#t_speed').val(running.speed);
-    $('#t_brightness').val(running.brightness);
-    $('#t_startenabled').prop('checked', running.startenabled);
-    $('#t_idleenabled').prop('checked', running.idleenabled);
-    $('#t_idletimeout').val(running.idletimeout);
-    $('#t_sendprotocol').val(running.sendprotocol);
-    $('#t_sendhost').val(running.sendhost);
-    $('#t_sendport').val(running.sendport);
-    $('#t_sendspeed').val(running.sendspeed);
+    if (parsed.hasOwnProperty('currentEffect')) {
+        var running = parsed.currentEffect;
+        // set html based on current running effect
+        var dd = document.getElementById('tmode');
+        for (var i = 0; i < dd.options.length; i++) {
+            if (dd.options[i].text === running.name) {
+                dd.selectedIndex = i;
+                hideShowTestSections();
+                break;
+            }
+        }
+
+        $('.color').val('rgb(' + running.r + ',' + running.g + ',' + running.b + ')');
+        $('.color').css('background-color', 'rgb(' + running.r + ',' + running.g + ',' + running.b + ')');
+        $('#t_reverse').prop('checked', running.reverse);
+        $('#t_mirror').prop('checked', running.mirror);
+        $('#t_allleds').prop('checked', running.allleds);
+        $('#t_speed').val(running.speed);
+        $('#t_brightness').val(running.brightness);
+        $('#t_startenabled').prop('checked', running.startenabled);
+        $('#t_idleenabled').prop('checked', running.idleenabled);
+        $('#t_idletimeout').val(running.idletimeout);
+        $('#t_sendprotocol').val(running.sendprotocol);
+        $('#t_sendhost').val(running.sendhost);
+        $('#t_sendport').val(running.sendport);
+        $('#t_sendspeed').val(running.sendspeed);
+    }
 }
 
 function getJsonStatus(data) {

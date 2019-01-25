@@ -97,6 +97,9 @@ public:
     void setFromConfig();
     void setFromDefaults();
 
+    void runningEffectToJson (JsonObject &json);
+    void EffectListToJson (JsonObject &json );
+
     bool isValidEffect(const String effectName);
     void setEffect(const String effectName);
     void setReverse(bool reverse)           { _effectReverse = reverse; }
