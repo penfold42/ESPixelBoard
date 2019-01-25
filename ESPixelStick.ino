@@ -560,6 +560,7 @@ void onMqttMessage(char* topic, char* payload,
         }
 
         publishState();
+        runningEffectSendAll("mqtt");
     }
 }
 
