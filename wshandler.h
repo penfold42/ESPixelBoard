@@ -39,6 +39,7 @@ extern UdpRaw       udpraw;
 
 extern EffectEngine effects;    // EffectEngine for test modes
 
+extern AsyncWebSocket ws;
 extern ESPAsyncE131 e131;       // ESPAsyncE131 with X buffers
 extern config_t     config;     // Current configuration
 extern uint32_t     *seqError;  // Sequence error tracking for each universe
@@ -84,6 +85,21 @@ extern const char CONFIG_FILE[];
 EFUpdate efupdate;
 uint8_t * WSframetemp;
 uint8_t * confuploadtemp;
+
+// send unsolicited update to all clients with the client who initiated it
+void runningEffectSendAll(String updateSource) {
+    String response;
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject &json = jsonBuffer.createObject();
+
+    effects.runningEffectToJson (json);
+
+    json["updateSource"] = updateSource;
+
+    json.printTo(response);
+    ws.textAll("G3" + response);
+}
+
 
 void procX(uint8_t *data, AsyncWebSocketClient *client) {
     switch (data[1]) {
@@ -240,50 +256,20 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
             DynamicJsonBuffer jsonBuffer;
             JsonObject &json = jsonBuffer.createObject();
 
-// dump the current running effect options
-            JsonObject &effect = json.createNestedObject("currentEffect");
-            if (config.ds == DataSource::E131) {
-                effect["name"] = "Disabled";
-            } else {
-                effect["name"] = (String)effects.getEffect() ? effects.getEffect() : "";
-            }
-            effect["brightness"] = effects.getBrightness();
-            effect["speed"] = effects.getSpeed();
-            effect["r"] = effects.getColor().r;
-            effect["g"] = effects.getColor().g;
-            effect["b"] = effects.getColor().b;
-            effect["reverse"] = effects.getReverse();
-            effect["mirror"] = effects.getMirror();
-            effect["allleds"] = effects.getAllLeds();
-            effect["startenabled"] = config.effect_startenabled;
-            effect["idleenabled"] = config.effect_idleenabled;
-            effect["idletimeout"] = config.effect_idletimeout;
-            effect["sendprotocol"] = config.effect_sendprotocol;
-            effect["sendhost"] = config.effect_sendhost;
-            effect["sendport"] = config.effect_sendport;
-            effect["sendspeed"] = config.effect_sendspeed;
+            effects.runningEffectToJson(json);
 
-// dump all the known effect and options
-            JsonObject &effectList = json.createNestedObject("effectList");
-            for(int i=0; i < effects.getEffectCount(); i++){
-              // hide the "view" option from effect list
-              if ( effects.getEffectInfo(i)->name != "View") {
-                JsonObject &effect = effectList.createNestedObject( effects.getEffectInfo(i)->htmlid );
-                effect["name"] = effects.getEffectInfo(i)->name;
-                effect["htmlid"] = effects.getEffectInfo(i)->htmlid;
-                effect["hasColor"] = effects.getEffectInfo(i)->hasColor;
-                effect["hasMirror"] = effects.getEffectInfo(i)->hasMirror;
-                effect["hasReverse"] = effects.getEffectInfo(i)->hasReverse;
-                effect["hasAllLeds"] = effects.getEffectInfo(i)->hasAllLeds;
-                effect["wsTCode"] = effects.getEffectInfo(i)->wsTCode;
-              }
-            }
+            effects.EffectListToJson(json);
+
+// tell the client its "unique" id based on the IP and port as seen by us
+            json["browserIPPort"] = String(client->remoteIP().toString()
+                                    + ":" + client->remotePort());
 
             json.printTo(response);
             client->text("G3" + response);
 //LOG_PORT.print(response);
             break;
         }
+
         case '4': {
             DynamicJsonBuffer jsonBuffer;
             JsonObject &json = jsonBuffer.createObject();
@@ -391,6 +377,9 @@ void procT(uint8_t *data, AsyncWebSocketClient *client) {
                 effects.setBrightness(json["brightness"]);
             }
             client->text("OK");
+// send unsolicited update to all clients with the client who initiated it
+            runningEffectSendAll( String(client->remoteIP().toString()
+                                         + ":" + client->remotePort()));
         }
     }
 
@@ -574,4 +563,4 @@ void wsEvent( __attribute__ ((unused)) AsyncWebSocket *server, AsyncWebSocketCli
     }
 }
 
-#endif /* ESPIXELSTICK_H_ */
+#endif /* WSHANDLER_H_ */

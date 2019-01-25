@@ -497,3 +497,47 @@ CRGB EffectEngine::hsv2rgb(dCHSV in)
     return out_int;
 }
 
+// dump the current running effect options to the supplied json
+void EffectEngine::runningEffectToJson (JsonObject &json) {
+    JsonObject &effect = json.createNestedObject("currentEffect");
+    if (config.ds == DataSource::E131) {
+        effect["name"] = "Disabled";
+    } else {
+        effect["name"] = (String)getEffect() ? getEffect() : "";
+    }
+    effect["brightness"] = getBrightness();
+    effect["speed"] = getSpeed();
+    effect["r"] = getColor().r;
+    effect["g"] = getColor().g;
+    effect["b"] = getColor().b;
+    effect["reverse"] = getReverse();
+    effect["mirror"] = getMirror();
+    effect["allleds"] = getAllLeds();
+    effect["startenabled"] = config.effect_startenabled;
+    effect["idleenabled"] = config.effect_idleenabled;
+    effect["idletimeout"] = config.effect_idletimeout;
+    effect["sendprotocol"] = config.effect_sendprotocol;
+    effect["sendhost"] = config.effect_sendhost;
+    effect["sendport"] = config.effect_sendport;
+    effect["sendspeed"] = config.effect_sendspeed;
+}
+
+
+// dump all the known effect and options to the supplied json
+void EffectEngine::EffectListToJson (JsonObject &json) {
+    JsonObject &effectList = json.createNestedObject("effectList");
+    for(int i=0; i < getEffectCount(); i++){
+        // hide the "view" option from effect list
+        if ( getEffectInfo(i)->name != "View") {
+            JsonObject &effect = effectList.createNestedObject( getEffectInfo(i)->htmlid );
+            effect["name"] = getEffectInfo(i)->name;
+            effect["htmlid"] = getEffectInfo(i)->htmlid;
+            effect["hasColor"] = getEffectInfo(i)->hasColor;
+            effect["hasMirror"] = getEffectInfo(i)->hasMirror;
+            effect["hasReverse"] = getEffectInfo(i)->hasReverse;
+            effect["hasAllLeds"] = getEffectInfo(i)->hasAllLeds;
+            effect["wsTCode"] = getEffectInfo(i)->wsTCode;
+        }
+    }
+}
+
