@@ -498,6 +498,7 @@ void onMqttMessage(char* topic, char* payload,
         publishRGBState();
         publishRGBBrightness();
         publishRGBColor();
+        runningEffectSendAll("mqtt");
 
     } else {
 
