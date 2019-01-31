@@ -52,7 +52,8 @@ const char BUILD_DATE[] = __DATE__;
 #define CLIENT_TIMEOUT  15      /* In station/client mode try to connection for 15 seconds */
 #define AP_TIMEOUT      60      /* In AP mode, wait 60 seconds for a connection or reboot */
 #define REBOOT_DELAY    100     /* Delay for rebooting once reboot flag is set */
-#define LOG_PORT        Serial  /* Serial port for console logging */
+#define LOG_PORT        Serial1 /* Serial port for console logging */
+#define SERIAL_PORT     Serial  /* Serial port for websocket terminal */
 
 // E1.33 / RDMnet stuff - to be moved to library
 #define RDMNET_DNSSD_SRV_TYPE   "draft-e133.tcp"

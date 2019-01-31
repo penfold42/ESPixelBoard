@@ -466,6 +466,9 @@ function wsConnect() {
                 case 'X6':
                     showReboot();
                     break;
+                case 'RX':
+                    handleSerialRX(data);
+                    break;
                 case 'OK':
                     break;
                 default:
@@ -868,6 +871,11 @@ function getEffectInfo(data) {
         $('#t_sendport').val(running.sendport);
         $('#t_sendspeed').val(running.sendspeed);
     }
+}
+
+function handleSerialRX(data) {
+    var serialRX = $('#serialRX');
+    serialRX.val(serialRX.val() + data);
 }
 
 function getJsonStatus(data) {

@@ -108,6 +108,9 @@ uint32_t            mqtt_num_packets;       // count of message rcvd
 EffectEngine        effects;        // Effects Engine
 Ticker              sendTimer;
 UdpRaw              udpraw;
+#define             SerialRXMAX 64
+char                SerialRXBuffer[SerialRXMAX];
+size_t              SerialRXPtr = 2;
 
 // Output Drivers
 #if defined(ESPS_MODE_PIXEL)
@@ -147,6 +150,7 @@ void setup() {
 
     // Setup serial log port
     LOG_PORT.begin(115200);
+    SERIAL_PORT.begin(9600);
     delay(10);
 
 #if defined(DEBUG)
@@ -1374,6 +1378,20 @@ void loop() {
 // workaround crash - consume incoming bytes on serial port
     if (LOG_PORT.available()) {
         while (LOG_PORT.read() >= 0);
+    }
+
+    if (SERIAL_PORT.available()) {
+        int RXChar = SERIAL_PORT.read();
+        if (SerialRXPtr < SerialRXMAX) {
+            SerialRXBuffer[SerialRXPtr++] = (char)RXChar;
+            if (RXChar == '\n') {
+                SerialRXBuffer[SerialRXPtr] = 0;
+                SerialRXBuffer[0] = 'R';
+                SerialRXBuffer[1] = 'X';
+                ws.textAll(SerialRXBuffer);
+                SerialRXPtr = 2;
+            }
+        }
     }
 
     MDNS.update();
