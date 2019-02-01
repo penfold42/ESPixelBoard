@@ -169,3 +169,11 @@ However, delay the fade out process for 2.5 seconds */
 .btn {
     margin: 4px auto;
 }
+
+.textarea {
+    background-color: #000;
+    border: 1px solid #000;
+    color: #00ff00;
+    padding: 8px;
+    font-family: courier new;
+}

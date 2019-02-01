@@ -36,7 +36,8 @@ const char BUILD_DATE[] = __DATE__;
 
 #if defined(ESPS_MODE_PIXEL)
 #include "PixelDriver.h"
-#elif defined(ESPS_MODE_SERIAL)
+#endif
+#if defined(ESPS_MODE_SERIAL) || defined(ESPS_ENABLE_SERIALIO)
 #include "SerialDriver.h"
 #endif
 
@@ -71,8 +72,9 @@ class DevCap {
     bool MPIXEL : 1;
     bool MSERIAL : 1;
     bool MPWM : 1;
+    bool MSERIALIO : 1;
     uint8_t toInt() {
-        return (MPWM << 2 | MSERIAL << 1 | MPIXEL);
+        return (MSERIALIO << 3 | MPWM << 2 | MSERIAL << 1 | MPIXEL);
     }
 };
 
@@ -154,7 +156,7 @@ typedef struct {
     uint16_t    groupSize;      /* Group size - 1 = no grouping */
     float       gammaVal;       /* gamma value to use */
     float       briteVal;       /* brightness lto use */
-#elif defined(ESPS_MODE_SERIAL)
+#elif defined(ESPS_MODE_SERIAL) || defined(ESPS_ENABLE_SERIALIO)
     /* Serial */
     SerialType  serial_type;    /* Serial type */
     BaudRate    baudrate;       /* Baudrate */

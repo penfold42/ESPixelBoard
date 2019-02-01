@@ -745,6 +745,10 @@ void validateConfig() {
     config.devmode.MPWM = true;
 #endif
 
+#if defined(ESPS_ENABLE_SERIALIO)
+    config.devmode.MSERIALIO = true;
+#endif
+
 #if defined(ESPS_MODE_PIXEL)
     // Set Mode
     config.devmode.MPIXEL = true;

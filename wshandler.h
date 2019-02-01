@@ -213,6 +213,23 @@ void procE(uint8_t *data, AsyncWebSocketClient *client) {
             s_baud["460800"] = static_cast<uint32_t>(BaudRate::BR_460800);
 #endif
 
+#if defined (ESPS_ENABLE_SERIALIO)
+            // Serial Baudrates for serial IO
+            JsonObject &s_baudio = json.createNestedObject("s_baudio");
+            s_baudio["9600"] = static_cast<uint32_t>(BaudRate::BR_9600);
+            s_baudio["19200"] = static_cast<uint32_t>(BaudRate::BR_19200);
+            s_baudio["38400"] = static_cast<uint32_t>(BaudRate::BR_38400);
+            s_baudio["57600"] = static_cast<uint32_t>(BaudRate::BR_57600);
+            s_baudio["115200"] = static_cast<uint32_t>(BaudRate::BR_115200);
+            s_baudio["230400"] = static_cast<uint32_t>(BaudRate::BR_230400);
+            s_baudio["250000"] = static_cast<uint32_t>(BaudRate::BR_250000);
+            s_baudio["460800"] = static_cast<uint32_t>(BaudRate::BR_460800);
+
+            JsonObject &s_framing = json.createNestedObject("s_framing");
+            s_framing["8N1"] = static_cast<uint32_t>(SERIAL_8N1);
+            s_framing["7E2"] = static_cast<uint32_t>(SERIAL_7E2);
+#endif
+
             String response;
             json.printTo(response);
             client->text("E1" + response);

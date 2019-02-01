@@ -22,6 +22,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="#">ESPixelBoard</a>
       </div>
@@ -32,6 +33,7 @@
           <li><a href="#config">Device Setup</a></li>
           <li><a href="#effects">Effects</a></li>
           <li><a href="#diag">Diagnostics</a></li>
+          <li><a href="#serialio">Serial I/O</a></li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li><a href="#admin">Admin</a></li>
@@ -410,26 +412,25 @@
             <legend class="esps-legend">Send Effect LED Data</legend>
             <div class="form-group">
               <label class="control-label col-sm-2" for="t_sendprotocol">Protocol</label>
-              <div class="col-sm-10">
+              <div class="col-sm-3">
                 <select class="form-control" id="t_sendprotocol" name="t_sendprotocol" onchange="sendChanged()">
                     <option value="0">Disabled</option>
                     <option value="1">UDP Raw</option>
                     <option value="2">E.131</option>
                 </select>
               </div>
+
+              <label class="control-label col-sm-2" for="t_sendspeed">Packet/sec</label>
+              <div class="col-sm-3"><input type="number" class="form-control" id="t_sendspeed" name="t_sendspeed" placeholder="Packets per Second"></div>
             </div>
+
             <div class="form-group sendeffect">
               <label class="control-label col-sm-2" for="t_sendhost">Target Host</label>
-              <div class="col-sm-10"><input type="text" class="form-control" id="t_sendhost" name="t_sendhost" placeholder="Target Host/IP"></div>
-            </div>
-            <div class="form-group sendeffect">
+              <div class="col-sm-3"><input type="text" class="form-control" id="t_sendhost" name="t_sendhost" placeholder="Target Host/IP"></div>
               <label class="control-label col-sm-2" for="t_sendport">UDP Port</label>
-              <div class="col-sm-10"><input type="number" class="form-control" id="t_sendport" name="t_sendport" placeholder="Target UDP Port"></div>
+              <div class="col-sm-3"><input type="number" class="form-control" id="t_sendport" name="t_sendport" placeholder="Target UDP Port"></div>
             </div>
-            <div class="form-group sendeffect">
-              <label class="control-label col-sm-2" for="t_sendspeed">Packet/sec</label>
-              <div class="col-sm-10"><input type="number" class="form-control" id="t_sendspeed" name="t_sendspeed" placeholder="Packets per Second"></div>
-            </div>
+
           </div>
 
           <div class="form-group t_startup">
@@ -476,6 +477,42 @@
             </div>
     </div>
 
+    <!-- Serial I/O and Terminal -->
+    <div id="serialio" class="mdiv hidden anchor">
+      <fieldset>
+        <legend class="esps-legend">Serial I/O</legend>
+        <form class="form-horizontal">
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="serialRX">Terminal</label>
+          <div class="col-sm-10">
+            <textarea class="form-control textarea" id="serialRX" rows="5"></textarea>
+          </div>
+          <div class="col-sm-offset-2 col-sm-10">
+            <div class="checkbox"><label><input type="checkbox" id="t_scroll" name="t_scroll"> Autoscroll Receive Data</label></div>
+          </div>
+        </div>
+        </form>
+
+        <legend class="esps-legend">Serial Configuration</legend>
+        <form class="form-horizontal">
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="s_baudio">Baud Rate</label>
+          <div class="col-sm-3"> <select class="form-control" id="s_baudio" name="s_baudio" XXonchange="refreshSerial()"></select> </div>
+          <label class="control-label col-sm-2" for="s_framing">Bits/Parity</label>
+          <div class="col-sm-3"> <select class="form-control" id="s_framing" name="s_framing"></select> </div>
+        </div>
+
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="s_TXending">TX Line Ending</label>
+          <div class="col-sm-3"> <select class="form-control" id="TXending" name="TXending" ></select> </div>
+          <label class="control-label col-sm-2" for="s_TXending">RX Line Ending</label>
+          <div class="col-sm-3"> <select class="form-control" id="RXending" name="RXending" ></select> </div>
+        </div>
+
+        </form>
+      </fieldset>
+    </div>
+
     <!-- Administration -->
     <div id="admin" class="mdiv hidden anchor">
 
@@ -491,11 +528,6 @@
               <tr><td width="50%">Flash chip ID</td><td><span id="x_flashchipid"></span></td></tr>
             </table>
           </fieldset>
-        </div>
-
-        <div class="form-group col-sm-6">
-          <label for="serialRX">Serial RX Data</label>
-          <textarea class="form-control rounded-0" id="serialRX" rows="5"></textarea>
         </div>
 
         <div class="col-sm-6">

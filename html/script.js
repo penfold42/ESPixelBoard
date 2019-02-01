@@ -704,6 +704,10 @@ function getConfig(data) {
         $('#s_count').trigger('change');
     }
 
+    if (config.device.mode & 0x08) { // Serial IO
+        $('#s_baud').val(config.serialio.baudrate);
+    }
+
     // PWM Config
     if (config.device.mode & 0x04) {  // PWM
         $('#o_pwm').removeClass('hidden');
@@ -876,6 +880,9 @@ function getEffectInfo(data) {
 function handleSerialRX(data) {
     var serialRX = $('#serialRX');
     serialRX.val(serialRX.val() + data);
+    if ( $('#t_scroll').prop('checked') ) {
+      serialRX.scrollTop(serialRX[0].scrollHeight);
+    }
 }
 
 function getJsonStatus(data) {
