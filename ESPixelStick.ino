@@ -1384,6 +1384,7 @@ void loop() {
         while (LOG_PORT.read() >= 0);
     }
 
+/* line buffered
     if (SERIAL_PORT.available()) {
         int RXChar = SERIAL_PORT.read();
         if (SerialRXPtr < SerialRXMAX) {
@@ -1396,6 +1397,20 @@ void loop() {
                 SerialRXPtr = 2;
             }
         }
+    }
+*/
+    while (SERIAL_PORT.available()) {
+        if (SerialRXPtr < SerialRXMAX) {
+            SerialRXBuffer[SerialRXPtr++] = SERIAL_PORT.read();
+        }
+    }
+
+    if ( SerialRXPtr > 2) {
+	SerialRXBuffer[SerialRXPtr] = 0;
+	SerialRXBuffer[0] = 'P';
+	SerialRXBuffer[1] = 'R';
+	ws.textAll(SerialRXBuffer);
+	SerialRXPtr = 2;
     }
 
     MDNS.update();

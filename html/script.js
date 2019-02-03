@@ -114,7 +114,7 @@ $(function() {
 
         // Set page event feeds
         feed();
-    });
+    }); // end of navbar click
 
     // Reverse checkbox
     $('.reverse').click(function() {
@@ -233,6 +233,27 @@ $(function() {
         }
     });
 
+    $('#serialRX').keypress(function(event) {
+        var LF = String.fromCharCode(10);
+        var CR = String.fromCharCode(13);
+        if (event.which == 13) {
+          switch ( $('#TXending').val() ) {
+	    case 'LF':
+              wsEnqueue('PT' + LF);
+              break;
+	    case 'CR':
+              wsEnqueue('PT' + CR);
+              break;
+	    case 'CRLF':
+              wsEnqueue('PT' + CR + LF);
+              break;
+          }
+        } else {
+          wsEnqueue('PT' + String.fromCharCode(event.which));
+        }
+//alert ('got key' + event.key);
+    });
+
     // Pixel type toggles
     $('#p_type').change(function() {
         if ($('select[name=p_type]').val() == '1') {
@@ -298,7 +319,7 @@ $(function() {
     var hash = window.location.hash;
     hash && $('ul.navbar-nav li a[href="' + hash + '"]').click();
 
-});
+}); // jQuery doc ready
 
 function updateMQTTSet() {
     if ( $('#mqtt_topic').val() ) {
@@ -466,7 +487,7 @@ function wsConnect() {
                 case 'X6':
                     showReboot();
                     break;
-                case 'RX':
+                case 'PR':
                     handleSerialRX(data);
                     break;
                 case 'OK':

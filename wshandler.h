@@ -80,6 +80,11 @@ extern const char CONFIG_FILE[];
     XJ - Get RSSI,heap,uptime, e131 stats
 
     X6 - Reboot
+
+    PP - GPIO stuff
+    PT - uart TX
+    PR - uart RX
+
 */
 
 EFUpdate efupdate;
@@ -303,7 +308,21 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
 }
 
 void procP(uint8_t *data, AsyncWebSocketClient *client) {
-    client->text("PP" + handleGPIO(reinterpret_cast<char*>(data + 2)) );
+    switch (data[1]) {
+        case 'P': {
+            client->text("PP" + handleGPIO(reinterpret_cast<char*>(data + 2)) );
+            break;
+        }
+#if defined (ESPS_ENABLE_SERIALIO)
+        case 'R': { // receive serialio
+            break;
+        }
+        case 'T': { // transmit serialio
+            SERIAL_PORT.write( reinterpret_cast<char*>(data + 2) );
+            break;
+        }
+#endif
+    }
 }
 
 void procS(uint8_t *data, AsyncWebSocketClient *client) {
