@@ -234,22 +234,30 @@ $(function() {
     });
 
     $('#serialRX').keypress(function(event) {
+        sendToSerial(event);
+    });
+
+    $('#serialTX').keypress(function(event) {
         var LF = String.fromCharCode(10);
         var CR = String.fromCharCode(13);
         if (event.which == 13) {
+          var blah = 'PT' + $('#serialTX').val();
           switch ( $('#TXending').val() ) {
 	    case 'LF':
-              wsEnqueue('PT' + LF);
+              wsEnqueue(blah + LF);
               break;
 	    case 'CR':
-              wsEnqueue('PT' + CR);
+              wsEnqueue(blah + CR);
               break;
 	    case 'CRLF':
-              wsEnqueue('PT' + CR + LF);
+              wsEnqueue(blah + CR + LF);
+              break;
+	    default:
+              wsEnqueue(blah);
               break;
           }
-        } else {
-          wsEnqueue('PT' + String.fromCharCode(event.which));
+          $('#serialTX').val('');
+          return false; // to prevent form submission
         }
 //alert ('got key' + event.key);
     });
@@ -1240,4 +1248,27 @@ function millsToDateString(millis, stringIfZero) {
     } else {
         return (stringIfZero);
     }
+}
+
+function sendToSerial(event) {
+    var LF = String.fromCharCode(10);
+    var CR = String.fromCharCode(13);
+    if (event.which == 13) {
+        switch ( $('#TXending').val() ) {
+          case 'LF':
+            wsEnqueue('PT' + LF);
+            break;
+          case 'CR':
+            wsEnqueue('PT' + CR);
+            break;
+          case 'CRLF':
+            wsEnqueue('PT' + CR + LF);
+            break;
+          default:
+            break;
+        }
+    } else {
+      wsEnqueue('PT' + String.fromCharCode(event.which));
+    }
+//alert ('got key' + event.key);
 }

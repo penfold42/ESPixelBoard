@@ -21,7 +21,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
+<!--      <span class="icon-bar"></span> -->
           <span class="icon-bar"></span>
         </button>
         <a class="navbar-brand" href="#">ESPixelBoard</a>
@@ -32,7 +32,7 @@
           <li><a href="#wifi">Network Setup</a></li>
           <li><a href="#config">Device Setup</a></li>
           <li><a href="#effects">Effects</a></li>
-          <li><a href="#diag">Diagnostics</a></li>
+<!--      <li><a href="#diag">Diagnostics</a></li> -->
           <li><a href="#serialio">Serial I/O</a></li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
@@ -480,10 +480,13 @@
     <!-- Serial I/O and Terminal -->
     <div id="serialio" class="mdiv hidden anchor">
       <fieldset>
-        <legend class="esps-legend">Serial I/O</legend>
+        <legend class="esps-legend">Terminal</legend>
         <form class="form-horizontal">
         <div class="form-group">
-          <label class="control-label col-sm-2" for="serialRX">Terminal</label>
+          <label class="control-label col-sm-2" for="serialTX">Transmit</label>
+          <div class="col-sm-10"><input type="text" class="form-control" id="serialTX"></div>
+
+          <label class="control-label col-sm-2" for="serialRX">Receive</label>
           <div class="col-sm-10">
             <textarea class="form-control textarea" readonly="true" id="serialRX" rows="5"></textarea>
           </div>
@@ -509,6 +512,7 @@
               <option value="CRLF">CR+LF</option>
               <option value="LF">LF</option>
               <option value="CR">CR</option>
+              <option value="None">None</option>
             </select>
           </div>
           <label class="control-label col-sm-2" for="s_TXending">RX Line Ending</label>
