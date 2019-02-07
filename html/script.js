@@ -10,12 +10,17 @@ var effectInfo;
 // my ws "unique" client id as sent from the server
 var browserIPPort;
 
+var LF = String.fromCharCode(10);
+var CR = String.fromCharCode(13);
+
 // Default modal properties
 $.fn.modal.Constructor.DEFAULTS.backdrop = 'static';
 $.fn.modal.Constructor.DEFAULTS.keyboard = false;
 
 // jQuery doc ready
 $(function() {
+    wsConnect();
+
     // Menu navigation for single page layout
 
     $('ul.navbar-nav li a').click(function() {
@@ -233,13 +238,21 @@ $(function() {
         }
     });
 
-    $('#serialRX').keypress(function(event) {
-        sendToSerial(event);
+    // if autoscroll clicked, scroll to bottom now
+    $('#t_scroll').click(function() {
+        if ($(this).is(':checked')) {
+            var serialRX = $('#serialRX');
+            serialRX.scrollTop(serialRX[0].scrollHeight);
+        }
     });
 
+    // send characters as typed in the RX window
+    $('#serialRX').keypress(function(event) {
+        sendKeyToSerial(event);
+    });
+
+    // send characters on enter in the TX window
     $('#serialTX').keypress(function(event) {
-        var LF = String.fromCharCode(10);
-        var CR = String.fromCharCode(13);
         if (event.which == 13) {
           var blah = 'PT' + $('#serialTX').val();
           switch ( $('#TXending').val() ) {
@@ -734,7 +747,9 @@ function getConfig(data) {
     }
 
     if (config.device.mode & 0x08) { // Serial IO
-        $('#s_baud').val(config.serialio.baudrate);
+        if (config.serialio) {
+            $('#s_baud').val(config.serialio.baudrate);
+        }
     }
 
     // PWM Config
@@ -906,11 +921,22 @@ function getEffectInfo(data) {
     }
 }
 
+var lastSerialRXChar;
 function handleSerialRX(data) {
     var serialRX = $('#serialRX');
-    serialRX.val(serialRX.val() + data);
+    var strToAdd = '';
+    for (var i = 0; i < data.length; i++) {
+//      alert(data.charAt(i));
+        var thisChar = data.charAt(i);
+        if ( (lastSerialRXChar == CR) && (thisChar == LF) ) {
+        } else {
+            strToAdd += thisChar;
+        }
+        lastSerialRXChar = thisChar;
+    }
+    serialRX.val(serialRX.val() + strToAdd);
     if ( $('#t_scroll').prop('checked') ) {
-      serialRX.scrollTop(serialRX[0].scrollHeight);
+        serialRX.scrollTop(serialRX[0].scrollHeight);
     }
 }
 
@@ -1250,9 +1276,7 @@ function millsToDateString(millis, stringIfZero) {
     }
 }
 
-function sendToSerial(event) {
-    var LF = String.fromCharCode(10);
-    var CR = String.fromCharCode(13);
+function sendKeyToSerial(event) {
     if (event.which == 13) {
         switch ( $('#TXending').val() ) {
           case 'LF':

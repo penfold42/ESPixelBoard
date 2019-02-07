@@ -1,0 +1,338 @@
+
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US" xml:lang="en-US">
+<head>
+<title>Extron</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="CACHE-CONTROL" content="NO-CACHE" />
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link rel="stylesheet" type="text/css" href="esps.css">
+</head>
+
+<body>
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+<!--      <span class="icon-bar"></span> -->
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#">Extron 7SC</a>
+      </div>
+      <div id="navbar" class="collapse navbar-collapse">
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="#inputs">Inputs</a></li>
+          <li><a href="#iosetup">I/O Setup</a></li>
+          <li><a href="#config">Device Setup</a></li>
+          <li><a href="#effects">Effects</a></li>
+<!--      <li><a href="#diag">Diagnostics</a></li> -->
+          <li><a href="#serialio">Serial I/O</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="#admin">Admin</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Home / Status page -->
+    <div id="inputs" class="collapse in mdiv anchor">
+      <div class="row">
+        <div class="col-sm-6">
+          <fieldset>
+            <legend class="esps-legend">Input Selection</legend>
+            <div class="col-sm-offset-0 col-sm-12">
+              <div class="btn-group" data-toggle="buttons">
+                <label class="btn btn-primary btn-cp">
+                  <input type="radio" name="inputChannel" value="1" autocomplete="off" onchange="setInputChannel()">Input 1
+                </label>
+                <label class="btn btn-primary btn-cp">
+                  <input type="radio" name="inputChannel" value="2" autocomplete="off" onchange="setInputChannel()">Input 2
+                </label>
+                <label class="btn btn-primary btn-cp">
+                  <input type="radio" name="inputChannel" value="3" autocomplete="off" onchange="setInputChannel()">Input 3
+                </label>
+                <label class="btn btn-primary btn-cp">
+                  <input type="radio" name="inputChannel" value="4" autocomplete="off" onchange="setInputChannel()">Input 4
+                </label>
+                <label class="btn btn-primary btn-cp">
+                  <input type="radio" name="inputChannel" value="5" autocomplete="off" onchange="setInputChannel()">Input 5
+                </label>
+                <label class="btn btn-primary btn-cp">
+                  <input type="radio" name="inputChannel" value="6" autocomplete="off" onchange="setInputChannel()">Input 6
+                </label>
+                <label class="btn btn-primary btn-cp">
+                  <input type="radio" name="inputChannel" value="7" autocomplete="off" onchange="setInputChannel()">Input 7
+                </label>
+                <label class="btn btn-primary btn-cp">
+                  <input type="radio" name="inputChannel" value="0" autocomplete="off" onchange="setInputChannel()">No Input
+                </label>
+              </div>
+            </div>
+
+          </fieldset>
+        </div>
+      </div>
+    </div>
+
+    <div id="iosetup" class="mdiv hidden anchor">
+      <!-- Input Configuration -->
+      <fieldset>
+        <legend class="esps-legend">Input Config</legend>
+        <form class="form-horizontal">
+          <div class="form-group">
+
+            <label class="control-label col-sm-2" for="inputMode_1">Input 1</label>
+            <div class="col-sm-3">
+              <select class="form-control" id="inputMode_1">
+                <option value="0">RGB</option>
+                <option value="1">composite video</option>
+                <option value="2">composite video</option>
+                <option value="3">S-video</option>
+                <option value="4">S-video</option>
+                <option value="5">component video (YUV)</option>
+                <option value="6">component video (YUV)</option>
+                <option value="7">component video (YUV), progressive</option>
+              </select>
+            </div>
+
+            <label class="control-label col-sm-2" for="inputMode_2">Input 2</label>
+            <div class="col-sm-3">
+              <select class="form-control" id="inputMode_2">
+                <option value="CRLF">Progressive YUV</option>
+                <option value="LF">Composite</option>
+                <option value="CR">S-Video</option>
+                <option value="None">RGB</option>
+              </select>
+            </div>
+
+          </div>
+        </form>
+
+        <legend class="esps-legend">Output Config</legend>
+        <form class="form-horizontal">
+          <div class="form-group">
+
+            <label class="control-label col-sm-2" for="outputMode">Output</label>
+            <div class="col-sm-3">
+              <select class="form-control" id="outputMode">
+                <option value="1">640x480 @ 50 Hz</option>
+                <option value="2">640x480 @ 60 Hz</option>
+                <option value="3">640x480 @ 75 Hz</option>
+                <option value="4">640x480 @ Lock*</option>
+                <option value="5">800x600 @ 50 Hz</option>
+                <option value="6">800x600 @ 60 Hz</option>
+                <option value="7">800x600 @ 75 Hz</option>
+                <option value="8">800x600 @ Lock</option>
+                <option value="9">832x624 @ 60 Hz</option>
+                <option value="10">832x624 @ 75 Hz</option>
+                <option value="11">832x624 @ Lock</option>
+                <option value="12">848x480 @ 60 Hz</option>
+                <option value="13">852x480 @ 60 Hz</option>
+                <option value="14">1024x768 @ 50 Hz</option>
+                <option value="15">1024x768 @ 60 Hz</option>
+                <option value="16">1024x768 @ 75 Hz</option>
+                <option value="17">1024x768 @ Lock</option>
+                <option value="18">1280x768 @ 56 Hz</option>
+                <option value="19 ">1280x1024 @ 50 Hz</option>
+                <option value="20 ">1280x1024 @ 60 Hz</option>
+                <option value="21 ">1280x1024 @ Lock</option>
+                <option value="22 ">1360x765 @ 60 Hz</option>
+                <option value="23">1365x1024 @ 60 Hz</option>
+                <option value="24 ">1365x1024 @ Lock</option>
+                <option value="25">480p (HDTV), 60 Hz</option>
+                <option value="26">480p @ Lock</option>
+                <option value="27">720p (HDTV), 60 Hz</option>
+                <option value="28">720p @ Lock</option>
+                <option value="29">1080p (HDTV), 60 Hz</option>
+                <option value="30">1080p @ Lock</option>
+                <option value="31">1080i (HDTV), 60 Hz</option>
+                <option value="32">1080i @ Lock</option>
+              </select>
+            </div>
+
+          </div>
+        </form>
+
+      </fieldset>
+    </div>
+
+    <!-- Device Configuration -->
+    <div id="config" class="mdiv hidden anchor">
+      <fieldset>
+        <legend class="esps-legend">Device Configuration</legend>
+        <form class="form-horizontal">
+          <div class="form-group">
+            <label class="control-label col-sm-2" for="devid">Device ID</label>
+            <div class="col-sm-10"><input type="text" class="form-control" id="devid" name="devid" title="Plain text ID to help identify your device."></div>
+          </div>
+
+
+        </form>
+      </fieldset>
+    </div>
+
+    <!-- Serial I/O and Terminal -->
+    <div id="serialio" class="mdiv hidden anchor">
+      <fieldset>
+        <legend class="esps-legend">Terminal</legend>
+        <form class="form-horizontal">
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="serialTX">Transmit</label>
+          <div class="col-sm-10"><input type="text" class="form-control" id="serialTX"></div>
+
+          <label class="control-label col-sm-2" for="serialRX">Receive</label>
+          <div class="col-sm-10">
+            <textarea class="form-control textarea" readonly="true" id="serialRX" rows="5"></textarea>
+          </div>
+          <div class="col-sm-offset-2 col-sm-10">
+            <div class="checkbox"><label><input type="checkbox" id="t_scroll" name="t_scroll" checked> Autoscroll Receive Data</label></div>
+          </div>
+        </div>
+        </form>
+
+        <legend class="esps-legend">Serial Configuration</legend>
+        <form class="form-horizontal">
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="s_baudio">Baud Rate</label>
+          <div class="col-sm-3"> <select class="form-control" id="s_baudio" name="s_baudio" XXonchange="refreshSerial()"></select> </div>
+          <label class="control-label col-sm-2" for="s_framing">Bits/Parity</label>
+          <div class="col-sm-3"> <select class="form-control" id="s_framing" name="s_framing"></select> </div>
+        </div>
+
+        <div class="form-group">
+          <label class="control-label col-sm-2" for="s_TXending">TX Line Ending</label>
+          <div class="col-sm-3">
+            <select class="form-control" id="TXending" name="TXending">
+              <option value="CRLF">CR+LF</option>
+              <option value="LF">LF</option>
+              <option value="CR">CR</option>
+              <option value="None">None</option>
+            </select>
+          </div>
+          <label class="control-label col-sm-2" for="s_TXending">RX Line Ending</label>
+          <div class="col-sm-3"> <select class="form-control" id="RXending" name="RXending" ></select> </div>
+        </div>
+
+        </form>
+      </fieldset>
+    </div>
+
+    <!-- Administration -->
+
+
+  </div>
+ 
+
+<style>
+
+xxhtml, body {
+    overflow: hidden;
+    background-color: white;
+    max-width:100%;
+    max-height:100%;
+    overflow:hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.button {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+		user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome and Opera */
+	background-color: white; /* Green */
+    border: none;
+    color: black;
+    padding: 16px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 50px;
+    margin: 4px 2px;
+    -webkit-transition-duration: 0.4s; /* Safari */
+    transition-duration: 0.4s;
+    cursor: pointer;  padding: 20px;
+    width: 300px;
+    border: 5px solid #4CAF50;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    height: 500px;
+    border-radius: 30px;
+}
+
+.toggleColour {
+    background-color: #4CAF50;
+    color: white;
+}
+
+</style>
+
+<!-- for local development
+<script type="text/javascript" src="js/jquery-3.1.1.js"></script>
+<script type="text/javascript" src="js/bootstrap.js"></script>
+<script type="text/javascript" src="js/jqColorPicker.js"></script>
+<script type="text/javascript" src="script.js"></script>
+-->
+<script type="text/javascript" src="esps.js"></script>
+
+<script type="text/javascript">
+
+//wsConnect();
+var responseText='';
+var lockscroll="no";
+
+//window.onload = loadscroll;
+//window.onscroll = fightscroll;
+
+function fightscroll() {
+    if (lockscroll=="yes") {
+        if (window.pageYOffset<=1)
+            lockscroll="no";
+        else
+            setTimeout('window.scrollTo(0, 120)' , 1);
+    }
+}
+
+function loadscroll() {
+    setTimeout('window.scrollTo(0, 120)' , 1);
+}
+
+function setInputChannel() {
+    var Channel = $('input[name=inputChannel]:checked').val();
+    if (Channel !== undefined) {
+        ws.send("PT"+Channel+"!");
+    }
+}
+
+function updateInput() {
+//$("input[name='viewStyle'][value='Channel']").trigger('click');
+}
+
+function setInput(Channel) {
+    if (Channel != "") {
+        ws.send("PT"+Channel+"!");
+    }
+}
+
+</script>
+
+</body>
+</html>

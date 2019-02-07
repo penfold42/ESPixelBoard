@@ -151,6 +151,7 @@ void setup() {
     // Setup serial log port
     LOG_PORT.begin(115200);
     SERIAL_PORT.begin(9600);
+//    SERIAL_PORT.begin(115200);
     delay(10);
 
 #if defined(DEBUG)
@@ -1384,33 +1385,37 @@ void loop() {
         while (LOG_PORT.read() >= 0);
     }
 
-/* line buffered
-    if (SERIAL_PORT.available()) {
-        int RXChar = SERIAL_PORT.read();
-        if (SerialRXPtr < SerialRXMAX) {
-            SerialRXBuffer[SerialRXPtr++] = (char)RXChar;
-            if (RXChar == '\n') {
-                SerialRXBuffer[SerialRXPtr] = 0;
-                SerialRXBuffer[0] = 'R';
-                SerialRXBuffer[1] = 'X';
-                ws.textAll(SerialRXBuffer);
-                SerialRXPtr = 2;
+    if (1) {
+    // line buffered
+        if (SERIAL_PORT.available()) {
+            int RXChar = SERIAL_PORT.read();
+            if (SerialRXPtr < SerialRXMAX) {
+                SerialRXBuffer[SerialRXPtr++] = (char)RXChar;
+                if (RXChar == '\n') {
+                    SerialRXBuffer[SerialRXPtr] = 0;
+                    SerialRXBuffer[0] = 'P';
+                    SerialRXBuffer[1] = 'R';
+                    ws.textAll(SerialRXBuffer);
+                    SerialRXPtr = 2;
+                }
             }
         }
-    }
-*/
-    while (SERIAL_PORT.available()) {
-        if (SerialRXPtr < SerialRXMAX) {
-            SerialRXBuffer[SerialRXPtr++] = SERIAL_PORT.read();
-        }
-    }
 
-    if ( SerialRXPtr > 2) {
-	SerialRXBuffer[SerialRXPtr] = 0;
-	SerialRXBuffer[0] = 'P';
-	SerialRXBuffer[1] = 'R';
-	ws.textAll(SerialRXBuffer);
-	SerialRXPtr = 2;
+    } else {
+    // send available chars
+        while (SERIAL_PORT.available()) {
+            if (SerialRXPtr < SerialRXMAX) {
+                SerialRXBuffer[SerialRXPtr++] = SERIAL_PORT.read();
+            }
+        }
+
+        if ( SerialRXPtr > 2) {
+	    SerialRXBuffer[SerialRXPtr] = 0;
+	    SerialRXBuffer[0] = 'P';
+	    SerialRXBuffer[1] = 'R';
+	    ws.textAll(SerialRXBuffer);
+	    SerialRXPtr = 2;
+        }
     }
 
     MDNS.update();
