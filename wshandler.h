@@ -95,7 +95,7 @@ void runningEffectSendAll(String updateSource) {
 
     json["updateSource"] = updateSource;
 
-    json.printTo(response);
+    serializeJson(json,response);
     ws.textAll("G3" + response);
 }
 
@@ -149,13 +149,13 @@ void procX(uint8_t *data, AsyncWebSocketClient *client) {
             e131J["last_seen"] = e131.stats.last_seen ? (String) (millis() - e131.stats.last_seen) : "never";
 
             // MQTT statistics
-            JsonObject &mqtt = json.createNestedObject("mqtt");
+            JsonObject mqtt = json.createNestedObject("mqtt");
             mqtt["num_packets"] = (String)mqtt_num_packets;
             mqtt["last_seen"] = mqtt_last_seen ? (String) (millis() - mqtt_last_seen) : "never";
 
 #if defined(ESPS_ENABLE_UDPRAW)
             // UDP raw statistics
-            JsonObject &udp = json.createNestedObject("udp");
+            JsonObject udp = json.createNestedObject("udp");
             udp["num_packets"] = (String)udpraw.stats.num_packets;
             udp["short_packets"] = (String)udpraw.stats.short_packets;
             udp["long_packets"] = (String)udpraw.stats.long_packets;

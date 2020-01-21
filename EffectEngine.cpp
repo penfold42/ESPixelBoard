@@ -498,8 +498,8 @@ CRGB EffectEngine::hsv2rgb(dCHSV in)
 }
 
 // dump the current running effect options to the supplied json
-void EffectEngine::runningEffectToJson (JsonObject &json) {
-    JsonObject &effect = json.createNestedObject("currentEffect");
+void EffectEngine::runningEffectToJson (DynamicJsonDocument json) {
+    JsonObject effect = json.createNestedObject("currentEffect");
     if (config.ds == DataSource::E131) {
         effect["name"] = "Disabled";
     } else {
@@ -524,12 +524,12 @@ void EffectEngine::runningEffectToJson (JsonObject &json) {
 
 
 // dump all the known effect and options to the supplied json
-void EffectEngine::EffectListToJson (JsonObject &json) {
-    JsonObject &effectList = json.createNestedObject("effectList");
+void EffectEngine::EffectListToJson (DynamicJsonDocument json) {
+    JsonObject effectList = json.createNestedObject("effectList");
     for(int i=0; i < getEffectCount(); i++){
         // hide the "view" option from effect list
         if ( getEffectInfo(i)->name != "View") {
-            JsonObject &effect = effectList.createNestedObject( getEffectInfo(i)->htmlid );
+            JsonObject effect = effectList.createNestedObject( getEffectInfo(i)->htmlid );
             effect["name"] = getEffectInfo(i)->name;
             effect["htmlid"] = getEffectInfo(i)->htmlid;
             effect["hasColor"] = getEffectInfo(i)->hasColor;
@@ -540,4 +540,3 @@ void EffectEngine::EffectListToJson (JsonObject &json) {
         }
     }
 }
-

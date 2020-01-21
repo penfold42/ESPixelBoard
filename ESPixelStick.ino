@@ -437,11 +437,11 @@ void onMqttDisconnect(__attribute__ ((unused)) AsyncMqttClientDisconnectReason r
 }
 
 void onMqttMessage(char* topic, char* payload,
+        AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
 
     mqtt_last_seen = millis();
     mqtt_num_packets++;
 
-        AsyncMqttClientMessageProperties properties, size_t len, size_t index, size_t total) {
     
     DynamicJsonDocument r(1024);
     DeserializationError error = deserializeJson(r, payload);
@@ -510,9 +510,11 @@ void onMqttMessage(char* topic, char* payload,
     } else {
 
         DynamicJsonDocument root(1024);
+        DeserializationError error = deserializeJson(root, payload);
+
         bool stateOn = false;
 
-        if (!root.success()) {
+        if (error) {
             LOG_PORT.println("MQTT: json Parsing failed");
             return;
         }
@@ -1016,7 +1018,7 @@ void dsDeviceConfig(const JsonObject &json) {
 #if defined(ESPS_SUPPORT_PWM)
     /* PWM */
     if (json.containsKey("pwm")) {
-        JsonObject& pwmJson = json["pwm"];
+        JsonObject pwmJson = json["pwm"];
         config.pwm_global_enabled = pwmJson["enabled"];
         config.pwm_freq = pwmJson["freq"];
         config.pwm_gamma = pwmJson["gamma"];
@@ -1024,7 +1026,7 @@ void dsDeviceConfig(const JsonObject &json) {
         config.pwm_gpio_digital = 0;
         config.pwm_gpio_enabled = 0;
         for (int gpio = 0; gpio < NUM_GPIO; gpio++) {
-            JsonObject& gpioJson = pwmJson["gpio"][(String)gpio];
+            JsonObject gpioJson = pwmJson["gpio"][(String)gpio];
 
             config.pwm_gpio_comment[gpio] = gpioJson["comment"].as<String>();
             if (pwm_valid_gpio_mask & 1<<gpio) {
@@ -1186,14 +1188,14 @@ void serializeConfig(String &jsonString, bool pretty, bool creds) {
 
 #if defined(ESPS_SUPPORT_PWM)
     // PWM
-    JsonObject &pwm = json.createNestedObject("pwm");
+    JsonObject pwm = json.createNestedObject("pwm");
     pwm["enabled"] = config.pwm_global_enabled;
     pwm["freq"] = config.pwm_freq;
     pwm["gamma"] = config.pwm_gamma;
 
-    JsonObject &gpioJ = pwm.createNestedObject("gpio");
+    JsonObject gpioJ = pwm.createNestedObject("gpio");
     for (int gpio = 0; gpio < NUM_GPIO; gpio++ ) {
-        JsonObject &thisGpio = gpioJ.createNestedObject((String)gpio);
+        JsonObject thisGpio = gpioJ.createNestedObject((String)gpio);
         thisGpio["comment"] = config.pwm_gpio_comment[gpio];
         if (pwm_valid_gpio_mask & 1<<gpio) {
             thisGpio["channel"] = static_cast<uint16_t>(config.pwm_gpio_dmx[gpio]);

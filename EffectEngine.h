@@ -97,8 +97,8 @@ public:
     void setFromConfig();
     void setFromDefaults();
 
-    void runningEffectToJson (JsonObject &json);
-    void EffectListToJson (JsonObject &json );
+    void runningEffectToJson (DynamicJsonDocument json);
+    void EffectListToJson (DynamicJsonDocument json );
 
     bool isValidEffect(const String effectName);
     void setEffect(const String effectName);
