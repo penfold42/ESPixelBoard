@@ -46,6 +46,7 @@ void handleWebGPIO (AsyncWebServerRequest *request) {
 }
 
 String handleGPIO ( String request ) {
+#if defined (ESPS_SUPPORT_PWM)
     String reply;
     char tempstr[40];
 
@@ -95,6 +96,9 @@ String handleGPIO ( String request ) {
     }
 
     return (String) tempstr;
+#else
+    return (String) "PWM disabled\r\n";
+#endif
 }
 
 

@@ -249,7 +249,7 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
 
         case '3': {
             String response;
-            DynamicJsonDocument json(1024);
+            DynamicJsonDocument json(4096);
 
             effects.runningEffectToJson(json);
 
@@ -266,13 +266,19 @@ void procG(uint8_t *data, AsyncWebSocketClient *client) {
         }
 
         case '4': {
-            DynamicJsonDocument json(1024);
-            JsonArray gamma = json.createNestedArray("gamma");
+//          DynamicJsonDocument json(1024);
+//          JsonArray gamma = json.createNestedArray("gamma");
+            String response = "{\"gamma\":[";
             for (int i=0; i<256; i++) {
-                gamma.add(GAMMA_TABLE[i] >> 8);
+//              gamma.add(GAMMA_TABLE[i] >> 8);
+                response += GAMMA_TABLE[i] >> 8;
+                response += ",";
             }
-            String response;
-            serializeJson(json, response);
+            response += "0]}";
+
+//          String response;
+//          serializeJson(json, response);
+
             client->text("G4" + response);
             break;
         }
@@ -285,7 +291,7 @@ void procP(uint8_t *data, AsyncWebSocketClient *client) {
 
 void procS(uint8_t *data, AsyncWebSocketClient *client) {
 
-    DynamicJsonDocument json(1024);
+    DynamicJsonDocument json(4096);
     DeserializationError error = deserializeJson(json, reinterpret_cast<char*>(data + 2));
 
     if (error) {

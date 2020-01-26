@@ -129,6 +129,8 @@ void initWifi();
 void initWeb();
 void updateConfig();
 void publishState();
+void resolveHosts();
+void sendData();
 
 // Radio config
 RF_PRE_INIT() {
@@ -715,6 +717,7 @@ void initWeb() {
 
     // Raw config file Handler - but only on station
 //  web.serveStatic("/config.json", SPIFFS, "/config.json").setFilter(ON_STA_FILTER);
+    web.serveStatic("/config.json", SPIFFS, "/config.json");
 
     web.onNotFound([](AsyncWebServerRequest *request) {
         if (request->method() == HTTP_OPTIONS) {
@@ -1096,6 +1099,10 @@ void dsDeviceConfig(const JsonObject &json) {
             }
         }
     }
+    else
+    {
+        LOG_PORT.println("No pwm settings found.");
+    }
 #endif
 }
 
@@ -1131,7 +1138,7 @@ void loadConfig() {
         std::unique_ptr<char[]> buf(new char[size]);
         file.readBytes(buf.get(), size);
 
-        DynamicJsonDocument json(1024);
+        DynamicJsonDocument json(size);
         DeserializationError error = deserializeJson(json, buf.get());
         if (error) {
             LOG_PORT.println(F("*** Configuration File Format Error ***"));
@@ -1155,7 +1162,7 @@ void loadConfig() {
 // Serialize the current config into a JSON string
 void serializeConfig(String &jsonString, bool pretty, bool creds) {
     // Create buffer and root object
-    DynamicJsonDocument json(1024);
+    DynamicJsonDocument json(2048);
     
     // Device
     JsonObject device = json.createNestedObject("device");
