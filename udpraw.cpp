@@ -73,14 +73,16 @@ void UdpRaw::onPacket(AsyncUDPPacket packet)
             config.ds = DataSource::E131;
         }
 
-        int nread = _min(packet.length(), config.channel_count);
-        memcpy(_driver.getData(), packet.data(), nread);
+	int nread = _min(packet.length(), config.channel_count);
+	int nzero = config.channel_count - nread;
 
-        if (zeropad) {
-            int nzero = config.channel_count - nread;
-            if (nzero > 0)
-                memset(_driver.getData() + nread, 0, nzero);
-        }
+	for (unsigned int i = 0; i < config.channel_count; i++) {
+	    if (i < nread) {
+		_driver.setValue(i, *(packet.data()+i) );
+            } else if (zeropad) {
+		_driver.setValue(i, 0 );
+            }
+	}
     }
 }
 
