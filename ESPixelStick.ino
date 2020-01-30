@@ -172,11 +172,11 @@ void setup() {
     // Enable SPIFFS
     if (!SPIFFS.begin())
     {
-        LOG_PORT.println("File system did not initialise correctly");
+        LOG_PORT.println(F("File system did not initialise correctly"));
     }
     else
     {
-        LOG_PORT.println("File system initialised");
+        LOG_PORT.println(F("File system initialised"));
     }
 
     FSInfo fs_info;
@@ -194,7 +194,7 @@ void setup() {
     }
     else
     {
-        LOG_PORT.println("Failed to read file system details");
+        LOG_PORT.println(F("Failed to read file system details"));
     }
     
     // Load configuration from SPIFFS and set Hostname
@@ -526,7 +526,7 @@ void onMqttMessage(char* topic, char* payload,
         DeserializationError error = deserializeJson(r, payload);
 
         if (error) {
-            LOG_PORT.println("MQTT: json Parsing failed");
+            LOG_PORT.println(F("MQTT: json Parsing failed"));
             return;
         }
 
@@ -961,7 +961,7 @@ void dsNetworkConfig(const JsonObject &json) {
     }
     else
     {
-        LOG_PORT.println("No network settings found.");
+        LOG_PORT.println(F("No network settings found."));
     }
 
     if (!config.hostname.length()) {
@@ -995,7 +995,7 @@ void dsEffectConfig(const JsonObject &json) {
     }
     else
     {
-        LOG_PORT.println("No effect settings found.");
+        LOG_PORT.println(F("No effect settings found."));
     }
 }
 
@@ -1007,7 +1007,7 @@ void dsDeviceConfig(const JsonObject &json) {
     }
     else
     {
-        LOG_PORT.println("No device settings found.");
+        LOG_PORT.println(F("No device settings found."));
     }
 
     // E131
@@ -1020,7 +1020,7 @@ void dsDeviceConfig(const JsonObject &json) {
     }
     else
     {
-        LOG_PORT.println("No e131 settings found.");
+        LOG_PORT.println(F("No e131 settings found."));
     }
 
     // MQTT
@@ -1038,7 +1038,7 @@ void dsDeviceConfig(const JsonObject &json) {
     }
     else
     {
-        LOG_PORT.println("No mqtt settings found.");
+        LOG_PORT.println(F("No mqtt settings found."));
     }
 
 #if defined(ESPS_MODE_PIXEL)
@@ -1053,7 +1053,7 @@ void dsDeviceConfig(const JsonObject &json) {
     }
     else
     {
-        LOG_PORT.println("No pixel settings found.");
+        LOG_PORT.println(F("No pixel settings found."));
     }
 
 #elif defined(ESPS_MODE_SERIAL)
@@ -1064,7 +1064,7 @@ void dsDeviceConfig(const JsonObject &json) {
     }
     else
     {
-        LOG_PORT.println("No serial settings found.");
+        LOG_PORT.println(F("No serial settings found."));
     }
 #endif
 
@@ -1096,7 +1096,7 @@ void dsDeviceConfig(const JsonObject &json) {
     }
     else
     {
-        LOG_PORT.println("No pwm settings found.");
+        LOG_PORT.println(F("No pwm settings found."));
     }
 #endif
 }
