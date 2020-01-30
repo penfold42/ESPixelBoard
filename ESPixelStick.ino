@@ -469,21 +469,6 @@ void onMqttMessage(char* topic, char* payload,
     mqtt_last_seen = millis();
     mqtt_num_packets++;
 
-    
-    DynamicJsonDocument r(1024);
-    DeserializationError error = deserializeJson(r, payload);
-
-    if (error) {
-        LOG_PORT.println("MQTT: Parsing failed");
-        return;
-    }
-
-    JsonObject root = r.as<JsonObject>();
-
-    // if its a retained message and we want clean session, ignore it
-    if ( properties.retain && config.mqtt_clean ) {
-        return;
-    }
 
 // check first char for {, if so, its new style json message
     if (payload[0] != '{') { // old mqtt handling
@@ -523,7 +508,8 @@ void onMqttMessage(char* topic, char* payload,
 
         // Set data source based on state - Fall back to E131 when off
         if (stateOn) {
-            effects.setEffect("Solid");
+            if (effects.getEffect().equalsIgnoreCase("Disabled"))
+                effects.setEffect("Solid");
             config.ds = DataSource::MQTT;
         } else {
             config.ds = DataSource::E131;
@@ -536,15 +522,22 @@ void onMqttMessage(char* topic, char* payload,
 
     } else {
 
-        DynamicJsonDocument root(1024);
-        DeserializationError error = deserializeJson(root, payload);
-
-        bool stateOn = false;
+        DynamicJsonDocument r(1024);
+        DeserializationError error = deserializeJson(r, payload);
 
         if (error) {
             LOG_PORT.println("MQTT: json Parsing failed");
             return;
         }
+
+        JsonObject root = r.as<JsonObject>();
+
+        // if its a retained message and we want clean session, ignore it
+        if ( properties.retain && config.mqtt_clean ) {
+            return;
+        }
+
+        bool stateOn = false;
 
         if (root.containsKey("state")) {
             if (strcmp(root["state"], LIGHT_ON) == 0) {
@@ -589,6 +582,8 @@ void onMqttMessage(char* topic, char* payload,
 
         // Set data source based on state - Fall back to E131 when off
         if (stateOn) {
+            if (effects.getEffect().equalsIgnoreCase("Disabled"))
+                effects.setEffect("Solid");
             config.ds = DataSource::MQTT;
         } else {
             config.ds = DataSource::E131;
