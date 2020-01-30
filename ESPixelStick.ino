@@ -182,14 +182,14 @@ void setup() {
     FSInfo fs_info;
     if (SPIFFS.info(fs_info))
     {
-        LOG_PORT.print("Total bytes in file system: ");
+        LOG_PORT.print(F("File System Used: "));
         LOG_PORT.println(fs_info.usedBytes);
 
         Dir dir = SPIFFS.openDir("/");
         while (dir.next()) {
-          LOG_PORT.print(dir.fileName());
           File f = dir.openFile("r");
-          LOG_PORT.println(f.size());
+          LOG_PORT.printf("%5d ", f.size());
+          LOG_PORT.println(dir.fileName());
         }
     }
     else

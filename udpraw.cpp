@@ -50,7 +50,7 @@ void UdpRaw::begin(uint16_t port /*= ESPS_UDP_RAW_DEFAULT_PORT*/)
 
         _udp.onPacket(std::bind(&UdpRaw::onPacket, this, std::placeholders::_1));
 
-        LOG_PORT.print(" - Local UDP RAW Port: ");
+        LOG_PORT.print(F("- Local UDP RAW Port: "));
         LOG_PORT.println(port);
     }
 }
